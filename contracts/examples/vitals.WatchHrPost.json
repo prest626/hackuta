@@ -1,0 +1,4 @@
+{"device_id": "watch_team01", "samples": [
+  {"t_end": "2026-11-15T19:02:00Z", "bpm": 80, "source": "workout"},
+  {"t_end": "2026-11-15T19:02:05Z", "bpm": 81, "source": "workout"}
+]}

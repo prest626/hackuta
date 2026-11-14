@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://homeward.local/contracts/med_schedule.schema.json",
+  "title": "MedSchedule",
+  "description": "The MOCK discharge medication schedule and the patient's weekly pill organizer layout. The pill check compares organizer compartments to this. Homeward never identifies pills by appearance and never gives dosing advice.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["patient_id", "is_mock", "organizer_layout", "slots", "meds", "start_date"],
+  "properties": {
+    "patient_id": {"type": "string", "pattern": "^pat_[a-z0-9]{4,32}$"},
+    "is_mock": {"const": true},
+    "organizer_layout": {"enum": ["7x1", "7x2", "7x4"], "description": "7 days x N slots per day. 7x2 = AM/PM."},
+    "week_starts_on": {"enum": ["SUN", "MON"], "default": "SUN"},
+    "slots": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slot", "local_time"],
+        "properties": {
+          "slot": {"enum": ["AM", "NOON", "PM", "BED"]},
+          "local_time": {"type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"}
+        }
+      }
+    },
+    "meds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "dose", "slots"],
+        "properties": {
+          "name": {"type": "string", "description": "Mock med name for display only."},
+          "dose": {"type": "string"},
+          "slots": {"type": "array", "items": {"enum": ["AM", "NOON", "PM", "BED"]}, "minItems": 1, "uniqueItems": true},
+          "instructions": {"type": "string", "description": "Verbatim from the mock discharge sheet. The agent may read this back; it never invents instructions."}
+        }
+      }
+    },
+    "start_date": {"type": "string", "format": "date"}
+  }
+}

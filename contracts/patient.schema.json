@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://homeward.local/contracts/patient.schema.json",
+  "title": "Patient",
+  "description": "A MOCK patient enrolled for post-discharge check-ins. No real PHI ever: is_mock must be true. Owned by role:lead; seeded by role:demo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "is_mock",
+    "display_name",
+    "phone_e164",
+    "tz",
+    "discharge_date",
+    "condition_tag",
+    "checkin_days",
+    "checkin_local_time",
+    "contacts",
+    "consent",
+    "symptom_questions",
+    "red_flags",
+    "watch_device_id"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^pat_[a-z0-9]{4,32}$"
+    },
+    "is_mock": {
+      "const": true,
+      "description": "Hard guard: the API rejects any patient without is_mock=true."
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60,
+      "description": "Fictional first name the agent uses, e.g. 'Rosa'."
+    },
+    "phone_e164": {
+      "type": "string",
+      "pattern": "^\\+[1-9][0-9]{7,14}$",
+      "description": "A phone Preston controls (his iPhone or a spare), standing in for the fictional patient. Set from .env at seed time, never committed."
+    },
+    "tz": {
+      "type": "string",
+      "default": "America/Chicago"
+    },
+    "discharge_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "condition_tag": {
+      "enum": [
+        "hf",
+        "copd",
+        "pneumonia",
+        "tka",
+        "general"
+      ],
+      "description": "Selects the mock care-plan template."
+    },
+    "checkin_days": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 30
+      },
+      "minItems": 1,
+      "uniqueItems": true,
+      "default": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "checkin_local_time": {
+      "type": "string",
+      "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+      "default": "10:00"
+    },
+    "contacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "name",
+          "phone_e164"
+        ],
+        "properties": {
+          "role": {
+            "enum": [
+              "nurse",
+              "clinician",
+              "family"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone_e164": {
+            "type": "string",
+            "pattern": "^\\+[1-9][0-9]{7,14}$"
+          }
+        }
+      }
+    },
+    "consent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "calls",
+        "video_analysis",
+        "proof_frames",
+        "family_share",
+        "watch_vitals"
+      ],
+      "properties": {
+        "calls": {
+          "type": "boolean"
+        },
+        "video_analysis": {
+          "type": "boolean"
+        },
+        "proof_frames": {
+          "type": "boolean",
+          "description": "May we store the annotated pill-box frame?"
+        },
+        "family_share": {
+          "type": "boolean"
+        },
+        "watch_vitals": {
+          "type": "boolean"
+        }
+      }
+    },
+    "symptom_questions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "slot",
+          "prompt",
+          "answer_type"
+        ],
+        "properties": {
+          "slot": {
+            "type": "string",
+            "pattern": "^[a-z_]{2,40}$"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Plain-language question; the agent may rephrase but not change meaning."
+          },
+          "answer_type": {
+            "enum": [
+              "yes_no",
+              "better_same_worse",
+              "scale_0_10",
+              "free_text"
+            ]
+          }
+        }
+      }
+    },
+    "red_flags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "urgent_911",
+        "call_care_team"
+      ],
+      "properties": {
+        "urgent_911": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Phrases from the (mock) discharge instructions that trigger the fixed 'hang up and call 911' script."
+        },
+        "call_care_team": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Symptom slots/values that create a flag for nurse review."
+        }
+      }
+    },
+    "watch_device_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Maps POST /v1/watch/hr device_id to this patient."
+    },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rhr_bpm_mean": {
+          "type": "number"
+        },
+        "rhr_bpm_sd": {
+          "type": "number"
+        },
+        "source": {
+          "enum": [
+            "mock",
+            "hae",
+            "watch"
+          ]
+        }
+      }
+    }
+  }
+}

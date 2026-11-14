@@ -1,0 +1,12 @@
+{
+  "id": "flg_rosa01d3a",
+  "patient_id": "pat_rosa01",
+  "call_id": "call_rosa01d3",
+  "code": "care_team_symptom",
+  "tier": "RED",
+  "reason": "Confirmed: more short of breath than yesterday + new ankle swelling, with resting HR drift (z=2.0).",
+  "evidence": {"quotes": ["the stairs are harder than yesterday", "My ankles are puffy."], "rhr_z": 2.0},
+  "rule_id": "care_team_symptom_plus_vitals_drift",
+  "created_at": "2026-11-15T19:05:21Z",
+  "status": "open"
+}

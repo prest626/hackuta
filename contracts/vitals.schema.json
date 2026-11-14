@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://homeward.local/contracts/vitals.schema.json",
+  "title": "Vitals",
+  "description": "Apple Watch vitals. Root = one stored VitalSample. $defs: WatchHrPost (watch -> POST /v1/watch/hr), LiveVitals (GET /v1/patients/{id}/vitals/live). Wellness-style data only; never blood pressure.",
+  "$ref": "#/$defs/VitalSample",
+  "$defs": {
+    "Metric": {"enum": ["hr", "rhr", "hrv_sdnn", "rr_sleep", "spo2", "steps", "rr_cam"]},
+    "VitalSample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t", "patient_id", "metric", "value", "source"],
+      "properties": {
+        "t": {"type": "string", "format": "date-time"},
+        "patient_id": {"type": "string", "pattern": "^pat_[a-z0-9]{4,32}$"},
+        "metric": {"$ref": "#/$defs/Metric"},
+        "value": {"type": "number"},
+        "source": {"enum": ["watch_workout", "hae", "camera", "mock_replay"]},
+        "quality": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      }
+    },
+    "WatchHrPost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["device_id", "samples"],
+      "properties": {
+        "device_id": {"type": "string", "minLength": 4},
+        "samples": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["t_end", "bpm"],
+            "properties": {
+              "t_end": {"type": "string", "format": "date-time"},
+              "bpm": {"type": "number", "minimum": 30, "maximum": 220},
+              "source": {"enum": ["workout", "mock_replay"], "default": "workout"}
+            }
+          }
+        }
+      }
+    },
+    "LiveVitals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["patient_id", "as_of", "hr_median_60s", "hr_n_60s", "hr_last_t", "stale"],
+      "properties": {
+        "patient_id": {"type": "string"},
+        "as_of": {"type": "string", "format": "date-time"},
+        "hr_median_60s": {"type": ["number", "null"]},
+        "hr_n_60s": {"type": "integer", "minimum": 0},
+        "hr_last_t": {"type": ["string", "null"], "format": "date-time"},
+        "stale": {"type": "boolean", "description": "true if no HR sample in the last 30 s. The agent must not quote a stale number as live."},
+        "rhr_baseline_bpm": {"type": ["number", "null"]},
+        "rhr_7d_bpm": {"type": ["number", "null"]},
+        "rhr_z": {"type": ["number", "null"]},
+        "steps_today": {"type": ["integer", "null"]},
+        "hrv_sdnn_ms_last_night": {"type": ["number", "null"]},
+        "rr_sleep_last_night": {"type": ["number", "null"]}
+      }
+    }
+  }
+}
