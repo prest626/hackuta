@@ -1,0 +1,423 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://homeward.local/contracts/call_result.schema.json",
+  "title": "CallResult",
+  "description": "What the agent tools (agent/tools.mjs, loaded by Preston's bridge.mjs) post to POST /v1/calls/{call_id}/result when a check-in or escalation call ends. The agent records observations; it never assigns the tier (the rules engine does). $defs: ScheduledCall (scheduler state).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "call_id",
+    "patient_id",
+    "kind",
+    "day_index",
+    "status",
+    "started_at",
+    "ended_at",
+    "pill_check",
+    "symptoms",
+    "breathing",
+    "vitals_snapshot",
+    "emergency_script_given"
+  ],
+  "properties": {
+    "call_id": {
+      "type": "string",
+      "pattern": "^call_[a-z0-9]{4,40}$"
+    },
+    "patient_id": {
+      "type": "string",
+      "pattern": "^pat_[a-z0-9]{4,32}$"
+    },
+    "kind": {
+      "enum": [
+        "checkin",
+        "nurse_callback",
+        "clinician_group_call",
+        "family_group_call"
+      ]
+    },
+    "day_index": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 30,
+      "description": "Days since discharge (1-4 for the MVP schedule; 0 = demo/ad hoc)."
+    },
+    "status": {
+      "enum": [
+        "completed",
+        "partial",
+        "no_answer",
+        "failed",
+        "emergency_script"
+      ]
+    },
+    "started_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "end_reason": {
+      "enum": [
+        "agent_hangup",
+        "hard_stop",
+        "patient_hangup",
+        "no_answer",
+        "bridge_error",
+        "error"
+      ]
+    },
+    "pill_check": {
+      "$ref": "#/$defs/PillCheck"
+    },
+    "symptoms": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SymptomAnswer"
+      }
+    },
+    "breathing": {
+      "$ref": "#/$defs/Breathing"
+    },
+    "vitals_snapshot": {
+      "$ref": "vitals.schema.json#/$defs/LiveVitals"
+    },
+    "emergency_script_given": {
+      "type": "boolean",
+      "description": "true if the patient said an urgent_911 phrase and the agent read the fixed 'hang up and call 911 now' script."
+    },
+    "agent_concern": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 300,
+      "description": "Optional LLM note (e.g. 'sounded confused'). Can only propose raising to YELLOW; never lowers a tier."
+    },
+    "summary_text": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 600,
+      "description": "Plain-language recap, no diagnosis, no dosing advice."
+    },
+    "direction": {
+      "enum": [
+        "outbound",
+        "inbound"
+      ],
+      "description": "outbound = scheduler dialed from the spare Mac; inbound = patient FaceTimed the spare Mac."
+    },
+    "frames": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "FaceTime-window capture on the spare Mac (mac/capture.py).",
+      "properties": {
+        "received": {
+          "type": "boolean"
+        },
+        "fps_capture": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "width": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "height": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "source": {
+          "enum": [
+            "window_capture",
+            "fixture"
+          ]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "Slot": {
+      "enum": [
+        "AM",
+        "NOON",
+        "PM",
+        "BED"
+      ]
+    },
+    "Day": {
+      "enum": [
+        "SUN",
+        "MON",
+        "TUE",
+        "WED",
+        "THU",
+        "FRI",
+        "SAT"
+      ]
+    },
+    "PillCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "ok",
+            "missed_possible",
+            "unknown",
+            "skipped"
+          ],
+          "description": "Deterministic outcome after the vision model + med schedule comparison."
+        },
+        "expected_empty": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(SUN|MON|TUE|WED|THU|FRI|SAT)-(AM|NOON|PM|BED)$"
+          },
+          "description": "Compartments whose dose time has passed per the med schedule."
+        },
+        "observed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "compartment",
+              "state"
+            ],
+            "properties": {
+              "compartment": {
+                "type": "string",
+                "pattern": "^(SUN|MON|TUE|WED|THU|FRI|SAT)-(AM|NOON|PM|BED)$"
+              },
+              "state": {
+                "enum": [
+                  "empty",
+                  "has_pills",
+                  "lid_closed",
+                  "not_visible"
+                ]
+              },
+              "bbox": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 4,
+                "maxItems": 4
+              }
+            }
+          }
+        },
+        "mismatches": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Compartments expected empty but seen with pills."
+        },
+        "image_quality": {
+          "enum": [
+            "good",
+            "blurry",
+            "glare",
+            "too_far",
+            "partial",
+            "no_frame"
+          ]
+        },
+        "confidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "retries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "self_report": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Patient's verbatim answer when vision is unknown or a mismatch is found."
+        },
+        "proof_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Path of the stored annotated frame (only if consent.proof_frames)."
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "SymptomAnswer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot",
+        "value",
+        "quote"
+      ],
+      "properties": {
+        "slot": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "description": "Normalized: yes|no, better|same|worse, 0-10, or short text."
+        },
+        "quote": {
+          "type": "string",
+          "description": "Patient's verbatim words (ASR)."
+        },
+        "confirmed": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if the agent asked a confirmation question for a red-flag answer."
+        }
+      }
+    },
+    "Breathing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "paced_measured",
+            "self_count",
+            "skipped",
+            "abstained"
+          ],
+          "description": "Wellness check only. paced_measured = rate from video motion while following a 10/min pacer; self_count = patient counted breaths for 30 s."
+        },
+        "rate_per_min": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "sqi": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "pacer_rate_per_min": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "ScheduledCall": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "patient_id",
+        "day_index",
+        "kind",
+        "due_at",
+        "status",
+        "attempts"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^call_[a-z0-9]{4,40}$"
+        },
+        "patient_id": {
+          "type": "string"
+        },
+        "day_index": {
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "checkin",
+            "nurse_callback",
+            "clinician_group_call",
+            "family_group_call"
+          ]
+        },
+        "due_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "enum": [
+            "scheduled",
+            "dialing",
+            "ringing",
+            "in_call",
+            "done",
+            "no_answer",
+            "retry_wait",
+            "failed",
+            "cancelled"
+          ]
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "approval_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Required (and must be approved) for every kind except checkin."
+        },
+        "direction": {
+          "enum": [
+            "outbound",
+            "inbound"
+          ]
+        }
+      }
+    }
+  }
+}

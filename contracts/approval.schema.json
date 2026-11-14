@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://homeward.local/contracts/approval.schema.json",
+  "title": "Approval",
+  "description": "An escalation proposal and the nurse's decision. NOTHING leaves the system (callback, group call, family message) until a named nurse approves. Root = Approval record; $defs.Decision = body of POST /v1/approvals/{id}/decision.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "patient_id",
+    "call_id",
+    "flag_ids",
+    "tier",
+    "action",
+    "recipients",
+    "brief_text",
+    "status",
+    "created_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^apr_[a-z0-9]{4,40}$"
+    },
+    "patient_id": {
+      "type": "string"
+    },
+    "call_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "flag_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "tier": {
+      "enum": [
+        "YELLOW",
+        "RED"
+      ]
+    },
+    "action": {
+      "enum": [
+        "nurse_callback",
+        "clinician_group_call",
+        "family_group_call",
+        "family_imessage"
+      ],
+      "description": "Proposed by approvals.propose(); the nurse may change it before approving. MVP executes nurse_callback; group calls and family_imessage are p2 (FaceTime 'Add People' / Messages via AppleScript on the spare Mac)."
+    },
+    "recipients": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "patient",
+          "nurse",
+          "clinician",
+          "family"
+        ]
+      },
+      "minItems": 1
+    },
+    "brief_text": {
+      "type": "string",
+      "maxLength": 400,
+      "description": "What the agent says in the first 20 s of the escalation call. Facts only."
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "executing",
+        "executed",
+        "failed",
+        "expired"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decision": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/Decision"
+        }
+      ]
+    },
+    "executed_call_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "$defs": {
+    "Decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "nurse_name",
+        "decided_at"
+      ],
+      "properties": {
+        "decision": {
+          "enum": [
+            "approve",
+            "reject"
+          ]
+        },
+        "nurse_name": {
+          "type": "string",
+          "minLength": 2,
+          "description": "Required. The gate records who approved."
+        },
+        "action_override": {
+          "enum": [
+            "nurse_callback",
+            "clinician_group_call",
+            "family_group_call",
+            "family_imessage",
+            null
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 300
+        },
+        "decided_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
