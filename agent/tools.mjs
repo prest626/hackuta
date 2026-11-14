@@ -58,10 +58,21 @@ export const TOOLS = [
   },
 ];
 
-const NAMES = new Set(TOOLS.map((tool) => tool.name));
-
 function fresh() {
-  return { active: null, context: null, emergency: false, mode: 'checkin' };
+  return {
+    active: null,
+    context: null,
+    emergency: false,
+    mode: 'checkin',
+    pill: null,
+    pillTries: 0,
+    symptoms: [],
+    breathing: null,
+    vitals: null,
+    startedAt: null,
+    finished: false,
+    lastResult: null,
+  };
 }
 
 let session = fresh();
@@ -103,7 +114,83 @@ export function reset() {
   session = fresh();
 }
 
+export function isoNow() {
+  return new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
+
+const UNSAFE = [/diagnos/i, /blood pressure/i, /prescrib/i, /you should take/i, /increase your dose/i, /skip a dose/i, /take two/i];
+
+function safeText(text, fallback) {
+  const clipped = String(text || '').slice(0, 600);
+  if (!clipped || UNSAFE.some((re) => re.test(clipped))) return fallback;
+  return clipped;
+}
+
+function emptyVitals(patientId) {
+  return {
+    patient_id: patientId,
+    as_of: isoNow(),
+    hr_median_60s: null,
+    hr_n_60s: 0,
+    hr_last_t: null,
+    stale: true,
+  };
+}
+
+export async function finishCall(args = {}) {
+  if (session.finished) return { ok: true, data: { already: true, result: session.lastResult } };
+  const active = session.active;
+  if (!active?.call_id) return { ok: false, error: 'no active call' };
+  const emergency = session.emergency || args.status === 'emergency_script';
+  const status = emergency ? 'emergency_script' : (args.status || 'partial');
+  if (!session.startedAt) session.startedAt = isoNow();
+  const result = {
+    call_id: active.call_id,
+    patient_id: active.patient_id,
+    kind: active.kind || 'checkin',
+    direction: active.direction || 'outbound',
+    day_index: active.day_index ?? 0,
+    status,
+    started_at: session.startedAt,
+    ended_at: isoNow(),
+    end_reason: args.end_reason || 'agent_hangup',
+    pill_check: session.pill || { state: 'skipped' },
+    symptoms: session.symptoms,
+    breathing: session.breathing || { mode: 'skipped' },
+    vitals_snapshot: session.vitals || emptyVitals(active.patient_id),
+    emergency_script_given: emergency,
+    summary_text: safeText(
+      emergency
+        ? 'The fixed emergency script was read. Your nurse will review.'
+        : 'Check-in recorded. Your nurse will review.',
+      'Your nurse will review.',
+    ),
+  };
+  const posted = await api('POST', `/v1/calls/${active.call_id}/result`, result);
+  await api('POST', `/v1/calls/${active.call_id}/hangup`);
+  session.finished = true;
+  session.lastResult = result;
+  return { ok: true, data: { result, api: posted }, ...(emergency ? { fixed: true } : {}) };
+}
+
+async function stub(name, args) {
+  return { ok: true, name, args: args || {} };
+}
+
+const HANDLERS = {
+  get_vitals: (args) => stub('get_vitals', args),
+  check_pillbox: (args) => stub('check_pillbox', args),
+  breathing_check: (args) => stub('breathing_check', args),
+  record_answer: (args) => stub('record_answer', args),
+  finish_call: finishCall,
+};
+
 export async function dispatch(name, args) {
-  if (!NAMES.has(name)) return JSON.stringify({ ok: false, error: `unknown tool ${name}` });
-  return JSON.stringify({ ok: true, name, args: args || {} });
+  const fn = HANDLERS[name];
+  if (!fn) return JSON.stringify({ ok: false, error: `unknown tool ${name}` });
+  try {
+    return JSON.stringify(await fn(args || {}));
+  } catch (err) {
+    return JSON.stringify({ ok: false, error: String(err.message || err) });
+  }
 }
