@@ -1,57 +1,39 @@
-# HackUTA
+# Homeward
 
-![The hacking floor at Cal Hacks](docs/banner.jpg)
+Homeward is a hackathon prototype. It is not a medical device, gives no diagnosis or treatment advice, uses only mock patient data, and every escalation is approved by a human care team.
 
-HackUTA repo for the team. Agents coordinate on one pinned GitHub issue: they post when they finish something or need something, tag a teammate by GitHub username, and wait for their own tag.
+Homeward is the hospital calling you. For the first four days after you go home, it FaceTimes you, looks at your pill box, asks how you're breathing, reads your Apple Watch, and puts a nurse in charge of what happens next.
 
-This is set up from the [hackathon agent board](https://github.com/azizu06/hackathon-agent-board) template. Full walkthrough and FAQ: **[marvelous-relative-5de.notion.site/hack](https://marvelous-relative-5de.notion.site/hack)**
+The patient's iPhone FaceTimes a spare Mac. That Mac runs FaceTime, Preston's `facetime-bridge/bridge.mjs` (BlackHole audio to OpenAI Realtime), the call agent, vision, the API, the scheduler, and the nurse dashboard. The watch posts heart rate to the API. Nothing is escalated until a named nurse approves it.
 
-## How it works
-
-```mermaid
-sequenceDiagram
-    participant A as Sam's agent
-    participant B as Board (pinned issue)
-    participant C as Priya's agent
-    A->>B: [Sam's Claude] login page is merged, @priya-dev can you add the API route?
-    Note over C: tools/board wait wakes up on the @priya-dev tag
-    B->>C: new post, flagged MENTION
-    C->>B: [Priya's Codex] @sam-dev the route is up on main
+```text
+iPhone FaceTime  <-->  FaceTime on the spare Mac
+                         | speaker / mic via BlackHole
+                         v
+                    bridge.mjs  <-->  OpenAI Realtime
+                         |
+                         v
+                    agent/  -->  api/ (rules, scheduler, SQLite)
+                         ^         ^
+              mac/ frames + vision/   watch POST /v1/watch/hr
+                                   dashboard/ approves --> scheduler dials
 ```
-
-1. Split the project up at kickoff and give each person their own folders. The owner table in `AGENTS.md` says whose folders are whose, and every agent reads it.
-2. Pin one issue as the board. Every agent posts there when it finishes something or needs something.
-3. Tag the teammate. Each agent keeps `tools/board wait` running, which wakes it up when someone else posts and flags the post when it tags you.
-
-## Used at
-
-My teams ran this at two hackathons, and both boards are public if you want to scroll through them.
-
-- **Knight Hacks**, UCF's hackathon. The [Farsight board](https://github.com/azizu06/farsight/issues/24) hit 1,182 posts, and Farsight won four sponsor tracks.
-- **Cal Hacks**, UC Berkeley's hackathon. The [Backrooms board](https://github.com/azizu06/backrooms/issues/1) hit 988 posts, and Backrooms won a Hyphenate track prize.
 
 ## Setup
 
-1. The board is pinned issue **[#1](https://github.com/prest626/hackuta/issues/1)**. If a later clone is not issue #1, every teammate sets `export BOARD_ISSUE=<number>`.
-2. Fill in the rest of the team's GitHub logins and the owner table in `AGENTS.md`. `@prest626` (Preston) is the team lead.
-3. Every teammate runs `gh auth login` once, then `tools/board whoami` to check it works.
+Needs Python 3.12, [uv](https://docs.astral.sh/uv/), and Node 20+.
 
-## Commands
+```bash
+uv sync
+cp .env.example .env
+MAC_DRY_RUN=1 VISION_FAKE=fixtures make test
+make dev
+```
 
-| Command | What it does |
-|---|---|
-| `tools/board post "[Sam's Claude] ..."` | Posts to the board. Every post starts with whose agent it is. |
-| `tools/board unread` | Shows posts since your last check and flags the ones that tag you. |
-| `tools/board wait` | Blocks until someone else posts, then prints it. |
-| `tools/board read -n 20` | Shows the last 20 posts. |
-| `tools/board whoami` | Prints your GitHub login so you can check `gh` is set up. |
+`make dev` serves `GET /v1/health` at `http://127.0.0.1:8000/v1/health`. `MAC_DRY_RUN=1` prints Mac commands instead of running them. `VISION_FAKE=fixtures` uses canned vision reads. Real keys stay in `.env` on the spare Mac and are never committed.
 
-`tools/board wait` checks once every 30 seconds, and when nothing is new that check is one API call, so a whole team stays well under GitHub's rate limit. Use `--interval 60` if a lot of agents share one account.
+`facetime-bridge/` is Preston's. Do not edit it from a lane PR.
 
-## Works with any coding agent
+## Board
 
-The script only needs `bash` and `gh`, so any agent that can run a shell command can use it. Claude Code also gets the hooks in `.claude/`, which show unread posts when a session starts and on every prompt, and `CLAUDE.md` pulls in the rules from `AGENTS.md`. Every other agent reads `AGENTS.md` and runs `tools/board unread` before each task.
-
-## Requirements
-
-`bash`, `git`, and the [GitHub CLI](https://cli.github.com) logged in with `gh auth login`.
+Agents coordinate on pinned issue [#1](https://github.com/prest626/hackuta/issues/1) via `tools/board`. Rules: `AGENTS.md`. Product spec: `docs/PRD.md`. Shared schemas and API: `docs/CONTRACTS.md`.

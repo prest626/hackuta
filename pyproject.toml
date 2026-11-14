@@ -1,0 +1,25 @@
+[project]
+name = "homeward"
+version = "0.0.0"
+description = "Homeward hackathon prototype. Not a medical device."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "httpx",
+    "pyyaml",
+    "pillow",
+    "numpy",
+    "opencv-python-headless",
+    "openai",
+    "google-genai",
+]
+
+[dependency-groups]
+dev = ["pytest", "jsonschema"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
