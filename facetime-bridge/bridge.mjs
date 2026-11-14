@@ -44,7 +44,8 @@ openai.on('open', () => {
     },
   });
   startSpeaker();
-  const mic = spawn('sox', ['-q', '-t', 'coreaudio', CALLER_DEVICE, ...PCM, '-'], { stdio: ['ignore', 'pipe', 'inherit'] });
+  // FaceTime plays stereo into channels 1-2; downmixing all of BlackHole 16ch would average in 14 silent channels.
+  const mic = spawn('sox', ['-q', '-t', 'coreaudio', CALLER_DEVICE, ...PCM, '-', 'remix', '1,2'], { stdio: ['ignore', 'pipe', 'inherit'] });
   mic.stdout.on('data', chunk => send({ type: 'input_audio_buffer.append', audio: chunk.toString('base64') }));
   mic.on('exit', code => { console.error(`[bridge] could not read "${CALLER_DEVICE}" (sox exit ${code})`); process.exit(1); });
   console.log(`[bridge] Ready. Hearing "${CALLER_DEVICE}", speaking into "${AGENT_DEVICE}".`);
@@ -54,7 +55,8 @@ openai.on('open', () => {
 openai.on('message', raw => {
   const event = JSON.parse(raw);
   if (event.type === 'response.output_audio.delta' || event.type === 'response.audio.delta') speaker.stdin.write(Buffer.from(event.delta, 'base64'));
-  else if (event.type === 'input_audio_buffer.speech_started') interrupt();
+  else if (event.type === 'input_audio_buffer.speech_started') { console.log('[bridge] caller speaking'); interrupt(); }
+  else if (event.type === 'input_audio_buffer.speech_stopped') console.log('[bridge] caller stopped, agent replying');
   else if (event.type === 'error') console.error('[bridge] OpenAI error:', event.error?.message);
 });
 

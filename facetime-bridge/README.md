@@ -46,7 +46,7 @@ The Mac's own speakers go silent while output is on BlackHole; the caller hears 
 | `could not read "BlackHole 16ch"` | BlackHole not loaded: restart, then `SwitchAudioSource -a` should list it. Terminal may need microphone permission (System Settings > Privacy & Security > Microphone). |
 | `credit_balance_exhausted` | The OpenAI account needs credit. |
 | Agent silent, no errors | FaceTime's mic isn't BlackHole 2ch, or nobody pressed Enter to greet. |
-| Agent can't hear the caller | System output isn't BlackHole 16ch. |
+| Agent can't hear the caller (no `[bridge] caller speaking` when you talk) | `SwitchAudioSource -c -t output` must print `BlackHole 16ch`. To see the level reaching the bridge, stop it and run `sox -t coreaudio "BlackHole 16ch" -n remix 1,2 stat trim 0 5` while talking on the phone: `RMS amplitude` near 0 means no audio arrives. |
 
 ## Not done yet
 
