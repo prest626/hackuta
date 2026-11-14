@@ -18,7 +18,8 @@ A worker does not merge its own PR.
 ## Rules
 
 - **One worker per lane.** A second Codex in the same lane stops. Post `BLOCKED` and wait.
-- **No shared files.** A change outside the lane's paths needs a `HANDOFF` post and a yes from the owner or from watson before the edit.
+- **No shared files.** A change outside the lane's paths needs a `HANDOFF` post and a yes from the owner or from watson before the edit. `CONVERSATIONS.MD` is the exception: every Cursor cloud agent appends there.
+- **Cursor notes.** A Cursor cloud agent's `tools/board post` returns 403. Append the same line to `CONVERSATIONS.MD` (time in CT, then the `[Preston's <agent>]` line). Read that file at the start of a turn. Issue #1 is still the board for anyone whose token can comment.
 - **Contract change.** Feature PRs do not edit `contracts/` or `docs/CONTRACTS.md`. Open a new issue labeled `contract-change` and `role:lead` with the diff and the reason. Post that issue's URL. The lead lane merges it after watson's OK on the board.
 - **Dropped worker.** If a lane's Codex dies, the swarm is N-1. Watson posts the gap: lane, issue key, path, last SHA. Other lanes do not take those files. Only watson or Preston reassigns.
 - **Cut.** If the wave is still red at :50, drop the first unfinished key in the roadmap cut list. Post `BLOCKED` with the word `cut`. Safety keys stay: CALL-3, API-4, APPR-1, API-8, APPR-2, LEAD-4.
