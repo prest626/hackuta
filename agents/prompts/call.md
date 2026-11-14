@@ -33,13 +33,19 @@ You own `agent/` only. Node ESM, no dependencies, `node --test`.
 
 You do not edit `facetime-bridge/`, `mac/`, `vision/`, `api/`, `contracts/`, `dashboard/`, `data/`, `demo/`, `watch/`, `ingest/`.
 
+## Vision replan
+
+PR #72 (snapshot-to-Realtime) is parked. Do not send a frame into the Realtime session.
+
+`check_pillbox` stays a Realtime function call. The vision JSON is the tool result. Speak only from that JSON. If confidence < 0.6 or the box is not visible, ask the patient to move closer or hold still, at most 2 retries. Then say "I couldn't see it clearly, a nurse will review the photo." and record unknown.
+
 ## Queue
 
 | Wave (CT) | Issue | Deliverable | Done check |
 |---|---|---|---|
 | 5:30–8:00 PM Sat | #18 | Start at 5:30. Merge by 8:00. `agent/index.mjs` default export: instructions, tools, refresh, onCallStart, onToolCall, onTranscript. Greet once at `in_call`. | `node --test agent/test_index.mjs` exits 0 |
 | 8:00–9:00 PM Sat | #32 | `agent/prompts/system.md` and `agent/safety.mjs`. Safety key. Do not drop. | `node --test agent/test_safety.mjs` exits 0 |
-| 10:00 PM–1:00 AM | #31 | Start handlers when VISION-1 merges (10:00 PM wave, after BRIDGE-3). Merge by 1:00 AM. get_vitals, check_pillbox, breathing_check, record_answer, finish_call. | `node --test agent/test_tools.mjs` exits 0 |
+| 10:00 PM–1:00 AM | #31 | Start handlers when VISION-1 merges (10:00 PM wave, after BRIDGE-3). Merge by 1:00 AM. get_vitals, check_pillbox, breathing_check, record_answer, finish_call. `check_pillbox` speaks only from the vision JSON. Confidence under 0.6 or not visible: move closer or hold still, at most 2 retries, then "I couldn't see it clearly, a nurse will review the photo." and record unknown. | `node --test agent/test_tools.mjs` exits 0 |
 | 1:00–2:00 AM Sun | #34 | `agent/sim.mjs`. No OpenAI, no audio. | `node --test agent/test_sim.mjs` exits 0 |
 | 2:00–3:00 AM Sun | #33 | `agent/script.mjs`. Wrap at 4:15, hard stop at 5:00, nurse brief ≤ 20 s. | `node --test agent/test_script.mjs` exits 0 |
 
