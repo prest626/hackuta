@@ -1,5 +1,6 @@
 // Realtime tool definitions and handlers. HTTP matches CONTRACTS.md §4.
 // api (#29, #30) and vision (#26) are called as specified; tests stand in until those PRs merge.
+import { disarm } from './script.mjs';
 
 export const TOOLS = [
   {
@@ -295,6 +296,7 @@ export async function finishCall(args = {}) {
   await api('POST', `/v1/calls/${active.call_id}/hangup`);
   session.finished = true;
   session.lastResult = result;
+  disarm();
   const say = emergency
     ? null
     : (posted?.tier === 'GREEN'
