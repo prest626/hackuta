@@ -2,7 +2,7 @@
 
 Clock: America/Chicago. Swarm start: **5:30 PM Sat Nov 14, 2026**. Freeze: **11:00 AM Sun Nov 15**. Devpost draft: **11:30 PM Sat**. Expo judging: **1:00–3:00 PM Sun**.
 
-Already on main at 5:15 PM: docs (PR #59) and the scaffold plus contracts (PR #60). One inbound FaceTime call already worked. PR #3 (`facetime-bridge/`, branch `2-facetime-bridge`) may still be open; SPIKE-1 merges it.
+Already on main at 5:15 PM: docs (PR #59) and the scaffold plus contracts (PR #60). One inbound FaceTime call already worked. PR #3 (`facetime-bridge/`, branch `2-facetime-bridge`) may still be open; SPIKE-1 merges it. PR #72 (snapshot-to-Realtime) is parked. Pill vision is a separate model call. `check_pillbox` is a Realtime function call, and that JSON is the tool result.
 
 Each wave is one hour. One row per lane. The issue number in the Issue column is the only place that number appears in this file. Dependencies use the issue key (`API-1`, `BRIDGE-2`). Watson merges at :50–:00 and posts the next wave (see `docs/SWARM.md`).
 
@@ -17,7 +17,7 @@ MAC_DRY_RUN=1 VISION_FAKE=fixtures make test
 Front-loaded on purpose:
 
 1. Contracts are already on main (LEAD-1, LEAD-2). API-1, then patient (API-2), vitals (API-3), and the result endpoint (API-5). Then propose (APPR-1), the decision route (APPR-2), and the dashboard (DASH-1, DASH-2, DASH-3).
-2. Bridge dial (BRIDGE-2) and capture (BRIDGE-3), then the pill check (VISION-1), then the call tools (CALL-2) and the sim (CALL-5).
+2. Bridge dial (BRIDGE-2) and capture (BRIDGE-3), then the pill check (VISION-1), then the call tools (CALL-2) and the sim (CALL-5). The live pill beat waits until 10 offline photos of the real pillbox are at least 9/10 (VISION-3).
 3. Watch ingest (WATCH-1), then mock replay (WATCH-4).
 4. Scheduler (API-7) and gated escalation (API-8) so `make e2e` can dial, score, and approve.
 
@@ -29,7 +29,7 @@ Same-wave order at 10:00 PM: watson merges BRIDGE-3, then VISION-1.
 |---|---|---|
 | M0 | 5:30–7:00 PM Sat | Launch at 5:30. Original M0 line was 6:00 PM. M0 closes at 7:00 because the swarm started at 5:30. Contracts were already on main. API-1, BRIDGE-1, DEMO-1, SPIKE-1 are merged. |
 | M1 | 7:00 PM Sat – 2:00 AM Sun | p0 features merged. Devpost draft submitted at 11:30 PM. |
-| M2 | 2:00–8:00 AM Sun | `make e2e` green by 4:00 AM. Safety audit by 5:00 AM. One live end-to-end call by 8:00 AM. |
+| M2 | 2:00–8:00 AM Sun | `make e2e` green by 4:00 AM. Safety audit by 5:00 AM. One live end-to-end call by 8:00 AM. The pill beat in that call waits for the 9/10 offline gate. |
 | M3 | 8:00–11:00 AM Sun | Dry run at 9:00 AM. Dry run at 10:00 AM. Tag `demo-freeze` at 11:00 AM. |
 | Rehearsal | 11:00 AM–12:00 PM Sun | Hotspot, `mac.doctor` green, one run from the tag. No feature work. |
 
@@ -39,9 +39,9 @@ No other wave asks him to do anything. 2:00–6:00 AM is sleep: the Preston row 
 
 | Slot | When | What |
 |---|---|---|
-| 1 | 5:30–7:00 PM Sat | SPIKE-1. Credit, frame, merge PR #3, ask Gary. The inbound call already worked. |
+| 1 | 5:30–7:00 PM Sat | SPIKE-1. Credit, frame, merge PR #3, ask Gary. The inbound call already worked. If he is free in this block, buy or label the 7-day pillbox and shoot the 10 offline photos; otherwise that is the 12–1 AM block. |
 | 2 | 11:00–11:30 PM Sat | HUMAN-2. Watch install or replay, and the Devpost draft. |
-| 3 | 12:00–1:00 AM Sun | HUMAN-1. Hook, permissions, doctor, smoke, organizer photos. In bed by 2:00. |
+| 3 | 12:00–1:00 AM Sun | HUMAN-1. Hook, permissions, doctor, smoke. If the pillbox photos were not taken at 5:30–7:00 PM, buy or label the box and shoot the 10 photos now. In bed by 2:00. |
 | 4 | 7:00–8:00 AM Sun | One live end-to-end call. No separate issue. Start of the Sunday morning sitting. |
 | 5 | 9:00 AM–12:00 PM Sun | HUMAN-3 dry runs at 9:00 and 10:00, then he stays for the 11:00 tag and one rehearsal from the tag. One sitting, not a new trip. |
 
@@ -80,12 +80,12 @@ M0 opens. The 6:00 PM line in COORDINATION.md is the original M0 boundary. This 
 | lead | #13 | Confirm LEAD-1 is on main from PR #60. Do not rebuild the scaffold. | `MAC_DRY_RUN=1 VISION_FAKE=fixtures make test` exits 0. | Already on main. |
 | bridge | — | Start BRIDGE-1: `mac/SETUP.md`, `mac/doctor.py`, `mac/run_all.sh`, `mac/test_doctor.py`. | `mac/doctor.py` exists. Tests merge next wave. | LEAD-1 on main. |
 | call | — | Start CALL-1: `agent/index.mjs` default export in CONTRACTS.md §4.5. | File exports instructions, tools, refresh, onCallStart, onToolCall, onTranscript. | LEAD-2 on main. |
-| vision | — | Write `expected_empty` and the pill decision table under `vision/` with `VISION_FAKE=fixtures`. Hold the VISION-1 PR until BRIDGE-3 is on main. | `pytest vision/test_pills.py -q` passes the pure cases. | LEAD-2 on main. |
+| vision | — | Write `expected_empty` and the pill decision table under `vision/` with `VISION_FAKE=fixtures`. The read is a separate vision call, not Realtime: `pillbox_visible`, compartments with `label` and `has_pills`, `confidence`, `reason`. Hold the VISION-1 PR until BRIDGE-3 is on main. | `pytest vision/test_pills.py -q` passes the pure cases. | LEAD-2 on main. |
 | watch | — | Read CONTRACTS.md §4.6. No ingest code until API-1 mounts routers. | `tools/board read -n 20` shows the launch WAVE. | API-1. |
 | api | — | Start API-1 in `api/main.py` and `api/db.py`: open `var/homeward.db`, run `contracts/schema.sql`, `log_event`, mount optional routers, keep `GET /v1/health`. | `curl -s localhost:8000/v1/health` returns `{"ok":true}` once `make dev` is up. | LEAD-2 on main. |
 | dashboard | — | Read `approval.schema.json` and CONTRACTS.md §5.3. No `approvals/` code until API-1 is on main. | `tools/board whoami` prints the GitHub login. | API-1. |
 | demo | — | Start DEMO-1: Rosa, Luis, Ada in `data/mock/patients.json` and `med_schedules.json`, plus `data/seed.py`. Phones come from `.env` only. | Three patient docs, each `is_mock: true`, no digit phone strings in `data/`. | LEAD-2 on main. |
-| Preston | — | Start SPIKE-1 (same block as the next wave): top up OpenAI credit and grab one FaceTime window frame. The inbound call already worked. | `curl -s -o /dev/null -w '%{http_code}' https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY"` prints 200. | None. |
+| Preston | — | Start SPIKE-1 (same block as the next wave): top up OpenAI credit and grab one FaceTime window frame. The inbound call already worked. If still free, buy or label a 7-day pillbox (big printed day labels, high contrast, good light, optional lid marker) and shoot 10 photos into `vision/eval/photos/`. If not, that is the 12–1 AM block. | `curl -s -o /dev/null -w '%{http_code}' https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY"` prints 200. | None. |
 
 **Integration checkpoint.** 6:00 PM checkpoint. `make test` still green. Every lane has posted START. M0's original clock boundary is this minute; scaffold and contracts are already on main, and the rest of M0 merges at 7:00.
 
@@ -150,7 +150,7 @@ M1. Rules engine. Watch app code. Capture in progress.
 | Lane | Issue # | Deliverable | Done check | Depends on |
 |---|---|---|---|---|
 | lead | — | Buffer. Review only. | `make test` exits 0 on main. | None. |
-| bridge | — | BRIDGE-3: FaceTime window bounds, `screencapture` ring at 1.5 fps, last 30 frames, `latest()`, `burst(20, 5)`. | `mac/capture.py` dry-run copies a fixture over `var/frames/latest.jpg`. | BRIDGE-1. |
+| bridge | — | BRIDGE-3: FaceTime window bounds, `screencapture` ring at 1.5 fps, last 30 frames, `latest()`, and a 5 fps burst for breathing. Pill check: about 5 full-res frames over 2 s; keep the sharpest by Laplacian variance. Save every frame that is sent to `var/vision/<call_id>/<ts>.jpg` (gitignored). | `mac/capture.py` dry-run copies a fixture over `var/frames/latest.jpg`. | BRIDGE-1. |
 | call | — | Draft `agent/tools.mjs` against a fake API. Do not open the CALL-2 PR until VISION-1 is on main. | Fake sequence builds a CallResult object locally. | VISION-1, API-2, API-3. |
 | vision | — | Wire `POST /v1/vision/pillcheck` to the fake reader. Merge next wave, after capture. | Route returns a PillCheck under `VISION_FAKE=fixtures`. | BRIDGE-3. |
 | watch | #23 | Merge WATCH-2. App code plus install steps. Preston installs it in HUMAN-2, not in this PR. | `pytest ingest/test_watch_payload.py` exits 0. | WATCH-1. |
@@ -168,9 +168,9 @@ M1. Capture, then the pill check, then the result endpoint. Watson merges BRIDGE
 | Lane | Issue # | Deliverable | Done check | Depends on |
 |---|---|---|---|---|
 | lead | — | Buffer. Merge BRIDGE-3 before VISION-1. | BRIDGE-3 PR is merged, then the VISION-1 PR. | BRIDGE-3, VISION-1. |
-| bridge | #20 | Merge BRIDGE-3 by 10:40 PM. | `pytest mac/test_capture.py` exits 0. | BRIDGE-1. |
+| bridge | #20 | Merge BRIDGE-3 by 10:40 PM. Pill frames are the sharpest of a full-res burst of about 5 over 2 s, saved under `var/vision/<call_id>/<ts>.jpg`. | `pytest mac/test_capture.py` exits 0. | BRIDGE-1. |
 | call | — | Fill tool handlers now that API-2 and API-3 are on main. PR waits for VISION-1, which lands this wave. | `node --test agent/test_tools.mjs` can fail only on the pill route until VISION-1 merges. | VISION-1. |
-| vision | #26 | Merge VISION-1 after BRIDGE-3 is on main. `expected_empty`, one structured read, decision table, `POST /v1/vision/pillcheck`. Never identify a pill. | `pytest vision/test_pills.py` exits 0. | LEAD-2. BRIDGE-3 merges earlier this same wave. |
+| vision | #26 | Merge VISION-1 after BRIDGE-3 is on main. Separate vision-model call, not Realtime. Verify which provider key works first (OpenAI showed `credit_balance_exhausted` earlier). JSON is `pillbox_visible`, compartments with `label` and `has_pills`, `confidence`, `reason`. `expected_empty` and the decision table stay. Never identify a pill. | `pytest vision/test_pills.py` exits 0. | LEAD-2. BRIDGE-3 merges earlier this same wave. |
 | watch | #38 | Merge WATCH-3. `POST /v1/ingest/hae` for resting HR, HRV, sleep respiratory rate, SpO2, steps. p1. Drop this if the wave is red (cut list). | `pytest ingest/test_hae.py` exits 0. | WATCH-1. |
 | api | #43 | Merge API-5. Validate CallResult, store, rules, flags, `approvals.propose`, hangup. Idempotent on `call_id`. | `pytest tests/test_results.py` exits 0. | API-2, API-4, APPR-1. |
 | dashboard | — | Buffer. | `tools/board read -n 20`. | None. |
@@ -187,7 +187,7 @@ M1. Devpost draft is 11:30 PM, inside this wave. Scheduler and replay land here.
 |---|---|---|---|---|
 | lead | — | Buffer. Watch the 11:30 PM Devpost post. | Devpost URL is on the HUMAN-2 issue by 11:30 PM. | DEMO-4. |
 | bridge | — | Buffer. OBS stays on the cut list until the cards PR is on main. | `pytest mac/test_capture.py mac/test_facetime.py` exits 0. | VISION-5. |
-| call | — | Finish CALL-2 against the merged pill route and vitals. | `node --test agent/test_tools.mjs` passes locally. Merge next wave. | CALL-1, API-2, API-3, VISION-1. |
+| call | — | Finish CALL-2 against the merged pill route and vitals. `check_pillbox` speaks only from the vision JSON. If confidence < 0.6 or the box is not visible, ask the patient to move closer or hold still, at most 2 retries, then "I couldn't see it clearly, a nurse will review the photo." and record unknown. | `node --test agent/test_tools.mjs` passes locally. Merge next wave. | CALL-1, API-2, API-3, VISION-1. |
 | vision | #27 | Merge VISION-5 cards. Green / amber / grey, caption, footer "Prototype · not a medical device", `var/cards/current.png`. p1. | `pytest vision/test_cards.py` exits 0. | VISION-1. |
 | watch | #40 | Merge WATCH-4. `python -m ingest.replay` posts `data/mock/hr_live_rosa.json` every 5 s with `source: mock_replay`. p1, last on the cut list. | `pytest ingest/test_replay.py` exits 0. | WATCH-1, DEMO-2. |
 | api | #45 | Merge API-7. Day 1–4 rows, one dial at a time, 45 s no-answer, 10 min retry, max 2, then a `no_answer` result, plus Call now. Estimate is 2.0 h; this wave is 1 h. If red at 11:50, keep going into the 4:00–6:00 AM buffer and slide API-8 with it. Do not drop API-7. | `pytest tests/test_scheduler.py` exits 0. | API-2, BRIDGE-2. |
@@ -205,13 +205,13 @@ M1. Call tools, gated escalation, Mac smoke. Preston's last step before sleep.
 |---|---|---|---|---|
 | lead | — | Buffer. Read the e2e deps. Do not start LEAD-3 until CALL-5 and APPR-2 are on main. | Deps list for LEAD-3 is checked against merged PRs. | CALL-5, APPR-2. |
 | bridge | #28 | Merge BRIDGE-4. `mac/OBS.md` and `mac/obs_check.py`. p2. This is the first cut if anything in this wave is red. | `pytest mac/test_obs.py` exits 0. | BRIDGE-1, VISION-5. |
-| call | #31 | Merge CALL-2. get_vitals, check_pillbox, breathing_check, record_answer, finish_call. No dose advice. | `node --test agent/test_tools.mjs` exits 0, including a partial call. | CALL-1, API-2, API-3, VISION-1. |
-| vision | #35 | Merge VISION-2. Crop chrome and the self-preview tile. p1. | `pytest vision/test_crop.py` exits 0. | VISION-1. |
+| call | #31 | Merge CALL-2. get_vitals, check_pillbox, breathing_check, record_answer, finish_call. `check_pillbox` is a Realtime function call; the JSON is the tool result; the agent speaks only from it. Confidence under 0.6 or the box not visible: move closer or hold still, at most 2 retries, then "I couldn't see it clearly, a nurse will review the photo." and record unknown. No dose advice. | `node --test agent/test_tools.mjs` exits 0, including a partial call. | CALL-1, API-2, API-3, VISION-1. |
+| vision | #35 | Merge VISION-2. Crop to the caller's video only: no self-preview and no FaceTime UI. The frame saved for the model is that crop. p1. | `pytest vision/test_crop.py` exits 0. | VISION-1. |
 | watch | — | Buffer. Ingest, app, HAE, and replay are on main. | `pytest ingest/test_ingest.py ingest/test_replay.py` exits 0. | None. |
 | api | #46 | Merge API-8. `scheduler.place_escalation` raises unless the approval is `approved` and has `decision.nurse_name`. | `pytest tests/test_scheduler.py::test_escalation_refuses_unapproved tests/test_scheduler.py::test_escalation_dials_nurse` exits 0. | API-7, APPR-1. |
 | dashboard | — | Write `POST /v1/approvals/{id}/decision`. Merge next wave. | Local test: missing nurse name returns 422. | APPR-1, API-8. |
 | demo | — | Draft `demo/RUNBOOK.md` and `demo/scripts/rosa_day3.json`. Merge after CALL-5. | Script file lists tool names from CONTRACTS.md §4.5. | CALL-5. |
-| Preston | #21 | HUMAN-1, about 45 minutes. Add the CONTRACTS.md §4.5 hook to `facetime-bridge/bridge.mjs` (about 10 lines). Grant Accessibility, Screen Recording, and Automation for System Events. `python -m mac.doctor` all PASS. Smoke auto-answer, `python -m mac.capture --once`, dial, hangup. Put about 20 organizer photos where the vision lane can take them (`vision/eval/photos/`). | `python -m mac.doctor` prints PASS on every line. `var/frames/latest.jpg` shows the caller. One inbound auto-answer greets with no Enter key. | SPIKE-1, CALL-1, BRIDGE-2, BRIDGE-3. |
+| Preston | #21 | HUMAN-1, about 45 minutes. Add the CONTRACTS.md §4.5 hook to `facetime-bridge/bridge.mjs` (about 10 lines). Grant Accessibility, Screen Recording, and Automation for System Events. `python -m mac.doctor` all PASS. Smoke auto-answer, `python -m mac.capture --once`, dial, hangup. If the 5:30–7:00 PM block did not already do it: buy or label a 7-day pillbox (big printed day labels, high contrast, good light, optional lid marker) and shoot 10 photos into `vision/eval/photos/`. | `python -m mac.doctor` prints PASS on every line. `var/frames/latest.jpg` shows the caller. One inbound auto-answer greets with no Enter key. The 10 pillbox photos are on disk from this block or from 5:30–7:00 PM. | SPIKE-1, CALL-1, BRIDGE-2, BRIDGE-3. |
 
 **Integration checkpoint.** 1:00 AM checkpoint. `make test` green. CALL-2 and API-8 are on main. The spare Mac has been smoked once. Preston is done until morning.
 
@@ -224,7 +224,7 @@ M1 ends at 2:00 AM. Sim driver, timeline, and the approval decision merge. Sleep
 | lead | — | Open `tests/test_e2e.py` only. The run starts at 2:00 once this wave's PRs are merged. | File exists and is not yet required to pass. | CALL-5, API-8, APPR-2. |
 | bridge | — | Buffer. p0 fixes in `mac/` only. | `pytest mac/test_facetime.py mac/test_capture.py` exits 0. | None. |
 | call | #34 | Merge CALL-5. `node agent/sim.mjs` drives the hook with no OpenAI and no audio. | `node --test agent/test_sim.mjs` exits 0. | CALL-2, CALL-3. |
-| vision | #36 | Merge VISION-3. `python -m vision.eval` on 6 synthetic Pillow organizers. p1. Real photos from HUMAN-1 can land in a follow-up; the harness must run without them. | `pytest vision/test_eval.py` exits 0. | VISION-1. |
+| vision | #36 | Merge VISION-3. Offline gate: 10 photos of the real pillbox, at least 9/10 correct, before any live pill test. `python -m vision.eval` still runs on 6 synthetic Pillow organizers when those photos are absent. p1. | `pytest vision/test_eval.py` exits 0. The 9/10 score is recorded before the 8:00 AM pill beat. | VISION-1. |
 | watch | — | Buffer. | `pytest ingest/test_replay.py` exits 0. | None. |
 | api | #44 | Merge API-6. Timeline, open flags, `GET /proof/{call_id}` by id only. | `pytest tests/test_timeline.py` exits 0. A `../` proof id is rejected. | API-5. |
 | dashboard | #47 | Merge APPR-2. Named nurse, 422 without a name, 409 on a second decision, approve calls `place_escalation`. | `pytest tests/test_approval_gate.py` exits 0. | APPR-1, API-8. |
@@ -242,7 +242,7 @@ M2. Sleep. No human step. Lead starts the simulated Rosa day-3 run.
 | lead | — | Write `tests/test_e2e.py`: seed, Call now for Rosa day 3, dry-run dial, `node agent/sim.mjs demo/scripts/rosa_day3.json`, RED tier, `care_team_symptom` and `missed_dose_possible`, approve, dry-run nurse dial. | Test file is committed on the LEAD-3 branch. Green is the next wave. | CALL-5, API-5, API-8, APPR-2, VISION-1, WATCH-1, DEMO-2. |
 | bridge | — | Buffer. p0 in `mac/` only. | `MAC_DRY_RUN=1 pytest mac/test_facetime.py` exits 0. | None. |
 | call | #33 | Merge CALL-4. Wrap prompt at 4:15, hard stop at 5:00, nurse-callback brief at or under 20 s. | `node --test agent/test_script.mjs` exits 0. | CALL-2. |
-| vision | — | VISION-4: `vision/breath.py` on synthetic frames. Abstain on noise. p1. | Local sinusoid at 10/min is within 1. Merge next wave. | VISION-1, BRIDGE-3. |
+| vision | — | VISION-4: `vision/breath.py` on synthetic frames. Abstain on noise. p1. No vision-model call unless the check needs one; if it does, use the same narrow JSON pattern as the pill read. | Local sinusoid at 10/min is within 1. Merge next wave. | VISION-1, BRIDGE-3. |
 | watch | — | Buffer. | `pytest ingest/test_ingest.py` exits 0. | None. |
 | api | — | Buffer. Fix only a red `tests/test_scheduler.py` or `tests/test_results.py` if LEAD-3 names one. | Named test exits 0, or the board post says no api failure. | None. |
 | dashboard | — | DASH-1 shell: `dashboard/index.html`, `app.js`, `style.css`. Banner on every view: "Homeward prototype · mock patients · not a medical device." Poll every 2 s. | Banner string is in the HTML. Merge next wave. | API-2, API-6. |
@@ -278,7 +278,7 @@ M2 buffer while Preston sleeps. Safety audit. No human step. This hour absorbs a
 | lead | #54 | Merge LEAD-4. Deny-list test. Grep `mac.facetime.dial` callers. Audit comment on the LEAD-4 issue, pass or fail per line. File a p0 bug for each failure. | `pytest tests/test_contracts.py::test_no_unsafe_strings` exits 0. | CALL-3, API-4, APPR-2, API-8. |
 | bridge | — | Buffer. | `pytest mac/` exits 0. | None. |
 | call | — | Buffer. | `node --test agent/` exits 0. | None. |
-| vision | #37 | Merge VISION-4. 20 s burst, SQI, abstain, else self-count. Wellness wording only. p1. | `pytest vision/test_breath.py` exits 0. Noise abstains. A 10/min sinusoid is within 1. | VISION-1, BRIDGE-3. |
+| vision | #37 | Merge VISION-4. 20 s burst, SQI, abstain, else self-count. Wellness wording only. The narrow JSON vision call is used only if this check needs a model. p1. | `pytest vision/test_breath.py` exits 0. Noise abstains. A 10/min sinusoid is within 1. | VISION-1, BRIDGE-3. |
 | watch | — | Buffer. | `pytest ingest/` exits 0. | None. |
 | api | — | Buffer for a slipped API-7 or API-4. No new feature. | `pytest tests/test_rules.py tests/test_scheduler.py` exits 0. | None. |
 | dashboard | #49 | Merge DASH-2. Proof frame, quotes, breathing labeled wellness check, resting-HR sparkline, "replay" on mock_replay, "not captured" when missing. | `node --test dashboard/test_sparkline.mjs` exits 0. | DASH-1, API-3. |
@@ -337,7 +337,7 @@ M2 ends at 8:00 AM with one live end-to-end call.
 | api | — | On call for a p0 in `api/` or `scheduler/` only. | `pytest tests/test_scheduler.py::test_escalation_refuses_unapproved` exits 0. | None. |
 | dashboard | #51 | Merge DASH-4 before 7:40. "Call now · day N" posts `POST /v1/outbound/calls/now`. Live chip from `GET /v1/calls/active`. p1. | `pytest dashboard/test_dashboard.py` exits 0 and `dashboard/app.js` contains `/v1/outbound/calls/now`. | DASH-1, API-7. |
 | demo | — | Sit with the runbook. Answer only paths and commands. | `demo/reset.sh` is the reset Preston runs. | None. |
-| Preston | — | Live end-to-end call, done by 8:00 AM. On the spare Mac: `python -m mac.doctor`, `mac/run_all.sh`, `cd facetime-bridge && npm start`, `make seed`, `bash demo/reset.sh`. Dashboard: Call now, Rosa day 3. Speak the runbook lines. Nurse name, Approve. Nurse phone rings and hears the brief. | One real FaceTime check-in ends with a CallResult on the dashboard and an approval that is approved or executed. | HUMAN-1 already smoked the Mac. LEAD-3 is green. DASH-4 is on main. |
+| Preston | — | Live end-to-end call, done by 8:00 AM. On the spare Mac: `python -m mac.doctor`, `mac/run_all.sh`, `cd facetime-bridge && npm start`, `make seed`, `bash demo/reset.sh`. Dashboard: Call now, Rosa day 3. Speak the runbook lines. The pill beat starts only after the 10 offline photos are at least 9/10. Then hold the box, empty one compartment, re-check, and compare each saved frame under `var/vision/<call_id>/` with the JSON. Nurse name, Approve. Nurse phone rings and hears the brief. | One real FaceTime check-in ends with a CallResult on the dashboard and an approval that is approved or executed. The pill beat ran only after the 9/10 gate, and the saved frame matches the JSON for the hold and for the emptied compartment. | HUMAN-1 already smoked the Mac. LEAD-3 is green. DASH-4 is on main. The 9/10 offline gate is already recorded. |
 
 **Integration checkpoint.** 8:00 AM checkpoint. One live end-to-end call has completed on the spare Mac. M2 is done. M3 starts.
 
@@ -355,7 +355,7 @@ M3. Dry run 1 is at 9:00 AM, the end of this wave.
 | api | — | Buffer. | `pytest tests/test_rules.py tests/test_scheduler.py` exits 0. | None. |
 | dashboard | — | Buffer. Banner still on every view. | `pytest dashboard/test_dashboard.py` exits 0. | None. |
 | demo | — | Be ready to add the 9:00 timing to `demo/RUNBOOK.md` if Preston reads a number out. | Runbook has a timings heading. | HUMAN-3. |
-| Preston | — | Dry run 1 at 9:00 AM. Same steps as the 8:00 call. Time it. Sat-PM compartment full, Sun-AM empty. This is the first half of the Sunday-morning block; the issue is recorded next wave. | Wall clock under 5:00. Timing written down. | DEMO-3, DEMO-5. |
+| Preston | — | Dry run 1 at 9:00 AM. Same steps as the 8:00 call. Time it. Sat-PM compartment full, Sun-AM empty, only if the 9/10 offline gate already passed. This is the first half of the Sunday-morning block; the issue is recorded next wave. | Wall clock under 5:00. Timing written down. | DEMO-3, DEMO-5. The 9/10 offline gate is already recorded. |
 
 **Integration checkpoint.** 9:00 AM checkpoint. Dry run 1 finished in under 5:00, or the failed beat is one p0 bug with an owner.
 

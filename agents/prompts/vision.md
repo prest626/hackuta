@@ -31,17 +31,29 @@ You own `vision/` only.
 
 You do not edit `facetime-bridge/`, `mac/`, `agent/`, `api/`, `contracts/`, `dashboard/`, `data/`, `demo/`, `watch/`, `ingest/`.
 
+## Vision replan
+
+PR #72 (snapshot-to-Realtime) is parked. Do not send frames into the Realtime session.
+
+VISION-1 is a separate vision-model call. Verify which provider key works first (OpenAI showed `credit_balance_exhausted` earlier) and post which key returns 200. Ask with this JSON only: `{pillbox_visible, compartments:[{label, has_pills}], confidence, reason}`.
+
+VISION-2 crops to the caller's video only: no self-preview, no FaceTime UI. The file under `var/vision/<call_id>/<ts>.jpg` is the frame that was sent (`var/` is gitignored).
+
+VISION-3: 10 offline photos of the real pillbox, at least 9/10 correct, before any live test. The live FaceTime check (hold the box, empty one compartment, re-check, compare the saved frame and the JSON) is Preston's, after that gate.
+
+VISION-4 uses that JSON pattern only if breathing needs a model.
+
 ## Queue
 
-From 5:30 PM until BRIDGE-3 merges, write pure tests only: `expected_empty`, the decision table, `VISION_FAKE=fixtures`. Do not open the VISION-1 PR before BRIDGE-3 is on main.
+From 5:30 PM until BRIDGE-3 merges, write pure tests only: `expected_empty`, the decision table, `VISION_FAKE=fixtures`, against the JSON in the replan above. Do not open the VISION-1 PR before BRIDGE-3 is on main.
 
 | Wave (CT) | Issue | Deliverable | Done check |
 |---|---|---|---|
-| 10:00–11:00 PM Sat | #26 | Merge after BRIDGE-3 (same wave, bridge first). `expected_empty`, one structured read, decision table, `POST /v1/vision/pillcheck`. | `pytest vision/test_pills.py` exits 0 |
+| 10:00–11:00 PM Sat | #26 | Merge after BRIDGE-3 (same wave, bridge first). Separate vision-model call, not Realtime. Verify the provider key first. JSON: `{pillbox_visible, compartments:[{label, has_pills}], confidence, reason}`. `expected_empty`, decision table, `POST /v1/vision/pillcheck`. | `pytest vision/test_pills.py` exits 0 |
 | 11:00 PM–12:00 AM | #27 | `vision/cards.py`. p1. Cut-list item 6. | `pytest vision/test_cards.py` exits 0 |
-| 12:00–1:00 AM Sun | #35 | `vision/crop.py` caller region and self-preview mask. p1. Cut-list item 4. | `pytest vision/test_crop.py` exits 0 |
-| 1:00–2:00 AM Sun | #36 | `python -m vision.eval` plus 6 synthetic organizers. p1. Cut-list item 3. Real photos from HUMAN-1 can arrive later. | `pytest vision/test_eval.py` exits 0 |
-| 2:00–5:00 AM Sun | #37 | Start at 2:00. Merge by 5:00. `vision/breath.py` and `POST /v1/vision/breathing`. Abstain under SQI 0.5 or fps under 4. p1. Cut-list item 2. | `pytest vision/test_breath.py` exits 0 |
+| 12:00–1:00 AM Sun | #35 | `vision/crop.py`: caller's video only, no self-preview, no FaceTime UI. The saved sent frame is that crop. p1. Cut-list item 4. | `pytest vision/test_crop.py` exits 0 |
+| 1:00–2:00 AM Sun | #36 | Offline gate: 10 real pillbox photos, at least 9/10, before any live test. `python -m vision.eval` still runs on 6 synthetic organizers when the photos are absent. p1. Cut-list item 3. | `pytest vision/test_eval.py` exits 0. Record the 9/10 score before the 8:00 AM pill beat. |
+| 2:00–5:00 AM Sun | #37 | Start at 2:00. Merge by 5:00. `vision/breath.py` and `POST /v1/vision/breathing`. Abstain under SQI 0.5 or fps under 4. Use the pill JSON pattern only if this check needs a model. p1. Cut-list item 2. | `pytest vision/test_breath.py` exits 0 |
 
 Depends: #26 on LEAD-2 (on main) and BRIDGE-3. #27, #35, #36 on #26. #37 on #26 and BRIDGE-3.
 

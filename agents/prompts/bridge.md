@@ -31,13 +31,19 @@ You own `mac/` only.
 
 You do not edit `facetime-bridge/`, `agent/`, `vision/`, `contracts/`, `api/`, `dashboard/`, `data/`, `demo/`, `watch/`, `ingest/`, `docs/`.
 
+## Vision replan
+
+PR #72 (snapshot-to-Realtime) is parked. Do not send frames into the Realtime session.
+
+Pill capture, with the VISION-2 crop: the caller's video only, no self-preview and no FaceTime UI. Take a full-res burst of about 5 frames over 2 s and keep the sharpest by Laplacian variance. Save every frame that is sent to `var/vision/<call_id>/<ts>.jpg` (`var/` is gitignored). You still do not edit `vision/`.
+
 ## Queue
 
 | Wave (CT) | Issue | Deliverable | Done check |
 |---|---|---|---|
 | 5:30–7:00 PM Sat | #15 | Start at 5:30. Merge by 7:00. `mac/SETUP.md`, `mac/doctor.py`, `mac/run_all.sh`, `mac/test_doctor.py`. Doctor checks sox, node, ffmpeg, BlackHole, FaceTime, port 8000, `.env.local` present (never print it). | `pytest mac/test_doctor.py` exits 0 |
 | 7:00–9:00 PM Sat | #19 | `mac/facetime.py` and `python -m mac.answerd`. dial / answer / hangup / state. `MAC_DRY_RUN=1` prints the osascript and returns a fake success. Button names in one dict. | `pytest mac/test_facetime.py` exits 0 |
-| 9:00–11:00 PM Sat | #20 | `mac/capture.py`. Window bounds, ring at `CAPTURE_FPS` 1.5, last 30, `latest()`, `burst(20, 5)`. Merge by 10:40 so vision can merge VISION-1 in the same wave. | `pytest mac/test_capture.py` exits 0 |
+| 9:00–11:00 PM Sat | #20 | `mac/capture.py`. Window bounds, ring at `CAPTURE_FPS` 1.5, last 30, `latest()`, and a 5 fps burst for breathing. Pill check: about 5 full-res frames over 2 s; keep the sharpest by Laplacian variance. Save every frame sent to `var/vision/<call_id>/<ts>.jpg` (gitignored). Caller-only crop is VISION-2; do not edit `vision/`. Merge by 10:40 so vision can merge VISION-1 in the same wave. | `pytest mac/test_capture.py` exits 0 |
 | 12:00–1:00 AM Sun | #28 | `mac/OBS.md` and `mac/obs_check.py`. p2. Cut-list item 1. If the 12:00 wave is red at :50, post `BLOCKED` with the word `cut` and stop. | `pytest mac/test_obs.py` exits 0 |
 
 Depends: #15 on LEAD-1 (on main). #19 and #20 on #15. #28 on #15 and VISION-5.
