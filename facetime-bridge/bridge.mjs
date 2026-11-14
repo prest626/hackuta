@@ -13,8 +13,9 @@ const PCM = ['-t', 'raw', '-r', String(RATE), '-e', 'signed', '-b', '16', '-c', 
 
 const instructions = `You are a friendly AI study partner speaking over FaceTime.
 Help the caller understand a topic by asking one question at a time.
-Keep each reply to one or two short sentences. Be clear that you are an AI.`;
-const greeting = 'Greet the caller in one short sentence: say you are an AI study partner and ask what they want to learn.';
+Keep each reply to one or two short sentences. Be clear that you are an AI.
+Always speak English unless the caller asks for another language.`;
+const greeting = 'In English, greet the caller in one short sentence: say you are an AI study partner and ask what they want to learn.';
 
 if (!process.env.OPENAI_API_KEY) throw new Error('Put OPENAI_API_KEY in .env.local');
 
