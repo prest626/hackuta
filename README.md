@@ -1,3 +1,5 @@
+Execution: [docs/ROADMAP.md](docs/ROADMAP.md) (hour by hour, CT) and [agents/START.md](agents/START.md) (how to launch the Codex lanes).
+
 # Homeward
 
 Homeward is a hackathon prototype. It is not a medical device, gives no diagnosis or treatment advice, uses only mock patient data, and every escalation is approved by a human care team.
