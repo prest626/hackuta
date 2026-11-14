@@ -23,13 +23,29 @@ const openai = new WebSocket(`wss://api.openai.com/v1/realtime?model=${MODEL}`, 
 });
 const send = event => openai.readyState === WebSocket.OPEN && openai.send(JSON.stringify(event));
 
-let speaker;
-const startSpeaker = () => {
-  speaker = spawn('sox', ['-q', ...PCM, '-', '-t', 'coreaudio', AGENT_DEVICE], { stdio: ['pipe', 'ignore', 'inherit'] });
-  speaker.stdin.on('error', () => {});
-};
-// The caller started talking: drop whatever the agent has queued so it stops mid-sentence.
-const interrupt = () => { speaker.kill(); startSpeaker(); };
+// One long-lived player. Agent audio waits in `queue` as 20 ms frames and is fed to sox about
+// 120 ms ahead of real time, so an interruption only has to drop the queue, not restart sox.
+const FRAME_BYTES = (RATE * 2) / 50;
+const LEAD_MS = 120;
+const speaker = spawn('sox', ['-q', '--buffer', '16384', ...PCM, '-', '-t', 'coreaudio', AGENT_DEVICE], { stdio: ['pipe', 'ignore', 'inherit'] });
+speaker.stdin.on('error', () => {});
+speaker.on('exit', code => { console.error(`[bridge] could not play to "${AGENT_DEVICE}" (sox exit ${code})`); process.exit(1); });
+let queue = [];
+let leadMs = 0;
+let lastTick = Date.now();
+setInterval(() => {
+  const now = Date.now();
+  leadMs = Math.max(0, leadMs - (now - lastTick));
+  lastTick = now;
+  while (leadMs < LEAD_MS && queue.length) {
+    const frame = queue.shift();
+    speaker.stdin.write(frame);
+    leadMs += (frame.length / (RATE * 2)) * 1000;
+  }
+}, 20);
+const play = audio => { for (let i = 0; i < audio.length; i += FRAME_BYTES) queue.push(audio.subarray(i, i + FRAME_BYTES)); };
+// The caller started talking: drop what the agent hasn't said yet so it stops mid-sentence.
+const interrupt = () => { queue = []; };
 
 openai.on('open', () => {
   send({
@@ -38,14 +54,13 @@ openai.on('open', () => {
       type: 'realtime',
       instructions,
       audio: {
-        input: { format: { type: 'audio/pcm', rate: RATE }, turn_detection: { type: 'server_vad' } },
+        input: { format: { type: 'audio/pcm', rate: RATE }, turn_detection: { type: 'server_vad', threshold: 0.7, silence_duration_ms: 700 } },
         output: { format: { type: 'audio/pcm', rate: RATE }, voice: 'marin' },
       },
     },
   });
-  startSpeaker();
   // FaceTime plays stereo into channels 1-2; downmixing all of BlackHole 16ch would average in 14 silent channels.
-  const mic = spawn('sox', ['-q', '-t', 'coreaudio', CALLER_DEVICE, ...PCM, '-', 'remix', '1,2'], { stdio: ['ignore', 'pipe', 'inherit'] });
+  const mic = spawn('sox', ['-q', '--buffer', '65536', '-t', 'coreaudio', CALLER_DEVICE, ...PCM, '-', 'remix', '1,2'], { stdio: ['ignore', 'pipe', 'inherit'] });
   mic.stdout.on('data', chunk => send({ type: 'input_audio_buffer.append', audio: chunk.toString('base64') }));
   mic.on('exit', code => { console.error(`[bridge] could not read "${CALLER_DEVICE}" (sox exit ${code})`); process.exit(1); });
   console.log(`[bridge] Ready. Hearing "${CALLER_DEVICE}", speaking into "${AGENT_DEVICE}".`);
@@ -54,7 +69,7 @@ openai.on('open', () => {
 
 openai.on('message', raw => {
   const event = JSON.parse(raw);
-  if (event.type === 'response.output_audio.delta' || event.type === 'response.audio.delta') speaker.stdin.write(Buffer.from(event.delta, 'base64'));
+  if (event.type === 'response.output_audio.delta' || event.type === 'response.audio.delta') play(Buffer.from(event.delta, 'base64'));
   else if (event.type === 'input_audio_buffer.speech_started') { console.log('[bridge] caller speaking'); interrupt(); }
   else if (event.type === 'input_audio_buffer.speech_stopped') console.log('[bridge] caller stopped, agent replying');
   else if (event.type === 'error') console.error('[bridge] OpenAI error:', event.error?.message);
