@@ -39,6 +39,24 @@ The Mac's own speakers go silent while output is on BlackHole; the caller hears 
 
 `.env.local` may also set `CALLER_DEVICE` (default `BlackHole 16ch`), `AGENT_DEVICE` (default `BlackHole 2ch`) and `OPENAI_REALTIME_MODEL` (default `gpt-realtime`). The agent's prompt and greeting are at the top of `bridge.mjs`.
 
+## Vision snapshots
+
+Start with `VISION_ENABLED=1 npm start`, then keep the FaceTime video call window visible. Without this flag, snapshot commands are disabled and audio works as before. In the bridge Terminal:
+
+- Type `see` and press Enter to send one snapshot to OpenAI and ask the agent to describe it.
+- Type `vision on` to send a snapshot every 3 seconds. Ask visual questions over the call.
+- Type `vision off` to stop sending snapshots. Vision starts off each time the bridge starts.
+
+**(human)** Enable Terminal in System Settings > Privacy & Security > Screen & System Audio Recording (called Screen Recording on some macOS versions), then quit and reopen Terminal if macOS requests it. The helper needs the Xcode command-line tools (`swiftc`).
+
+The bridge selects the largest visible FaceTime window, captures only that window, and resizes snapshots to at most 1024 pixels on the longest side. This includes app UI and possibly the Mac's self preview; it is sampled vision, not a continuous video stream. Keep the caller's video large. Snapshots go to the same OpenAI conversation and incur image-input usage. Temporary images are deleted after sending; `vision off` does not remove images already sent from the conversation.
+
+If the project's `mac.capture` service is running, set `VISION_FRAME_PATH` to its `var/frames/latest.jpg` path to reuse those frames instead. Frames older than 5 seconds are rejected. No changes to `mac/` or `vision/` are required for this standalone mode.
+
+The model must not claim to see anything until a snapshot arrives. Verify with a harmless object: hold up a mug, type `see`, and ask what it sees. Check for `[bridge] vision frame sent` and an accurate spoken description. Screen permission and the real call must be tested on the Mac; unit tests cannot prove them.
+
+Run the frame-input checks with `node --test vision.test.mjs`.
+
 ## Troubleshooting
 
 | Symptom | Check |

@@ -4,18 +4,21 @@
 import { spawn } from 'node:child_process';
 import readline from 'node:readline';
 import WebSocket from 'ws';
+import { captureFrame, imageItem, cleanupVision } from './vision.mjs';
 
 const CALLER_DEVICE = process.env.CALLER_DEVICE || 'BlackHole 16ch';
 const AGENT_DEVICE = process.env.AGENT_DEVICE || 'BlackHole 2ch';
 const MODEL = process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime';
+const VISION_ENABLED = process.env.VISION_ENABLED === '1';
 const RATE = 24000;
 const PCM = ['-t', 'raw', '-r', String(RATE), '-e', 'signed', '-b', '16', '-c', '1', '-L'];
 
 const instructions = `You are a friendly AI study partner speaking over FaceTime.
+Start in English and speak English throughout unless the caller explicitly asks for another language.
+You can inspect FaceTime snapshots when the caller enables vision. Only claim to see details present in a recent image; if no image is available, say so. Snapshots may include the Mac's self preview and app UI as well as the caller. Do not assume which person is the caller. Never identify pills or give medical advice from images.
 Help the caller understand a topic by asking one question at a time.
-Keep each reply to one or two short sentences. Be clear that you are an AI.
-Always speak English unless the caller asks for another language.`;
-const greeting = 'In English, greet the caller in one short sentence: say you are an AI study partner and ask what they want to learn.';
+Keep each reply to one or two short sentences. Be clear that you are an AI.`;
+const greeting = 'Greet the caller in English in one short sentence: say you are an AI study partner and ask what they want to learn.';
 
 if (!process.env.OPENAI_API_KEY) throw new Error('Put OPENAI_API_KEY in .env.local');
 
@@ -66,6 +69,7 @@ openai.on('open', () => {
   mic.on('exit', code => { console.error(`[bridge] could not read "${CALLER_DEVICE}" (sox exit ${code})`); process.exit(1); });
   console.log(`[bridge] Ready. Hearing "${CALLER_DEVICE}", speaking into "${AGENT_DEVICE}".`);
   console.log('[bridge] Answer the FaceTime call, then press Enter to have the agent greet.');
+  if (VISION_ENABLED) console.log('[bridge] Vision commands: see (snapshot + describe), vision on (snapshot every 3 seconds), vision off.');
 });
 
 openai.on('message', raw => {
@@ -73,9 +77,57 @@ openai.on('message', raw => {
   if (event.type === 'response.output_audio.delta' || event.type === 'response.audio.delta') play(Buffer.from(event.delta, 'base64'));
   else if (event.type === 'input_audio_buffer.speech_started') { console.log('[bridge] caller speaking'); interrupt(); }
   else if (event.type === 'input_audio_buffer.speech_stopped') console.log('[bridge] caller stopped, agent replying');
+  else if (event.type === 'response.done') console.log('[bridge] response finished:', event.response?.status, JSON.stringify(event.response?.status_details || {}));
   else if (event.type === 'error') console.error('[bridge] OpenAI error:', event.error?.message);
 });
 
 openai.on('close', (code, reason) => { console.error(`[bridge] OpenAI connection closed (${code}) ${reason}`); process.exit(1); });
 
-readline.createInterface({ input: process.stdin }).on('line', () => send({ type: 'response.create', response: { instructions: greeting } }));
+let visionTimer;
+let capturing = false;
+let visionGeneration = 0;
+async function snapshot(describe = false) {
+  if (capturing || openai.readyState !== WebSocket.OPEN) return;
+  capturing = true;
+  const generation = visionGeneration;
+  try {
+    const bytes = await captureFrame();
+    if (openai.readyState !== WebSocket.OPEN || generation !== visionGeneration) return;
+    send(imageItem(bytes));
+    console.log(`[bridge] vision frame sent (${bytes.length} bytes)`);
+    if (describe) send({ type: 'response.create', response: { instructions: 'In English, briefly describe what is actually visible in the latest FaceTime snapshot. If it is unclear, say so and ask the caller to reposition the camera.' } });
+  } catch (error) {
+    console.error('[bridge] vision unavailable:', error.message);
+    clearInterval(visionTimer);
+    visionTimer = undefined;
+  } finally { capturing = false; }
+}
+readline.createInterface({ input: process.stdin }).on('line', line => {
+  const command = line.trim().toLowerCase();
+  if (['see', 'vision on', 'vision off'].includes(command) && !VISION_ENABLED) {
+    console.log('[bridge] Vision is disabled. Restart with VISION_ENABLED=1 npm start to enable snapshot commands.');
+    return;
+  }
+  if (command === 'see') { void snapshot(true); return; }
+  if (command === 'vision on') {
+    if (visionTimer) return;
+    console.log('[bridge] vision enabled: sending FaceTime window snapshots to OpenAI every 3 seconds');
+    visionTimer = setInterval(() => void snapshot(), 3000);
+    void snapshot();
+    return;
+  }
+  if (command === 'vision off') {
+    visionGeneration++;
+    clearInterval(visionTimer); visionTimer = undefined;
+    console.log('[bridge] vision disabled');
+    return;
+  }
+  if (command) { console.log('[bridge] Use Enter, see, vision on, or vision off.'); return; }
+  send({ type: 'response.create', response: { instructions: greeting } });
+});
+process.on('exit', () => { speaker.kill(); });
+process.on('SIGINT', async () => {
+  clearInterval(visionTimer);
+  await cleanupVision();
+  process.exit(0);
+});
