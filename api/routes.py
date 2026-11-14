@@ -11,7 +11,8 @@ from pydantic import BaseModel
 
 from api import db
 from api.main import require_reader
-from contracts.models import LiveVitals, MedSchedule, Patient
+from api.vitals import history, live_vitals
+from contracts.models import MedSchedule, Patient
 
 router = APIRouter()
 ACTIVE = ("dialing", "ringing", "in_call")
@@ -53,16 +54,7 @@ def _expected_empty(schedule: MedSchedule | None) -> list:
 
 
 def _live_vitals(patient: Patient) -> dict:
-    # shortcut: API-3 replaces this with the 60s median, upgrade = api.vitals.live_vitals
-    live = LiveVitals(
-        patient_id=patient.id,
-        as_of=db.now(),
-        hr_median_60s=None,
-        hr_n_60s=0,
-        hr_last_t=None,
-        stale=True,
-    )
-    return live.model_dump(mode="json")
+    return live_vitals(patient).model_dump(mode="json")
 
 
 def _last_result(c, patient_id: str):
@@ -147,6 +139,25 @@ def list_patients(_=Depends(require_reader)):
 def get_patient(patient_id: str, _=Depends(require_reader)):
     with db.conn() as c:
         return _patient(c, patient_id).model_dump(mode="json")
+
+
+@router.get("/v1/patients/{patient_id}/vitals/live")
+def vitals_live(patient_id: str, _=Depends(require_reader)):
+    with db.conn() as c:
+        patient = _patient(c, patient_id)
+    return live_vitals(patient).model_dump(mode="json")
+
+
+@router.get("/v1/patients/{patient_id}/vitals")
+def vitals_history(
+    patient_id: str,
+    metric: str | None = None,
+    since: str | None = None,
+    _=Depends(require_reader),
+):
+    with db.conn() as c:
+        _patient(c, patient_id)
+    return history(patient_id, metric, since)
 
 
 @router.get("/v1/patients/{patient_id}/context")
