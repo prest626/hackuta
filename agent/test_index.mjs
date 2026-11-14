@@ -102,7 +102,7 @@ describe('bridge hook', { concurrency: 1 }, () => {
     await hook.refresh();
     const ok = JSON.parse(await hook.onToolCall('get_vitals', {}));
     assert.equal(ok.ok, true);
-    assert.equal(ok.name, 'get_vitals');
+    assert.match(ok.say, /watch shows/);
     const badArgs = JSON.parse(await hook.onToolCall('get_vitals', '{"nope"'));
     assert.equal(badArgs.ok, false);
     const unknown = JSON.parse(await hook.onToolCall('dial_nurse', {}));
