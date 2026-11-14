@@ -181,3 +181,69 @@ def test_call_now(mac):
         assert listed.status_code == 200
         assert len(listed.json()) == 4
     assert ("dial", "+15550100001") in mac.calls
+
+
+def _store_approval(doc):
+    from api import db
+
+    with db.conn() as c:
+        c.execute(
+            "INSERT INTO approvals (id, patient_id, status, doc) VALUES (?, ?, ?, ?)",
+            (doc["id"], doc["patient_id"], doc["status"], json.dumps(doc)),
+        )
+
+
+def test_escalation_refuses_unapproved(mac):
+    from scheduler.escalate import EscalationRefused, place_escalation
+
+    _seed(_patient())
+    base = json.loads((EXAMPLES / "approval.json").read_text())
+    for status in ("pending", "rejected"):
+        doc = dict(base)
+        doc["id"] = "apr_pending0001" if status == "pending" else "apr_reject00001"
+        doc["status"] = status
+        doc["decision"] = None
+        _store_approval(doc)
+        with pytest.raises(EscalationRefused):
+            place_escalation(doc["id"])
+    missing = dict(base)
+    missing["id"] = "apr_noname0001"
+    missing["status"] = "approved"
+    missing["decision"] = None
+    _store_approval(missing)
+    with pytest.raises(EscalationRefused):
+        place_escalation(missing["id"])
+    assert mac.calls == []
+
+
+def test_escalation_dials_nurse(mac):
+    from api import db
+    from scheduler.escalate import place_escalation
+
+    _seed(_patient())
+    doc = json.loads((EXAMPLES / "approval.json").read_text())
+    _store_approval(doc)
+    placed = place_escalation(doc["id"])
+    assert ("dial", "+15550100002") in mac.calls
+    assert placed["kind"] == "nurse_callback"
+    assert placed["approval_id"] == doc["id"]
+    assert placed["status"] == "dialing"
+    with db.conn() as c:
+        status = c.execute("SELECT status FROM approvals WHERE id = ?", (doc["id"],)).fetchone()["status"]
+    assert status == "executing"
+
+    group = dict(doc)
+    group["id"] = "apr_group00001"
+    group["action"] = "clinician_group_call"
+    group["status"] = "approved"
+    _store_approval(group)
+    # The line is already busy with the nurse callback, so this one waits.
+    mac._state = "idle"
+    with db.conn() as c:
+        c.execute("UPDATE scheduled_calls SET status = 'done'")
+    place_escalation(group["id"])
+    with db.conn() as c:
+        event = c.execute(
+            "SELECT name FROM events WHERE name = 'escalation.fallback_1to1'"
+        ).fetchone()
+    assert event is not None
