@@ -312,6 +312,11 @@ def _mac_hangup() -> None:
 def post_result(call_id: str, result: CallResult, _=Depends(require_agent)):
     if result.call_id != call_id:
         raise HTTPException(status_code=422, detail="call_id does not match")
+    return store_result(result)
+
+
+def store_result(result: CallResult) -> dict:
+    call_id = result.call_id
     with db.conn() as c:
         sched = c.execute("SELECT patient_id FROM scheduled_calls WHERE id = ?", (call_id,)).fetchone()
         if sched is None:
@@ -477,3 +482,8 @@ def proof(call_id: str):
     if root not in full.parents or not full.is_file():
         raise HTTPException(status_code=404, detail="not found")
     return FileResponse(full, media_type="image/jpeg")
+
+
+from api.main import app  # noqa: E402
+
+app.include_router(router)

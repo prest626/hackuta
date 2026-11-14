@@ -1,5 +1,6 @@
 # Scaffold for GET /v1/health (LEAD-1). API-1 owns the rest of this app.
 
+import asyncio
 import importlib
 import os
 from contextlib import asynccontextmanager
@@ -13,7 +14,6 @@ from api import db
 
 # Other lanes add routes.py when their issue lands. Missing modules are skipped.
 OPTIONAL_ROUTERS = (
-    "api.routes",
     "ingest.routes",
     "vision.routes",
     "approvals.routes",
@@ -73,11 +73,33 @@ def include_optional(app: FastAPI, names: tuple[str, ...] = OPTIONAL_ROUTERS) ->
     return mounted
 
 
+async def _scheduler_loop() -> None:
+    from scheduler.core import tick
+
+    while True:
+        try:
+            await asyncio.to_thread(tick)
+        except Exception as exc:
+            try:
+                db.log_event("mac.error", "scheduler", {"error": str(exc)})
+            except Exception:
+                pass
+        await asyncio.sleep(15)
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     with db.conn():
         pass
-    yield
+    # pytest sets PYTEST_CURRENT_TEST; the loop would dial during tests.
+    task = None
+    if not os.environ.get("PYTEST_CURRENT_TEST") and os.environ.get("SCHEDULER", "1") != "0":
+        task = asyncio.create_task(_scheduler_loop())
+    try:
+        yield
+    finally:
+        if task:
+            task.cancel()
 
 
 app = FastAPI(title="Homeward", lifespan=lifespan)
@@ -89,6 +111,7 @@ def health():
 
 
 include_optional(app)
+import api.routes  # noqa: E402  — routes mounts itself after this app exists
 
 _dash = Path("dashboard")
 if (_dash / "index.html").is_file():
