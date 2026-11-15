@@ -87,3 +87,41 @@ def test_queue_flow(tmp_path, monkeypatch):
         )
         assert ok.status_code == 200
         assert ok.json()["status"] == "approved"
+
+
+def test_call_now_control_and_live_chip(tmp_path, monkeypatch):
+    html = (ROOT / "dashboard" / "index.html").read_text()
+    js = (ROOT / "dashboard" / "app.js").read_text()
+    assert "Call now · day" in html
+    assert 'id="call-day"' in html and 'id="call-chip"' in html
+    for day in ("1", "2", "3", "4"):
+        assert f'value="{day}"' in html
+    assert "/v1/outbound/calls/now" in js
+    assert "/v1/calls/active" in js
+    assert "patient_id" in js and "day_index" in js
+    for label in ('return "dialing"', 'return "ringing"', 'return "in call"', 'return "ended"'):
+        assert label in js
+    subprocess.check_call(
+        [
+            "node",
+            "--input-type=module",
+            "-e",
+            "import { callChip } from './dashboard/app.js';"
+            "const cases = [[null, 'ended'], [{state:'dialing'}, 'dialing'],"
+            "[{state:'ringing'}, 'ringing'], [{state:'in_call'}, 'in call'], [{state:'done'}, 'ended']];"
+            "for (const [input, want] of cases) { if (callChip(input) !== want) process.exit(1); }",
+        ],
+        cwd=ROOT,
+    )
+    with _client(tmp_path, monkeypatch) as client:
+        page = client.get("/")
+        assert page.status_code == 200
+        assert "Call now · day" in page.text
+        assert 'id="call-chip"' in page.text
+        assert client.get("/v1/calls/active").status_code == 204
+        missing = client.post(
+            "/v1/outbound/calls/now",
+            json={"patient_id": "pat_missing", "day_index": 1},
+        )
+        assert missing.status_code == 404
+        assert client.post("/v1/outbound/calls/now", json={"day_index": 1}).status_code == 422
