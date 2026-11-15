@@ -115,6 +115,20 @@ def test_fake_read_skips_the_provider(monkeypatch):
     assert pills.check_pillbox(b"jpeg", schedule(), SUNDAY).state == "missed_possible"
 
 
+def test_green_fake_is_every_am_pm_empty(monkeypatch):
+    from vision import pills
+
+    monkeypatch.setenv("VISION_FAKE", "green")
+    monkeypatch.setattr(pills, "_openai", lambda jpeg, layout: (_ for _ in ()).throw(AssertionError("network")))
+    read = pills.read_organizer(b"jpeg", "7x2")
+    labels = [row["label"] for row in read["compartments"]]
+    assert labels == [f"{day}-{slot}" for day in ("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN") for slot in ("AM", "PM")]
+    assert all(row["has_pills"] is False for row in read["compartments"])
+    assert read["confidence"] >= 0.7
+    assert read["model"] == "green"
+    assert pills.check_pillbox(b"jpeg", schedule(), SUNDAY).state == "ok"
+
+
 def test_provider_switch_and_shrink(monkeypatch):
     from vision import pills
 
