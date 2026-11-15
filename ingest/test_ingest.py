@@ -6,8 +6,6 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from ingest.routes import app, connect
-
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE = ROOT / "contracts" / "examples" / "vitals.WatchHrPost.json"
 PATIENT = ROOT / "contracts" / "examples" / "patient.json"
@@ -18,12 +16,17 @@ TOKEN = "test-watch-token"
 def client(tmp_path, monkeypatch):
     monkeypatch.setenv("DB_PATH", str(tmp_path / "homeward.db"))
     monkeypatch.setenv("WATCH_DEVICE_TOKEN", TOKEN)
-    return TestClient(app)
+    from api.main import app
+
+    with TestClient(app) as c:
+        yield c
 
 
 def _seed():
+    from api import db
+
     doc = PATIENT.read_text()
-    with connect() as con:
+    with db.conn() as con:
         con.execute(
             "INSERT INTO patients (id, doc, is_mock) VALUES (?, ?, 1)",
             (json.loads(doc)["id"], doc),
@@ -39,7 +42,9 @@ def _post(client, payload, token=TOKEN):
 
 
 def _rows():
-    with connect() as con:
+    from api import db
+
+    with db.conn() as con:
         return con.execute(
             "SELECT t, patient_id, metric, value, source FROM vitals ORDER BY t"
         ).fetchall()
