@@ -56,14 +56,10 @@ def api(tmp_path, monkeypatch):
     thread.join(timeout=5)
 
 
-def _sim(api, script, hold=None):
-    cmd = ["node"]
-    # shortcut: sim.mjs exits before the unawaited 911 finish_call posts, upgrade = await it in agent/index.mjs
-    if hold is not None:
-        cmd.extend(["--require", str(hold)])
-    cmd.extend(["agent/sim.mjs", f"agent/fixtures/{script}", "--api", api])
+def _sim(api, script):
     return subprocess.run(
-        cmd, cwd=ROOT, capture_output=True, text=True, timeout=60,
+        ["node", "agent/sim.mjs", f"agent/fixtures/{script}", "--api", api],
+        cwd=ROOT, capture_output=True, text=True, timeout=60,
         env={**os.environ, "HOMEWARD_API": api},
     )
 
@@ -125,16 +121,14 @@ def test_green_days_end_green_with_no_approval(api, monkeypatch):
         assert pending == []
 
 
-def test_emergency_script_is_stored_and_does_not_dial(api, capfd, tmp_path):
+def test_emergency_script_is_stored_and_does_not_dial(api, capfd):
     from data.seed import seed
 
     assert "pat_rosa01" in seed()
     client = httpx.Client(base_url=api, timeout=30)
     call_id = _begin(api, 3, client)
     capfd.readouterr()
-    hold = tmp_path / "hold-exit.cjs"
-    hold.write_text("const real = process.exit;\nprocess.exit = (code = 0) => setTimeout(() => real(code), 1000);\n")
-    sim = _sim(api, "emergency.json", hold)
+    sim = _sim(api, "emergency.json")
     assert sim.returncode == 0, sim.stdout + sim.stderr
     assert "This could be serious. Please hang up and call 911 now." in sim.stdout
     row, codes = _result(call_id)
