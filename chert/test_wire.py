@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 import os
 import sys
@@ -183,7 +184,29 @@ def test_latest_jpeg_is_the_pill_frame(tmp_path, monkeypatch):
     line, pill = wire.read_pillbox(wire.latest_jpeg(tmp_path), tmp_path / "ring", "call_rosa01d3")
     assert seen["jpeg"] == new
     assert seen["path"] == "/v1/vision/pillcheck"
-    assert seen["body"] == {"call_id": "call_rosa01d3"}
+    assert seen["body"]["call_id"] == "call_rosa01d3"
+    assert seen["body"]["jpeg_b64"] == base64.b64encode(payload).decode("ascii")
+    assert line == homeward.EMPTY
+    assert pill["state"] == "ok"
+
+
+def test_read_pillbox_posts_jpeg_b64(tmp_path, monkeypatch):
+    jpeg = tmp_path / "frame.jpg"
+    payload = b"\xff\xd8\xff\xd9"
+    jpeg.write_bytes(payload)
+    seen = {}
+
+    def request(method, path, body=None):
+        seen["method"] = method
+        seen["path"] = path
+        seen["body"] = body
+        return {"state": "ok", "image_quality": "good", "confidence": 0.9}
+
+    monkeypatch.setattr(homeward, "_request", request)
+    line, pill = wire.read_pillbox(jpeg, tmp_path / "ring", "call_rosa01d3")
+    assert (seen["method"], seen["path"]) == ("POST", "/v1/vision/pillcheck")
+    assert seen["body"]["call_id"] == "call_rosa01d3"
+    assert seen["body"]["jpeg_b64"] == base64.b64encode(payload).decode("ascii")
     assert line == homeward.EMPTY
     assert pill["state"] == "ok"
 

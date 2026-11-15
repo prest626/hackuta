@@ -1,5 +1,6 @@
 """POST /v1/vision/pillcheck and /v1/vision/breathing. Mounted by api.main include_optional."""
 
+import base64
 import os
 import re
 from datetime import datetime
@@ -25,10 +26,13 @@ NOT_AVAILABLE = {
 
 router = APIRouter()
 _CALL_ID = re.compile(r"^call_[a-z0-9]{4,40}$")
+# Reject before decode. Encoded length is 4/3 of the bytes, plus padding.
+MAX_JPEG = 5 * 1024 * 1024
 
 
 class PillIn(BaseModel):
     call_id: str
+    jpeg_b64: str | None = None
 
 
 def local_now(tz: str) -> datetime:
@@ -51,6 +55,20 @@ def sharpness(path: Path) -> float:
     if img is None:
         return 0.0
     return float(cv2.Laplacian(img, cv2.CV_64F).var())
+
+
+def _posted_jpeg(raw: str) -> bytes:
+    if len(raw) > (MAX_JPEG + 2) // 3 * 4:
+        raise HTTPException(status_code=413, detail="jpeg too large")
+    try:
+        jpeg = base64.b64decode(raw, validate=True)
+    except Exception:
+        raise HTTPException(status_code=400, detail="bad jpeg") from None
+    if len(jpeg) > MAX_JPEG:
+        raise HTTPException(status_code=413, detail="jpeg too large")
+    if not jpeg:
+        raise HTTPException(status_code=400, detail="bad jpeg")
+    return jpeg
 
 
 def best_jpeg() -> bytes | None:
@@ -105,7 +123,7 @@ def pillcheck(body: PillIn, authorization: Annotated[str | None, Header()] = Non
     if not patient.consent.video_analysis:
         pill = PillCheck(state="skipped", expected_empty=expected_empty(schedule, now))
     else:
-        jpeg = best_jpeg()
+        jpeg = _posted_jpeg(body.jpeg_b64) if body.jpeg_b64 else best_jpeg()
         if jpeg is None:
             pill = PillCheck(
                 state="unknown",
