@@ -21,6 +21,11 @@ if (!process.env.OPENAI_API_KEY) throw new Error('Put OPENAI_API_KEY in .env.loc
 console.log(`[bridge] connecting to OpenAI (${MODEL})...`);
 const openai = new WebSocket(`wss://api.openai.com/v1/realtime?model=${MODEL}`, {
   headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+  handshakeTimeout: 15000,
+});
+openai.on('error', error => {
+  console.error(`[bridge] OpenAI connection error: ${error.code || error.message}`);
+  process.exit(1);
 });
 const send = event => openai.readyState === WebSocket.OPEN && openai.send(JSON.stringify(event));
 // No connection in 15 s (network, key, outage): exit so `npm run loop` tries again instead of hanging.
@@ -32,6 +37,7 @@ let ready = false;
 const FRAME_BYTES = (RATE * 2) / 50;
 const LEAD_MS = 120;
 const speaker = spawn('sox', ['-q', '--buffer', '16384', ...PCM, '-', '-t', 'coreaudio', AGENT_DEVICE], { stdio: ['pipe', 'ignore', 'inherit'] });
+process.on('exit', () => speaker.kill());
 speaker.stdin.on('error', () => {});
 speaker.on('exit', code => { console.error(`[bridge] could not play to "${AGENT_DEVICE}" (sox exit ${code})`); process.exit(1); });
 let queue = [];
@@ -144,11 +150,15 @@ openai.on('message', raw => {
   if (event.type === 'response.output_audio.delta' || event.type === 'response.audio.delta') play(Buffer.from(event.delta, 'base64'));
   else if (event.type === 'response.created') responding = true;
   else if (event.type === 'response.done') {
+    console.log(`[bridge] response ended: ${event.response?.status}; details=${JSON.stringify(event.response?.status_details || {})}`);
     responding = false;
     const calls = (event.response?.output || []).filter(item => item.type === 'function_call');
     if (calls.length) void runTools(calls);
   }
-  else if (event.type === 'input_audio_buffer.speech_started') { console.log('[bridge] caller speaking'); interrupt(); }
+  else if (event.type === 'input_audio_buffer.speech_started') {
+    console.log(`[bridge] caller speaking; agent responding=${responding}; queued audio frames=${queue.length}`);
+    interrupt();
+  }
   else if (event.type === 'input_audio_buffer.speech_stopped') console.log('[bridge] caller stopped, agent replying');
   else if (event.type === 'conversation.item.input_audio_transcription.completed') {
     console.log(`[bridge] caller: ${event.transcript}`);

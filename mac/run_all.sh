@@ -3,6 +3,11 @@
 # Prototype: not a medical device. Mock patients only. A nurse approves every escalation.
 set -u
 cd "$(dirname "$0")/.."
+if lsof -nP -iTCP:8000 -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "Homeward cannot start: port 8000 is already in use. Stop the previous server first."
+  lsof -nP -iTCP:8000 -sTCP:LISTEN
+  exit 1
+fi
 mkdir -p var/frames/ring var/frames/burst var/cards var/proof
 if [ -x .venv/bin/python ]; then
   PY=".venv/bin/python"
@@ -17,7 +22,9 @@ cleanup() {
     kill "$p" 2>/dev/null || true
   done
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 if command -v caffeinate >/dev/null 2>&1; then
   caffeinate -dims &
@@ -27,18 +34,30 @@ else
 fi
 
 if [ -f api/main.py ]; then
-  # A stale API on :8000 makes the new one fail to bind while the old one keeps answering.
-  if command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:8000 -sTCP:LISTEN >/dev/null 2>&1; then
-    echo "port 8000 is already in use (an old API?). Stop it with: kill \$(lsof -t -iTCP:8000 -sTCP:LISTEN)"
-    exit 1
-  fi
   if [ -x .venv/bin/uvicorn ]; then
     UVICORN=".venv/bin/uvicorn"
   else
     UVICORN="uvicorn"
   fi
   "$UVICORN" api.main:app --host 127.0.0.1 --port 8000 &
-  pids+=($!)
+  api_pid=$!
+  pids+=("$api_pid")
+  api_ready=0
+  for attempt in {1..50}; do
+    if ! kill -0 "$api_pid" 2>/dev/null; then
+      echo "Homeward API exited during startup; stopping the launcher."
+      exit 1
+    fi
+    if curl --noproxy '*' --fail --silent --max-time 1 http://127.0.0.1:8000/v1/health >/dev/null; then
+      api_ready=1
+      break
+    fi
+    sleep 0.2
+  done
+  if [ "$api_ready" -ne 1 ]; then
+    echo "Homeward API did not become healthy; stopping the launcher."
+    exit 1
+  fi
 else
   echo "skip api (api/main.py not in this checkout)"
 fi

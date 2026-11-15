@@ -22,6 +22,7 @@ def test_scripts_carry_the_button_labels():
 
 
 def test_banner_only_ring_is_ringing():
+    assert facetime.parse_state("button=Answer\nbutton=Decline\n") == "ringing_in"
     # The FaceTime window can vanish on ring; the state script then reports only the banner's buttons.
     assert facetime.parse_state("button=Accept\nbutton=Decline\n") == "ringing_in"
 

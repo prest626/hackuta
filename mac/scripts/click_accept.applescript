@@ -17,15 +17,25 @@ on pressAccept(el)
 				if role of k is "AXButton" then
 					set n to name of k
 					if n is missing value or (n as text) is "" then set n to description of k
-					if (n as text) is "Accept" then
-						click k
-						return true
+					if (n as text) is "Accept" or (n as text) is "Answer" then
+						try
+							perform action "AXPress" of k
+							return true
+						on error errText number errNum
+							log "answer AXPress failed code=" & errNum
+						end try
+						try
+							click k
+							return true
+						on error errText number errNum
+							log "answer click failed code=" & errNum
+						end try
 					end if
 				end if
 			end try
 			try
 				repeat with a in actions of k
-					if (name of a as text) contains "Accept" then
+					if (name of a as text) contains "Accept" or (name of a as text) contains "Answer" then
 						perform a
 						return true
 					end if
