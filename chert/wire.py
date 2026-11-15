@@ -47,6 +47,14 @@ END_REASONS = (
 )
 HANDOFF_KINDS = ("nurse_callback", "family_group_call")
 BREATH_WAIT_S = 20
+# Replaces the 3:45 breathing slot in the loaded prompt. This call stops at 2:00.
+CHECKIN_ORDER = (
+    "Call order for this 2:00 check-in: check_pillbox, then breathing_check right away, "
+    "then record_answer, then get_vitals, then finish_call. "
+    "breathing_check asks them to sit still for 20 seconds. "
+    "Start it immediately after the pill check so that wait ends before 2:00. "
+    "Do not leave breathing until 3:45."
+)
 PHRASES = ("chest pain", "can't breathe", "911")
 ROOT = Path(__file__).resolve().parents[1]
 PROMPT = ROOT / "agent" / "prompts" / "system.md"
@@ -153,6 +161,8 @@ def instructions(prompt: str, call: dict, handoff: str | None = None) -> str:
     text = f"{prompt.rstrip()}\n\n{TONE}\n\n# This call\n{json.dumps(for_prompt(call))}"
     if call.get("kind") in HANDOFF_KINDS:
         text += "\n\n" + (SPOKEN_HANDOFF if handoff else QUIET_HANDOFF)
+    else:
+        text += "\n\n" + CHECKIN_ORDER
     return text
 
 
@@ -449,16 +459,6 @@ def build_agent(instructions: str, box: dict):
 
     class Homeward(Agent):
         @function_tool()
-        async def get_vitals(self) -> str:
-            """Read the live watch heart rate. Say a number only when it is fresh."""
-            if not box.get("patient_id"):
-                return homeward.NO_READING
-            line, live = read_vitals(box["patient_id"])
-            if live:
-                box["vitals"] = live
-            return line
-
-        @function_tool()
         async def check_pillbox(self) -> str:
             """Compare the pill organizer on camera to the med schedule. Never identify a pill or advise a dose."""
             jpeg = latest_jpeg(box.get("frames") or "")
@@ -467,14 +467,24 @@ def build_agent(instructions: str, box: dict):
             return line
 
         @function_tool()
+        async def breathing_check(self) -> str:
+            """Call this immediately after check_pillbox, before symptoms and vitals. It is a wellness check."""
+            return await run_breathing(box)
+
+        @function_tool()
         async def record_answer(self, slot: str, value: str, quote: str, confirmed: bool = False) -> str:
             """Store one symptom answer with the caller's exact words. Do not diagnose."""
             return remember_answer(box["symptoms"], slot, value, quote, confirmed)
 
         @function_tool()
-        async def breathing_check(self) -> str:
-            """Call this after the symptom answers. It is a wellness check."""
-            return await run_breathing(box)
+        async def get_vitals(self) -> str:
+            """Read the live watch heart rate after breathing. Say a number only when it is fresh."""
+            if not box.get("patient_id"):
+                return homeward.NO_READING
+            line, live = read_vitals(box["patient_id"])
+            if live:
+                box["vitals"] = live
+            return line
 
         @function_tool()
         async def finish_call(self, end_reason: str = "agent_hangup") -> str:

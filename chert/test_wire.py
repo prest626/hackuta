@@ -25,6 +25,19 @@ def test_prompt_includes_call_context():
     assert "call_rosa01d3" in text
     assert '"day_index": 3' in text
     assert wire.TONE in text
+    assert wire.CHECKIN_ORDER in text
+
+
+def test_breathing_comes_right_after_the_pill_check():
+    order = wire.CHECKIN_ORDER
+    pill = order.index("check_pillbox")
+    breath = order.index("breathing_check")
+    symptoms = order.index("record_answer")
+    vitals = order.index("get_vitals")
+    assert pill < breath < symptoms < vitals
+    spoken = wire.instructions("prompt", {"kind": "checkin", "patient": {}})
+    assert order in spoken
+    assert "20 seconds" in spoken and "2:00" in spoken
 
 
 def test_metadata_call_fields_win():
