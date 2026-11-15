@@ -6,6 +6,7 @@ Run from the repo root: ``python -m chert.agent``.
 import asyncio
 import json
 import logging
+import os
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -185,6 +186,10 @@ async def entrypoint(ctx):
             ),
             room=ctx.room,
         )
+        mode = os.environ.get("CHERT_FACE") or ""
+        if mode in ("fallback", "simli"):
+            from chert import face
+            await face.start(ctx.room, session, mode)
 
         def _heard(ev):
             if getattr(ev, "is_final", True) is False:
