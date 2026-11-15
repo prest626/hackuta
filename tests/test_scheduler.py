@@ -185,6 +185,37 @@ def test_call_now(mac):
     assert ("dial", "+15550100001") in mac.calls
 
 
+def test_call_now_starts_rosa_day3_not_the_older_due_row(mac):
+    from api import db
+    from api.main import app
+    from scheduler.core import ensure_schedule
+
+    ensure_schedule(_seed(_patient()))
+    ensure_schedule(_seed(_patient("pat_luis01", "+15550100011")))
+    with db.conn() as c:
+        c.execute("UPDATE scheduled_calls SET due_at = '2099-01-01T00:00:00Z'")
+        c.execute(
+            "UPDATE scheduled_calls SET due_at = '2020-01-01T00:00:00Z' WHERE id = 'call_luis01d1'"
+        )
+    with TestClient(app) as client:
+        res = client.post("/v1/outbound/calls/now", json={"patient_id": "pat_rosa01", "day_index": 3})
+        assert res.status_code == 200
+        body = res.json()
+        assert body["id"] == "call_rosa01d3"
+        assert body["patient_id"] == "pat_rosa01"
+        assert body["day_index"] == 3
+        assert body["status"] == "dialing"
+    with db.conn() as c:
+        dialing = c.execute(
+            "SELECT id, patient_id, day_index FROM scheduled_calls WHERE status = 'dialing'"
+        ).fetchall()
+    assert [dict(row) for row in dialing] == [
+        {"id": "call_rosa01d3", "patient_id": "pat_rosa01", "day_index": 3}
+    ]
+    assert mac.calls == [("dial", "+15550100001")]
+    assert _rows("pat_luis01")[0]["status"] == "scheduled"
+
+
 def _store_approval(doc):
     from api import db
 
