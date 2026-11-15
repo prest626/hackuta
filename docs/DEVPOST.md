@@ -1,10 +1,9 @@
 <!--
 devpost_final.md: the paste-ready Devpost draft. Drafted Sun Nov 15, 2026, about 3:25 AM CT.
 Final-pass instructions (after phase 2 merges, about 6:30 AM CT, and before submitting by 12:00 PM CT):
-  - For each [IF SHIPPED: ...] block, keep the shipped text OR the "Fallback:" sentence, never both. Then delete the markers.
-  - [VERIFY AT FREEZE: ...] blocks are live-demo facts not tied to phase 2. Check each one on the 11 AM build and keep the true sentence.
-  - Search for "[IF SHIPPED", "[VERIFY", and "Fallback:". There should be no hits when you're done.
-  - Every number below has a source: AHRQ HCUP SB #307 and Jencks 2009. Add no other stats.
+  - Markers left below are live-call results only. For each one, keep the shipped sentence OR the Fallback sentence, never both, then delete the marker.
+  - Code facts (greeting, breathing off the loop, the 80% vision gate, the drawn face, the Maya 1:1) are already written as shipped. Do not put Simli in the built-with line.
+  - Health stats stay AHRQ HCUP SB #307 and Jencks 2009. The 80% line is the vision-test pass bar in code, not another health stat.
 -->
 
 # Homeward
@@ -27,9 +26,9 @@ FaceTime is the app. The parts of the call that matter use the camera:
   [VERIFY AT FREEZE: The pillbox read in the demo is live, from the FaceTime frame.
   Fallback: In the demo video, the pillbox read uses a canned fixture result, labeled on screen as a fixture; the live vision path is built and runs with an API key.]
 - **Listens and asks.** A short structured symptom check from Rosa's mock discharge plan: better, same or worse? More breathless on the stairs? Swollen ankles? Weight up? The agent confirms every "yes" once and stores the patient's own words.
-- **Breathing wellness check (wellness only).**
-  [IF SHIPPED: The agent asks Rosa to sit still with her chest in frame for about 20 seconds, estimates a breathing rate from upper-body motion in the live Chert video, and says it in plain words ("about N a minute"). If the signal is poor, it abstains instead of guessing.
-  Fallback: The breathing estimator is built and tested on recorded frames (chest motion, then an FFT over the breathing band). On the live call it currently abstains, so the agent skips this step.]
+- **Breathing wellness check (wellness only).** The agent asks Rosa to sit still with her chest in frame for about 20 seconds. The estimate runs off the audio loop, over that 20 second window of frames the call already saved. A measured rate is spoken as "About N a minute. That's just a wellness check." A poor signal is spoken as "We can skip the breathing wellness check."
+  [IF SHIPPED: A live call after this tool landed spoke the rate line.
+  Fallback: No live call since the tool landed has confirmed a spoken rate. Call 7, before the tool existed, abstained while the caller was moving.]
 - **Heart rate in context.** The agent mentions one number, the heart rate compared with the patient's own usual resting rate from a 60-day mock history. In the demo, this is a **labeled mock replay** of Rosa's data. A watchOS app that streams live heart rate is built, but it isn't used in the demo.
 - **A result, not a diagnosis.** Each call ends as a structured record. A small set of deterministic rules turns it into GREEN, YELLOW, or RED. The thresholds are demo placeholders that a patient's clinician would set in a real deployment.
   [VERIFY AT FREEZE: Our recorded day-3 call came out RED (symptoms plus a resting heart-rate drift).
@@ -39,10 +38,11 @@ FaceTime is the app. The parts of the call that matter use the camera:
 
 Nothing leaves the call without a person. A YELLOW or RED result lands on the care-team dashboard with the evidence attached: the reasons, the patient's own words, the annotated pillbox frame, and the heart-rate trend. Homeward only *proposes* an escalation. A named nurse reads the evidence and clicks **Approve**, or doesn't. The database and the tests require a named nurse approval before any escalation call can be placed, and there's exactly one place in the code that can dial. The language model can raise a concern, but it can't lower a tier, can't push breathing or its own concern above YELLOW, and can't call anyone.
 
-[IF SHIPPED: After approval, Homeward places a 1:1 FaceTime call to the nurse (or the emergency contact) and gives a short spoken brief that starts with the tier and the reason.
-Fallback: After approval, the dashboard marks the escalation approved and queues the nurse callback. The automated callback is built and exercised in the simulated call, but we don't show it live.]
+After a named nurse approves, Homeward places a separate 1:1 call to the nurse, or to Maya, the mock emergency contact. Nothing dials before that name. The handoff, when the approved call is answered, starts "Hi, this is Homeward, an automated prototype from the care team."
+[IF SHIPPED: The demo shows that separate call live.
+Fallback: The callback is built and exercised in the simulated call. The demo has not yet shown the live ring.]
 
-**Why a separate call?** Chert can start a group FaceTime call, but everyone has to be named when the call is placed. People can't be added to a live call, and group calling is turned on line by line. So after the nurse approves, Homeward places a separate 1:1 call to the nurse. Escalation is that approved 1:1 callback. It is not a person added to the live call. The patient's call never changes without a human decision.
+**Why a separate call?** Chert can start a group FaceTime call, but everyone has to be named when the call is placed. People can't be added to a live call, and group calling is turned on line by line. So after the nurse approves, Homeward places a separate 1:1 to the nurse or to Maya. It does not add a person to the live check-in. The patient's call never changes without a human decision.
 
 ### What's AI, and what isn't
 
@@ -53,18 +53,15 @@ Fallback: After approval, the dashboard marks the escalation approved and queues
 
 - **Safety:** fixed scripted lines for anything safety-critical, plus a CI check that flags known dosing and diagnosis phrasing across the codebase. The database and the tests require a named nurse approval before any escalation call. The CI check is a backstop, not a guarantee. The primary controls are the fixed lines and the human gate.
 - **Privacy:** only the single selected pillbox frame is sent to the vision model, not a video stream. The model's free-text reasoning is dropped, never spoken or stored. Only the structured result is kept. Every patient record in this project is mock data, and a test fails the build if a non-mock patient appears.
-- **Disclosure and consent:** the agent introduces itself as an automated check-in from the care team ("Hi Rosa, it's Homeward from your care team…"). It doesn't claim to be a doctor or a nurse. In a real deployment, patients would choose the call time and could opt out at any time.
+- **Disclosure and consent:** the agent introduces itself as an automated assistant for the care team ("Hi, I'm Homeward, an automated assistant for your care team. This is a prototype, and not a medical device."). It doesn't claim to be a doctor or a nurse. In a real deployment, patients would choose the call time and could opt out at any time.
 
 ## How we built it
 
 - **FaceTime call:** [Chert](https://trychert.com/uta) bridges the FaceTime call into a LiveKit room, where a Python agent (`chert/agent.py`, `chert/homeward.py`, `chert/wire.py`, run as `python -m chert.agent`) runs the conversation on OpenAI Realtime. Chert has no tool calling, no transfer, and no avatar of its own, so the tools live in that LiveKit agent. Only one participant may publish audio. `chert/media.py` pulls video frames for vision. A second path, built as a fallback when the hosted line was unstable, runs FaceTime on our own spare Mac: BlackHole virtual audio pipes the call to OpenAI Realtime (`facetime-bridge/bridge.mjs`), and AppleScript answers and dials.
-  [IF SHIPPED: The agent's voice was tuned to be warmer and plainer-spoken, like a friendly care-team member, without ever claiming to be a clinician.
-  Fallback: (delete this block)]
-  [IF SHIPPED: An optional on-screen face for the agent, rendered with Simli, is sent back as the agent's FaceTime video.
-  Fallback: The agent is voice only. It has no avatar, because what matters is what it does with what it sees.]
+  The prompt adds one tone line: kind and straight to the point, one or two short sentences, warm, never cute. The greeting says it is an automated assistant for the care team, a prototype, and not a medical device. It does not claim to be a clinician.
+  `CHERT_FACE` defaults off, so the call is voice only. `fallback` draws a face on the same participant and publishes no extra audio. `simli` is a guarded path that skips while the agent is publishing audio. We do not claim Simli works.
 - **Vision:** `vision/pills.py` reads the pillbox compartments against the schedule and returns empty, not-empty, or unknown. `vision/breath.py` estimates the breathing rate locally with NumPy and OpenCV (frame motion, then an FFT, then a peak in the breathing band, abstaining on a low-quality signal). An offline eval harness scores the pill read on 14 synthetic pillbox images and 33 public, Creative Commons–licensed pillbox photos with our own labels.
-  [IF SHIPPED: `make vision-test` runs that eval in one command. Result: <PASTE THE ACTUAL OUTPUT: per-compartment accuracy on non-unknown, and the unknown rate>.
-  Fallback: Pill-read accuracy is not yet measured on real photos. The harness is built, and measuring it is the next step.]
+  `make vision-test` scores `vision/eval/photos` against `vision/eval/labels.json`. The pill line passes at 80% or better. It also prints an information-only breathing line from real call frames when those frames are on disk. That line does not decide pass or fail. Pill-read accuracy on real photos of our own is not yet measured. The 80% figure is the pass bar, not a score from a live run.
 - **Backend:** FastAPI with SQLite: patients, schedules, calls, flags, approvals. A rules file (`api/rules.yaml`) with caps, a call scheduler, and an approvals module. JSON Schema contracts shared by every part of the system.
 - **Heart rate:** a watchOS app (SwiftUI, workout session) posts heart rate through a Cloudflare tunnel to the ingest API. `python -m ingest.replay` posts labeled mock heart rate when the watch is off, from a 60-day mock history with a deliberate resting-rate drift for Rosa.
 - **Dashboard:** plain HTML, CSS, and JavaScript: tier, reasons, quotes, pillbox frame, a heart-rate sparkline, and the Approve button.
@@ -87,17 +84,18 @@ Homeward has one human developer, Preston, working with a team of AI agents:
 - **Choosing which frame to trust.** The pill read uses the sharpest frame, and it answers "unknown" when the box is blurred, angled, or covered.
 - **Keeping a realtime voice model on script.** It likes to paraphrase. Safety-critical lines go through fixed text-to-speech instead.
 - **Being kind without playing doctor.** The agent asks; it never advises.
-- [VERIFY AT FREEZE: The end-of-call result contract (`finish_call`) failed on an early live call. We fixed it and made duplicate results idempotent.
-  Fallback: (delete this bullet if the live fix isn't confirmed. Never claim a fix that wasn't verified.)]
+- An end reason outside the six allowed values is stored as `agent_hangup`, and a duplicate result is idempotent. Call 7 sent `check-in complete` and `finish_call` failed on that build.
+  [VERIFY AT FREEZE: A live call after that coercion posted a result with no finish_call error.
+  Fallback: No later live call has confirmed the coercion. Call 7 failed before it.]
 
 ## What call 7 taught us
 
-Call 7 ended YELLOW. These are observations from that call. They are not a claim that a later fix has shipped. The `[IF SHIPPED]` and `[VERIFY AT FREEZE]` blocks above stay until freeze. Watson keeps the shipped sentence or the Fallback sentence, never both.
+Call 7 ended YELLOW, on the build before these tools. The markers left in this draft are live-call results only. Watson keeps the shipped sentence or the Fallback sentence, never both.
 
-- Breathing did not run. That build registered `get_vitals`, `check_pillbox`, `record_answer`, and `finish_call` only. Frames did arrive, about 15 fps at 1280×720, under the call's frame directory. An offline wellness check on those frames abstained while the caller was moving. `POST /v1/vision/breathing` reads the spare Mac's own screen, not the Chert track.
+- Breathing did not run. That build registered `get_vitals`, `check_pillbox`, `record_answer`, and `finish_call` only. Frames did arrive, about 15 fps at 1280×720, under the call's frame directory. An offline wellness check on those frames abstained while the caller was moving. The agent now measures off the audio loop, over a 20 second window, and does not call `POST /v1/vision/breathing`. Whether a later live call speaks a rate is the marker above.
 - The pill check raised `OpenAIError`. The API process had no vision key. A key that lives only beside the spare-Mac bridge does not reach that process. No key is written in this draft.
-- `get_vitals` spoke a heart-rate number from a labeled mock replay. A replay is not a live watch reading.
-- `finish_call` was sent with an end reason outside the six allowed values. Whether that is fixed in the build is the verify block above.
+- `get_vitals` spoke a heart-rate number from a labeled mock replay as if it were the watch. A mock replay now says "The mock replay shows {hr}. It is not a live watch reading." A stale reading says "I don't have a fresh watch reading right now."
+- `finish_call` was sent with an end reason outside the six allowed values. The code now stores `agent_hangup` for that case. A later live confirmation is the marker above.
 
 ## Accomplishments that we're proud of
 
@@ -126,8 +124,6 @@ AI follow-up calls after discharge already exist, voice only. Onset (Emory Hacks
 ## Built with
 
 `chert` · `facetime` · `livekit` · `livekit-agents` · `openai-realtime` · `openai` (gpt-4o-mini vision, TTS) · `google-genai` (Gemini 2.5 Flash, optional) · `python` · `fastapi` · `uvicorn` · `httpx` · `sqlite` · `pyyaml` · `numpy` · `opencv` · `pillow` · `json-schema` · `pytest` · `uv` · `node.js` · `ws` · `blackhole` · `applescript` · `swift` · `swiftui` · `watchos` · `cloudflare-tunnel` · `html` · `css` · `javascript` · `github-actions` · `cursor` · `grok-bot`
-[IF SHIPPED: · `simli`
-Fallback: (delete)]
 
 **Links:** GitHub: https://github.com/prest626/hackuta · Video: <PASTE URL>
 
@@ -140,5 +136,5 @@ Fallback: (delete)]
 - [ ] **General Track.** Judged on Robustness, Theme (Homer's *Odyssey*) and Creativity. The Inspiration paragraph covers the theme. [UNVERIFIED whether it needs an explicit selection]
 - [x] **Skip: Best Project Built with ElevenLabs.** The call voice isn't ElevenLabs. Don't make any ElevenLabs claim.
 - [x] **Skip: Hardware, Gemini, and the other MLH tracks** (Gemini is optional and not in the demo path; there's no hardware build).
-- [ ] Before submitting: the README describes the Chert → LiveKit path (not only the spare-Mac bridge); the video is 30 s–2:00 and uploaded; the GitHub URL is set; there are no "[IF SHIPPED" or "[VERIFY" markers left.
+- [ ] Before submitting: the README describes the Chert → LiveKit path (not only the spare-Mac bridge); the video is 30 s–2:00 and uploaded; the GitHub URL is set; the remaining "[IF SHIPPED" and "[VERIFY" markers are resolved from the live demo, then deleted.
 - [ ] Submit by **12:00 PM CT** (Devpost deadline, confirmed).
