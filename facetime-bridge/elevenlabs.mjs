@@ -5,6 +5,8 @@ import { execFile, spawn } from 'node:child_process';
 import readline from 'node:readline';
 import WebSocket from 'ws';
 import agent from '../agent/index.mjs';
+import { EMERGENCY_LINE } from '../agent/safety.mjs';
+import { WRAP_LINE } from '../agent/script.mjs';
 import { api } from '../agent/tools.mjs';
 import { createSession, initMessage } from './elevenlabs_session.mjs';
 
@@ -13,23 +15,58 @@ const AGENT_DEVICE = process.env.AGENT_DEVICE || 'BlackHole 2ch';
 const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL';
 const RATE = 16000;
 const PCM = ['-t', 'raw', '-r', String(RATE), '-e', 'signed', '-b', '16', '-c', '1', '-L'];
+// Tests import the cache helpers. The process boots only from start.mjs or this file.
+const booting = /(?:^|\/)(?:start|elevenlabs)\.mjs$/.test(process.argv[1] || '');
 
-if (!process.env.ELEVENLABS_API_KEY || !process.env.ELEVENLABS_AGENT_ID) {
+if (booting && (!process.env.ELEVENLABS_API_KEY || !process.env.ELEVENLABS_AGENT_ID)) {
   console.error('Put ELEVENLABS_API_KEY and ELEVENLABS_AGENT_ID in .env.local');
   process.exit(1);
+}
+
+export const fixedPcm = new Map();
+
+async function fetchPcm(text) {
+  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(VOICE_ID)}/stream?output_format=pcm_16000`, {
+    method: 'POST',
+    headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY, 'content-type': 'application/json' },
+    body: JSON.stringify({ text, model_id: 'eleven_flash_v2_5' }),
+  });
+  if (!res.ok || !res.body) throw new Error(String(res.status));
+  const parts = [];
+  let pending = Buffer.alloc(0);
+  for await (const chunk of res.body) {
+    const buf = Buffer.concat([pending, Buffer.from(chunk)]);
+    const even = buf.length & ~1;
+    if (even) parts.push(buf.subarray(0, even));
+    pending = Buffer.from(buf.subarray(even));
+  }
+  return parts.length ? Buffer.concat(parts) : Buffer.alloc(0);
+}
+
+async function warmFixed(text) {
+  try {
+    const pcm = await fetchPcm(text);
+    if (pcm.length) fixedPcm.set(text, pcm);
+    else console.error('[bridge] WARN fixed line cached empty');
+  } catch (err) {
+    console.error(`[bridge] WARN could not cache a fixed line (${err.message})`);
+  }
 }
 
 // One long-lived player. Agent audio waits in `queue` as 20 ms frames and is fed to sox about
 // 120 ms ahead of real time, so an interruption only has to drop the queue, not restart sox.
 const FRAME_BYTES = (RATE * 2) / 50;
 const LEAD_MS = 120;
-const speaker = spawn('sox', ['-q', '--buffer', '16384', ...PCM, '-', '-t', 'coreaudio', AGENT_DEVICE], { stdio: ['pipe', 'ignore', 'inherit'] });
-speaker.stdin.on('error', () => {});
-speaker.on('exit', code => { console.error(`[bridge] could not play to "${AGENT_DEVICE}" (sox exit ${code})`); process.exit(1); });
+let speaker;
+if (booting) {
+  speaker = spawn('sox', ['-q', '--buffer', '16384', ...PCM, '-', '-t', 'coreaudio', AGENT_DEVICE], { stdio: ['pipe', 'ignore', 'inherit'] });
+  speaker.stdin.on('error', () => {});
+  speaker.on('exit', code => { console.error(`[bridge] could not play to "${AGENT_DEVICE}" (sox exit ${code})`); process.exit(1); });
+}
 let queue = [];
 let leadMs = 0;
 let lastTick = Date.now();
-setInterval(() => {
+if (booting) setInterval(() => {
   const now = Date.now();
   leadMs = Math.max(0, leadMs - (now - lastTick));
   lastTick = now;
@@ -58,36 +95,32 @@ let connectTimer;
 const send = event => ws?.readyState === WebSocket.OPEN && ws.send(JSON.stringify(event));
 
 // 4:15 wrap, 911, and the nurse close have no "say exactly this" event on the convai socket.
-async function speakFixed(text) {
-  interrupt();
-  if (session) session.holding = true;
+// ctx is for tests; the live call uses the module player.
+export async function speakFixed(text, ctx) {
+  const playAudio = ctx?.play || play;
+  const stop = ctx?.interrupt || interrupt;
+  const live = ctx ? ctx.session : session;
+  const tell = ctx?.send || send;
+  stop();
+  if (live) live.holding = true;
   console.log(`[bridge] saying: ${text}`);
-  let pending = Buffer.alloc(0);
   let spoke = false;
   try {
-    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(VOICE_ID)}/stream?output_format=pcm_16000`, {
-      method: 'POST',
-      headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY, 'content-type': 'application/json' },
-      body: JSON.stringify({ text, model_id: 'eleven_flash_v2_5' }),
-    });
-    if (!res.ok || !res.body) {
-      console.error(`[bridge] TTS failed (${res.status})`);
-      return;
+    let pcm = fixedPcm.get(text);
+    if (!pcm?.length) {
+      console.error('[bridge] WARN no cached audio for a fixed line, fetching live');
+      pcm = await fetchPcm(text);
+      if (pcm.length) fixedPcm.set(text, pcm);
     }
-    // A chunk can end on a split sample. Hold that byte for the next one.
-    for await (const chunk of res.body) {
-      const buf = Buffer.concat([pending, Buffer.from(chunk)]);
-      const even = buf.length & ~1;
-      if (even) play(buf.subarray(0, even));
-      pending = buf.subarray(even);
-    }
+    if (!pcm?.length) throw new Error('empty audio');
+    playAudio(pcm);
     spoke = true;
   } catch (err) {
-    console.error('[bridge] TTS error:', err.message);
+    console.error(`[bridge] WARN TTS failed (${err.message})`);
   } finally {
-    if (session) session.holding = false;
+    if (live) live.holding = false;
   }
-  if (spoke) send({ type: 'contextual_update', text: `The care line just said to the patient, word for word: "${text}"` });
+  if (spoke) tell({ type: 'contextual_update', text: `The care line just said to the patient, word for word: "${text}"` });
 }
 
 function startMic() {
@@ -178,14 +211,17 @@ function watchForHangup() {
   }, 2000);
 }
 
-console.log(`[bridge] Ready. Hearing "${CALLER_DEVICE}", speaking into "${AGENT_DEVICE}".`);
-console.log('[bridge] Greets on its own once mac.answerd picks up. Press Enter to greet by hand if the API is down.');
-void agent.onCallStart(say);
+if (booting) {
+  await Promise.all([warmFixed(EMERGENCY_LINE), warmFixed(WRAP_LINE)]);
+  console.log(`[bridge] Ready. Hearing "${CALLER_DEVICE}", speaking into "${AGENT_DEVICE}".`);
+  console.log('[bridge] Greets on its own once mac.answerd picks up. Press Enter to greet by hand if the API is down.');
+  void agent.onCallStart(say);
 
-// API down: Enter opens the fallback greeting. No hang-up watch, because there is no active call.
-readline.createInterface({ input: process.stdin }).on('line', () => {
-  if (started || agent._greeted) return;
-  agent._greeted = true;
-  started = true;
-  void openConversation(agent.greeting);
-});
+  // API down: Enter opens the fallback greeting. No hang-up watch, because there is no active call.
+  readline.createInterface({ input: process.stdin }).on('line', () => {
+    if (started || agent._greeted) return;
+    agent._greeted = true;
+    started = true;
+    void openConversation(agent.greeting);
+  });
+}
