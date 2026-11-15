@@ -216,12 +216,25 @@ async function callNow(event) {
   }
 }
 
+const ACTION_LABELS = {
+  nurse_callback: "Nurse, 1:1",
+  family_group_call: "Emergency contact, 1:1",
+};
+
 function actionField(row) {
   const options = ["nurse_callback", "clinician_group_call", "family_group_call", "family_imessage"];
   const opts = options
-    .map((name) => `<option value="${name}"${name === row.action ? " selected" : ""}>${name}</option>`)
+    .map((name) => {
+      const label = ACTION_LABELS[name] || name;
+      return `<option value="${name}"${name === row.action ? " selected" : ""}>${esc(label)}</option>`;
+    })
     .join("");
   return `<label>Proposed action <select data-action>${opts}</select></label>`;
+}
+
+function familyContactName(patient) {
+  const contact = (patient?.contacts || []).find((item) => item.role === "family");
+  return contact ? contact.name : "";
 }
 
 async function paintQueue(names) {
@@ -233,17 +246,24 @@ async function paintQueue(names) {
     const rank = (row) => (row.tier === "RED" ? 0 : 1);
     return rank(a) - rank(b) || String(a.created_at).localeCompare(String(b.created_at));
   });
+  const familyNames = {};
+  for (const id of new Set(ranked.map((row) => row.patient_id))) {
+    familyNames[id] = familyContactName(await get(`/v1/patients/${id}`));
+  }
   box.innerHTML = ranked.length
     ? ranked.map((row) => {
         const reasons = (flags || [])
           .filter((flag) => (row.flag_ids || []).includes(flag.id))
           .map((flag) => esc(flag.reason))
           .join("; ");
+        const contact = familyNames[row.patient_id];
         return `
           <article class="card" data-id="${esc(row.id)}">
             <p><strong>${esc(names[row.patient_id] || row.patient_id)}</strong> ${esc(row.tier)}</p>
             <p>${reasons || "not captured"}</p>
+            ${contact ? `<p>Emergency contact: ${esc(contact)}</p>` : ""}
             ${actionField(row)}
+            <p>Approving places a separate 1:1 call. It does not add anyone to the live call.</p>
             <p>${esc(row.brief_text)}</p>
             <label>Reason to deny <input data-reason name="reason"></label>
             <button type="button" data-decision="approve">Approve</button>
