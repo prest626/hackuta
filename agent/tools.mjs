@@ -264,6 +264,12 @@ function summary(status) {
   return bits.join(' ');
 }
 
+export async function endCall(args = {}) {
+  const reason = args.end_reason || 'patient_hangup';
+  await api('POST', '/v1/calls/active/ended', { end_reason: reason });
+  return { ok: true };
+}
+
 export async function finishCall(args = {}) {
   if (session.finished) return { ok: true, data: { already: true, result: session.lastResult } };
   const active = session.active;
