@@ -16,6 +16,33 @@
       "file": "06-partial.jpg",
       "visible": ["SAT-AM", "SAT-PM", "SUN-AM", "SUN-PM"],
       "filled": ["SAT-PM"]
+    },
+    {"file": "07-mon-am.jpg", "filled": ["MON-AM"]},
+    {
+      "file": "08-am-row.jpg",
+      "filled": ["MON-AM", "TUE-AM", "WED-AM", "THU-AM", "FRI-AM", "SAT-AM", "SUN-AM"]
+    },
+    {"file": "09-sun-pm.jpg", "filled": ["SUN-PM"]},
+    {"file": "10-fri-both.jpg", "filled": ["FRI-AM", "FRI-PM"]},
+    {"file": "11-weekend.jpg", "filled": ["SAT-AM", "SAT-PM", "SUN-AM", "SUN-PM"]},
+    {"file": "12-three-days.jpg", "filled": ["MON-PM", "WED-AM", "FRI-PM"]},
+    {
+      "file": "13-blur.jpg",
+      "filled": [
+        "MON-AM", "MON-PM", "TUE-AM", "TUE-PM", "WED-AM", "WED-PM",
+        "THU-AM", "THU-PM", "FRI-AM", "FRI-PM", "SAT-AM", "SAT-PM",
+        "SUN-AM", "SUN-PM"
+      ],
+      "expect": "unknown"
+    },
+    {
+      "file": "14-occlusion.jpg",
+      "filled": [
+        "MON-AM", "MON-PM", "TUE-AM", "TUE-PM", "WED-AM", "WED-PM",
+        "THU-AM", "THU-PM", "FRI-AM", "FRI-PM", "SAT-AM", "SAT-PM",
+        "SUN-AM", "SUN-PM"
+      ],
+      "expect": "unknown"
     }
   ]
 }
