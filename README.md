@@ -56,7 +56,7 @@ Pill-read accuracy on real photos of our own is not yet measured. The 80% line i
 Needs Python 3.12, [uv](https://docs.astral.sh/uv/), and Node 20+.
 
 ```bash
-uv sync
+uv sync --group dev
 cp .env.example .env
 MAC_DRY_RUN=1 VISION_FAKE=fixtures make test
 make e2e
@@ -64,6 +64,8 @@ make demo-check
 make vision-test
 make dev
 ```
+
+The API Mac uses `uv sync --group dev`. The MacBook that runs the agent uses `uv sync --inexact --group chert`.
 
 `make e2e` is the simulated Rosa day-3 call. It uses mock data and does not dial.
 

@@ -17,9 +17,11 @@ Restart the Mac so the BlackHole drivers load. Approve the audio-driver prompt i
 Python side, from the repo root:
 
 ```bash
-uv sync
+uv sync --group dev
 cp .env.example .env
 ```
+
+The API Mac uses `uv sync --group dev`. The MacBook that runs the agent uses `uv sync --inexact --group chert`.
 
 Fill `.env` on the Mac only (`DEMO_PATIENT_PHONE`, `DEMO_NURSE_PHONE`, tokens). Leave the committed example blank.
 
