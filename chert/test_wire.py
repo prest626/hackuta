@@ -1,6 +1,10 @@
+import asyncio
 import json
 import os
+import sys
 from pathlib import Path
+
+from contracts.models import Breathing
 
 import chert.homeward as homeward
 import chert.wire as wire
@@ -20,6 +24,7 @@ def test_prompt_includes_call_context():
     assert "pat_rosa01" in text
     assert "call_rosa01d3" in text
     assert '"day_index": 3' in text
+    assert wire.TONE in text
 
 
 def test_metadata_call_fields_win():
@@ -192,3 +197,200 @@ def test_result_validates_and_flags_emergency():
     assert flagged["status"] == "emergency_script"
     assert flagged["emergency_script_given"] is True
     assert "diagnos" not in flagged["summary_text"].lower()
+
+
+def test_recent_frames_keeps_the_last_25_seconds(tmp_path):
+    newest = 1_700_000_000_000
+    (tmp_path / f"{newest}.jpg").write_bytes(b"\xff\xd8\xff\xd9")
+    (tmp_path / f"{newest - 25_000}.jpg").write_bytes(b"\xff\xd8\xff\xd9")
+    (tmp_path / f"{newest - 25_001}.jpg").write_bytes(b"\xff\xd8\xff\xd9")
+    (tmp_path / "notes.jpg").write_bytes(b"\xff\xd8\xff\xd9")
+    got = wire.recent_frames(tmp_path)
+    assert [stamp for stamp, _path in got] == [(newest - 25_000) / 1000.0, newest / 1000.0]
+    assert all(path.endswith(".jpg") for _stamp, path in got)
+
+
+def test_sit_still_is_spoken_before_the_wait(tmp_path, monkeypatch):
+    order = []
+    monkeypatch.setattr(wire, "measure_breathing", lambda frames: Breathing(mode="abstained"))
+
+    def speak(line):
+        order.append(line)
+
+    def wait():
+        order.append("wait")
+
+    box = {"frames": tmp_path, "speak": speak, "wait": wait}
+    line = asyncio.run(wire.breathing_check(box))
+    assert order == [
+        "Please sit still, with your chest and shoulders in the frame, for about 20 seconds.",
+        "wait",
+    ]
+    assert line == "We can skip the breathing wellness check."
+    assert box["breathing"]["mode"] == "abstained"
+    assert not any(name == "livekit" or name.startswith("livekit.") for name in sys.modules)
+
+
+def test_measured_breathing_is_stored_and_spoken(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        wire,
+        "measure_breathing",
+        lambda frames: Breathing(mode="paced_measured", rate_per_min=12.4, note="Wellness check only."),
+    )
+    box = {
+        "frames": tmp_path,
+        "speak": lambda _line: None,
+        "wait": lambda: None,
+        "call_id": "call_rosa01d3",
+        "patient_id": "pat_rosa01",
+        "day_index": 3,
+    }
+    line = asyncio.run(wire.breathing_check(box))
+    assert line == "About 12 a minute. That's just a wellness check."
+    body = wire.build_result(
+        box,
+        breathing=box["breathing"],
+        started_at="2026-11-15T00:00:00Z",
+        ended_at="2026-11-15T00:02:00Z",
+    )
+    assert body["breathing"] == {
+        "mode": "paced_measured",
+        "rate_per_min": 12.4,
+        "note": "Wellness check only.",
+    }
+
+
+def test_breathing_exception_stores_skipped(tmp_path, monkeypatch):
+    def boom(_frames):
+        raise RuntimeError("no frames")
+
+    monkeypatch.setattr(wire, "measure_breathing", boom)
+    box = {"frames": tmp_path, "speak": lambda _line: None, "wait": lambda: None}
+    line = asyncio.run(wire.breathing_check(box))
+    assert line == "We can skip the breathing wellness check."
+    assert box["breathing"] == {"mode": "skipped"}
+    assert "Count your breaths" not in line
+
+
+def test_check_in_complete_becomes_agent_hangup():
+    call = {
+        "call_id": "call_rosa01d3",
+        "patient_id": "pat_rosa01",
+        "day_index": 3,
+        "kind": "checkin",
+        "direction": "outbound",
+    }
+    body = wire.build_result(
+        call,
+        end_reason="check-in complete",
+        started_at="2026-11-15T00:00:00Z",
+        ended_at="2026-11-15T00:02:00Z",
+    )
+    assert body["end_reason"] == "agent_hangup"
+    kept = wire.build_result(
+        call,
+        end_reason="patient_hangup",
+        started_at="2026-11-15T00:00:00Z",
+        ended_at="2026-11-15T00:02:00Z",
+    )
+    assert kept["end_reason"] == "patient_hangup"
+
+
+def _approval_request(approval):
+    def request(method, path, body=None):
+        assert (method, path) == ("GET", "/v1/approvals/apr_rosa01d3")
+        return approval
+    return request
+
+
+_HANDOFF_CALL = {
+    "call_id": "call_rosa01d3",
+    "patient_id": "pat_rosa01",
+    "day_index": 3,
+    "kind": "nurse_callback",
+    "direction": "outbound",
+    "approval_id": "apr_rosa01d3",
+    "patient": {"contacts": [{"role": "nurse", "name": "Jordan"}]},
+}
+
+
+def test_unapproved_approval_has_no_handoff_sentence():
+    for status in ("pending", "rejected", "expired"):
+        approval = {
+            "status": status,
+            "brief_text": "Missed evening pills.",
+            "decision": {"nurse_name": "Nurse Jordan"},
+        }
+        assert wire.handoff_line(_HANDOFF_CALL, _approval_request(approval)) is None
+    assert wire.handoff_line(_HANDOFF_CALL, lambda *_args, **_kwargs: None) is None
+    missing = dict(_HANDOFF_CALL)
+    missing["approval_id"] = None
+    assert wire.handoff_line(missing, lambda *_args, **_kwargs: {"status": "approved"}) is None
+
+    def request(method, path, body=None):
+        if path == "/v1/calls/active":
+            return {
+                "call_id": "call_rosa01d3",
+                "patient_id": "pat_rosa01",
+                "day_index": 3,
+                "kind": "nurse_callback",
+                "direction": "outbound",
+                "approval_id": "apr_rosa01d3",
+            }
+        return {"day_index": 3, "patient": _HANDOFF_CALL["patient"]}
+
+    got = wire.fetch_context("{}", request)
+    assert got["approval_id"] == "apr_rosa01d3"
+    assert wire.handoff_line(got, _approval_request({"status": "pending", "brief_text": "x"})) is None
+    text = wire.instructions("You are Homeward.", got)
+    assert "Say nothing about a handoff." in text
+    assert "This is a separate call." not in text
+
+
+def test_approved_handoff_sentence_and_dashboard_wrap(monkeypatch):
+    line = wire.handoff_line(_HANDOFF_CALL, _approval_request({
+        "status": "approved",
+        "brief_text": "Missed evening pills.",
+        "decision": {"nurse_name": "Nurse Jordan"},
+    }))
+    assert line == (
+        "This is a separate call. I can't add you to the patient's line. "
+        "Missed evening pills. Is this Nurse Jordan?"
+    )
+    executing = wire.handoff_line(_HANDOFF_CALL, _approval_request({
+        "status": "executing",
+        "brief_text": "Missed evening pills.",
+        "decision": {},
+    }))
+    assert executing.endswith("Is this Jordan?")
+    family = dict(_HANDOFF_CALL, kind="family_group_call", patient={"contacts": []})
+    bare = wire.handoff_line(family, _approval_request({
+        "status": "approved",
+        "brief_text": "Missed evening pills.",
+        "decision": None,
+    }))
+    assert bare.endswith("Is this the nurse?")
+    trimmed = wire.handoff_line(_HANDOFF_CALL, _approval_request({
+        "status": "approved",
+        "brief_text": "a" * 300,
+        "decision": {"nurse_name": "Nurse Jordan"},
+    }))
+    assert ("a" * 277) + "..." in trimmed
+    assert "a" * 278 not in trimmed
+    prompt = wire.instructions("You are Homeward.", _HANDOFF_CALL, line)
+    assert "I'll leave the details on the dashboard." in prompt
+    assert "Do not run the four-part check-in." in prompt
+    monkeypatch.setattr(homeward, "_request", lambda *_args, **_kwargs: {})
+    box = dict(_HANDOFF_CALL)
+    box.update({"posted": False, "symptoms": [], "handoff": line, "started_at": "2026-11-15T00:00:00Z"})
+    assert wire.submit(box) == "I'll leave the details on the dashboard."
+    checkin = {
+        "call_id": "call_rosa01d3",
+        "patient_id": "pat_rosa01",
+        "day_index": 3,
+        "kind": "checkin",
+        "posted": False,
+        "symptoms": [],
+        "started_at": "2026-11-15T00:00:00Z",
+    }
+    assert wire.submit(checkin) == "I've sent this to your care team. Your nurse will review it."

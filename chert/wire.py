@@ -1,6 +1,9 @@
 """Homeward prompt, pill frame, 911 check, and CallResult. No LiveKit."""
 
+import asyncio
+import inspect
 import json
+import math
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,6 +16,37 @@ else:
     import homeward
 
 EMERGENCY_LINE = "This could be serious. Please hang up and call 911 now."
+SIT_STILL = "Please sit still, with your chest and shoulders in the frame, for about 20 seconds."
+SKIP_BREATH = "We can skip the breathing wellness check."
+REVIEW_LINE = "I've sent this to your care team. Your nurse will review it."
+DASHBOARD_LINE = "I'll leave the details on the dashboard."
+TONE = (
+    "Tone: kind and straight to the point, like a good doctor. "
+    "One or two short sentences. Warm, never cute."
+)
+QUIET_HANDOFF = (
+    "Do not run the four-part check-in. "
+    "Say nothing about a handoff. "
+    "Do not dial, text, or propose another approval. "
+    "Never promise a callback time."
+)
+SPOKEN_HANDOFF = (
+    "Do not run the four-part check-in. "
+    "The opening was already spoken. "
+    f"When the call wraps, say exactly: {DASHBOARD_LINE} "
+    "Do not dial, text, or propose another approval. "
+    "Never promise a callback time."
+)
+END_REASONS = (
+    "agent_hangup",
+    "hard_stop",
+    "patient_hangup",
+    "no_answer",
+    "bridge_error",
+    "error",
+)
+HANDOFF_KINDS = ("nurse_callback", "family_group_call")
+BREATH_WAIT_S = 20
 PHRASES = ("chest pain", "can't breathe", "911")
 ROOT = Path(__file__).resolve().parents[1]
 PROMPT = ROOT / "agent" / "prompts" / "system.md"
@@ -58,6 +92,7 @@ def context_from(metadata, active, patient_ctx) -> dict:
         "day_index": active.get("day_index", patient_ctx.get("day_index", 0)),
         "kind": active.get("kind") or "checkin",
         "direction": active.get("direction") or "outbound",
+        "approval_id": active.get("approval_id"),
         "patient": patient,
         "phrases": phrases or list(PHRASES),
         "vitals": patient_ctx.get("live_vitals") if isinstance(patient_ctx.get("live_vitals"), dict) else None,
@@ -114,8 +149,11 @@ def for_prompt(call: dict) -> dict:
     }
 
 
-def instructions(prompt: str, call: dict) -> str:
-    return f"{prompt.rstrip()}\n\n# This call\n{json.dumps(for_prompt(call))}"
+def instructions(prompt: str, call: dict, handoff: str | None = None) -> str:
+    text = f"{prompt.rstrip()}\n\n{TONE}\n\n# This call\n{json.dumps(for_prompt(call))}"
+    if call.get("kind") in HANDOFF_KINDS:
+        text += "\n\n" + (SPOKEN_HANDOFF if handoff else QUIET_HANDOFF)
+    return text
 
 
 def negated(hay: str, at: int) -> bool:
@@ -241,7 +279,7 @@ def build_result(call: dict, *, vitals=None, pill=None, symptoms=None, breathing
         "status": status,
         "started_at": started_at,
         "ended_at": ended_at or iso_now(),
-        "end_reason": end_reason,
+        "end_reason": end_reason if end_reason in END_REASONS else "agent_hangup",
         "pill_check": pill_doc(pill),
         "symptoms": symptoms,
         "breathing": breathing or {"mode": "skipped"},
@@ -281,12 +319,120 @@ def submit(box: dict, end_reason: str = "agent_hangup") -> str:
     box["result"] = body
     if box.get("emergency"):
         return EMERGENCY_LINE
-    return "I've sent this to your care team. Your nurse will review it."
+    if box.get("handoff"):
+        return DASHBOARD_LINE
+    return REVIEW_LINE
+
+
+def recent_frames(directory, *, seconds=25.0) -> list[tuple[float, str]]:
+    root = Path(directory)
+    frames = []
+    if not root.is_dir():
+        return frames
+    for path in root.glob("*.jpg"):
+        try:
+            stamp = int(path.stem) / 1000.0
+        except ValueError:
+            continue
+        frames.append((stamp, str(path)))
+    if not frames:
+        return []
+    latest = max(stamp for stamp, _ in frames)
+    return sorted((stamp, path) for stamp, path in frames if latest - seconds <= stamp <= latest)
+
+
+def measure_breathing(frames):
+    """In-process. Imported here so collecting the tests does not load vision."""
+    from vision.breath import measure_breathing as measure
+
+    return measure(frames)
+
+
+async def breathing_check(box) -> str:
+    """Speak, wait, then measure the JPEGs already saved for this call."""
+    speak = box.get("speak")
+    if callable(speak):
+        said = speak(SIT_STILL)
+        if inspect.isawaitable(said):
+            await said
+    waiter = box.get("wait")
+    if callable(waiter):
+        done = waiter()
+        if inspect.isawaitable(done):
+            await done
+    else:
+        await asyncio.sleep(BREATH_WAIT_S)
+    try:
+        directory = box.get("frames") or "var/chert-frames/none"
+        breath = measure_breathing(recent_frames(directory))
+        data = breath.model_dump(exclude_none=True)
+    except Exception:
+        box["breathing"] = {"mode": "skipped"}
+        return SKIP_BREATH
+    if not isinstance(data, dict):
+        box["breathing"] = {"mode": "skipped"}
+        return SKIP_BREATH
+    box["breathing"] = data
+    rate = data.get("rate_per_min")
+    if (
+        data.get("mode") == "paced_measured"
+        and isinstance(rate, (int, float))
+        and not isinstance(rate, bool)
+    ):
+        return f"About {math.floor(rate + 0.5)} a minute. That's just a wellness check."
+    return SKIP_BREATH
+
+
+def _brief(value) -> str:
+    raw = value.strip() if isinstance(value, str) else ""
+    if len(raw) <= 280:
+        return raw
+    return f"{raw[:277]}..."
+
+
+def _nurse_name(call, approval) -> str:
+    decision = approval.get("decision") if isinstance(approval.get("decision"), dict) else {}
+    name = decision.get("nurse_name") if isinstance(decision, dict) else None
+    if isinstance(name, str) and name.strip():
+        return name.strip()
+    patient = call.get("patient") if isinstance(call.get("patient"), dict) else {}
+    contacts = patient.get("contacts") if isinstance(patient.get("contacts"), list) else []
+    for contact in contacts:
+        if isinstance(contact, dict) and contact.get("role") == "nurse":
+            contact_name = contact.get("name")
+            if isinstance(contact_name, str) and contact_name.strip():
+                return contact_name.strip()
+    return "the nurse"
+
+
+def handoff_line(call, request) -> str | None:
+    """The approved handoff sentence, or None. Pending and missing stay quiet."""
+    if not isinstance(call, dict) or call.get("kind") not in HANDOFF_KINDS:
+        return None
+    approval = None
+    approval_id = call.get("approval_id")
+    if approval_id and callable(request):
+        try:
+            got = request("GET", f"/v1/approvals/{approval_id}")
+        except Exception:
+            got = None
+        if isinstance(got, dict):
+            approval = got
+    if approval is None or approval.get("status") not in ("approved", "executing"):
+        return None
+    brief = _brief(approval.get("brief_text"))
+    nurse = _nurse_name(call, approval)
+    head = "This is a separate call. I can't add you to the patient's line."
+    if brief:
+        return f"{head} {brief} Is this {nurse}?"
+    return f"{head} Is this {nurse}?"
 
 
 def build_agent(instructions: str, box: dict):
     """Realtime agent. LiveKit is imported here so tests never load it."""
     from livekit.agents import Agent, function_tool
+
+    run_breathing = breathing_check
 
     class Homeward(Agent):
         @function_tool()
@@ -313,8 +459,13 @@ def build_agent(instructions: str, box: dict):
             return remember_answer(box["symptoms"], slot, value, quote, confirmed)
 
         @function_tool()
+        async def breathing_check(self) -> str:
+            """Call this after the symptom answers. It is a wellness check."""
+            return await run_breathing(box)
+
+        @function_tool()
         async def finish_call(self, end_reason: str = "agent_hangup") -> str:
-            """Post this check-in for the nurse to review. Do not call anyone."""
+            """Post this check-in for the nurse to review. end_reason is agent_hangup, hard_stop, patient_hangup, no_answer, bridge_error, or error. Do not call anyone."""
             return submit(box, end_reason=end_reason)
 
     return Homeward(instructions=instructions)
