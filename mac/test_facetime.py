@@ -11,13 +11,20 @@ FICTIONAL = "+15555550100"
 
 def test_scripts_carry_the_button_labels():
     assert 'clickLabel(w, "Call")' in (SCRIPTS / "click_call.applescript").read_text()
-    assert 'clickLabel(w, "Accept")' in (SCRIPTS / "click_accept.applescript").read_text()
+    assert '"Accept"' in (SCRIPTS / "click_accept.applescript").read_text()
     assert "NotificationCenter" in (SCRIPTS / "click_accept.applescript").read_text()
     assert 'clickLabel(w, "End")' in (SCRIPTS / "click_end.applescript").read_text()
     assert 'tell application "FaceTime" to quit' in (SCRIPTS / "quit_facetime.applescript").read_text()
     assert "button=" in (SCRIPTS / "facetime_state.applescript").read_text()
+    assert "NotificationCenter" in (SCRIPTS / "facetime_state.applescript").read_text()
     for key, label in facetime.BUTTONS.items():
         assert label == {"call": "Call", "accept": "Accept", "end": "End"}[key]
+
+
+def test_banner_only_ring_is_ringing():
+    assert facetime.parse_state("button=Answer\nbutton=Decline\n") == "ringing_in"
+    # The FaceTime window can vanish on ring; the state script then reports only the banner's buttons.
+    assert facetime.parse_state("button=Accept\nbutton=Decline\n") == "ringing_in"
 
 
 def test_normalize_rejects_injection_and_adds_plus():
@@ -51,7 +58,7 @@ def test_dial_audio_only_and_retries(monkeypatch):
     monkeypatch.setenv("MAC_DRY_RUN", "0")
     calls = []
 
-    def fake_run(argv, capture_output=True, text=True):
+    def fake_run(argv, capture_output=True, text=True, timeout=None):
         calls.append(list(argv))
         if argv[0] == "open":
             return subprocess.CompletedProcess(argv, 0, "", "")
@@ -70,7 +77,7 @@ def test_dial_stops_when_call_is_clicked(monkeypatch):
     monkeypatch.setenv("MAC_DRY_RUN", "0")
     n = {"clicks": 0}
 
-    def fake_run(argv, capture_output=True, text=True):
+    def fake_run(argv, capture_output=True, text=True, timeout=None):
         if argv[0] == "osascript":
             n["clicks"] += 1
             stdout = "missing\n" if n["clicks"] < 3 else "clicked\n"
@@ -86,13 +93,13 @@ def test_dial_stops_when_call_is_clicked(monkeypatch):
 def test_state_parses_script_stdout_and_blocks_dial_on_error(monkeypatch):
     monkeypatch.setenv("MAC_DRY_RUN", "0")
 
-    def ok(argv, capture_output=True, text=True):
+    def ok(argv, capture_output=True, text=True, timeout=None):
         return subprocess.CompletedProcess(argv, 0, "button=End\n", "")
 
     monkeypatch.setattr(facetime.subprocess, "run", ok)
     assert facetime.state() == "in_call"
 
-    def bad(argv, capture_output=True, text=True):
+    def bad(argv, capture_output=True, text=True, timeout=None):
         return subprocess.CompletedProcess(argv, 1, "", "osascript error")
 
     monkeypatch.setattr(facetime.subprocess, "run", bad)
@@ -103,7 +110,7 @@ def test_hangup_clicks_end_or_quits(monkeypatch):
     monkeypatch.setenv("MAC_DRY_RUN", "0")
     calls = []
 
-    def clicked(argv, capture_output=True, text=True):
+    def clicked(argv, capture_output=True, text=True, timeout=None):
         calls.append(list(argv))
         return subprocess.CompletedProcess(argv, 0, "clicked\n", "")
 
@@ -114,7 +121,7 @@ def test_hangup_clicks_end_or_quits(monkeypatch):
 
     calls.clear()
 
-    def missing(argv, capture_output=True, text=True):
+    def missing(argv, capture_output=True, text=True, timeout=None):
         calls.append(list(argv))
         stdout = "missing\n" if "click_end" in argv[-1] else ""
         return subprocess.CompletedProcess(argv, 0, stdout, "")
@@ -218,3 +225,14 @@ def test_dry_run_request_does_not_open_the_network(monkeypatch, capsys):
     status, raw = answerd._request("POST", "/v1/calls/active/state", {"state": "in_call"})
     assert (status, raw) == (204, "")
     assert "POST http://127.0.0.1:8000/v1/calls/active/state" in capsys.readouterr().out
+
+
+def test_scripts_compile_on_macos():
+    # osacompile exists only on macOS; cloud lanes skip this.
+    import shutil, subprocess
+    import pytest
+    if not shutil.which("osacompile"):
+        pytest.skip("osacompile is macOS-only")
+    for script in sorted(SCRIPTS.glob("*.applescript")):
+        proc = subprocess.run(["osacompile", "-o", "/dev/null", str(script)], capture_output=True, text=True)
+        assert proc.returncode == 0, f"{script.name}: {proc.stderr.strip()}"

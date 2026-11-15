@@ -27,6 +27,7 @@ BUTTONS = {
 }
 
 CALL_TRIES = 5
+OSA_TIMEOUT_S = 15
 CALL_WINDOW_S = 3.0
 _E164 = re.compile(r"^\+?[1-9]\d{6,14}$")
 
@@ -46,7 +47,11 @@ def run(argv: list[str], *, ok_stdout: str = "clicked\n") -> subprocess.Complete
     if dry_run():
         print(shlex.join(argv))
         return subprocess.CompletedProcess(argv, 0, stdout=ok_stdout, stderr="")
-    return subprocess.run(argv, capture_output=True, text=True)
+    try:
+        # A hung UI scan must not freeze answerd or the scheduler; a timeout reads as a failed probe.
+        return subprocess.run(argv, capture_output=True, text=True, timeout=OSA_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(argv, 124, stdout="", stderr=f"timed out after {OSA_TIMEOUT_S}s")
 
 
 def parse_state(text: str) -> str:
@@ -57,7 +62,7 @@ def parse_state(text: str) -> str:
             buttons.add(line.split("=", 1)[1].strip())
         elif line.startswith("window="):
             windows.append(line.split("=", 1)[1].strip())
-    if BUTTONS["accept"] in buttons or any("incoming" in w.lower() for w in windows):
+    if buttons.intersection({BUTTONS["accept"], "Answer"}) or any("incoming" in w.lower() for w in windows):
         return "ringing_in"
     if BUTTONS["end"] in buttons:
         return "in_call"
@@ -70,6 +75,8 @@ def click(script: Path, tries: int = 1) -> bool:
     argv = ["osascript", str(script)]
     for i in range(tries):
         proc = run(argv)
+        if proc.stderr and script == ACCEPT_SCRIPT:
+            print(f"mac.answer diagnostics {proc.stderr.strip()}", flush=True)
         if "clicked" in (proc.stdout or ""):
             return True
         if not dry_run() and proc.returncode != 0:
