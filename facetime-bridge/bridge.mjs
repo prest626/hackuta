@@ -1,21 +1,20 @@
 // FaceTime <-> OpenAI Realtime bridge. Runs on the Mac that answers FaceTime.
 // FaceTime's speaker plays into CALLER_DEVICE (the agent hears the caller there);
 // the agent speaks into AGENT_DEVICE, which FaceTime uses as its microphone.
+// The prompt, tools, greeting and 911 line come from ../agent (CONTRACTS.md §4.5).
+// One process serves one call: it exits when the API's active call ends, and `npm run loop` restarts it.
 import { spawn } from 'node:child_process';
 import readline from 'node:readline';
 import WebSocket from 'ws';
+import agent from '../agent/index.mjs';
+import { api } from '../agent/tools.mjs';
 
 const CALLER_DEVICE = process.env.CALLER_DEVICE || 'BlackHole 16ch';
 const AGENT_DEVICE = process.env.AGENT_DEVICE || 'BlackHole 2ch';
 const MODEL = process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime';
 const RATE = 24000;
 const PCM = ['-t', 'raw', '-r', String(RATE), '-e', 'signed', '-b', '16', '-c', '1', '-L'];
-
-const instructions = `You are a friendly AI study partner speaking over FaceTime.
-Help the caller understand a topic by asking one question at a time.
-Keep each reply to one or two short sentences. Be clear that you are an AI.
-Always speak English unless the caller asks for another language.`;
-const greeting = 'In English, greet the caller in one short sentence: say you are an AI study partner and ask what they want to learn.';
+const ENGLISH = '\n\nAlways speak English unless the caller asks for another language.';
 
 if (!process.env.OPENAI_API_KEY) throw new Error('Put OPENAI_API_KEY in .env.local');
 
@@ -48,14 +47,43 @@ const play = audio => { for (let i = 0; i < audio.length; i += FRAME_BYTES) queu
 // The caller started talking: drop what the agent hasn't said yet so it stops mid-sentence.
 const interrupt = () => { queue = []; };
 
-openai.on('open', () => {
+// Track whether a response is in flight: response.cancel with none active is an error.
+let responding = false;
+// Say `text` word for word, now: the greeting, the 4:15 wrap-up, and fixed lines like the 911 script.
+const sayExact = text => {
+  if (responding) send({ type: 'response.cancel' });
+  interrupt();
+  send({ type: 'response.create', response: { instructions: `Say exactly this and nothing else: ${text}` } });
+  console.log(`[bridge] saying: ${text}`);
+};
+// The hook calls this for the greeting and later fixed lines (wrap-up); start watching for hang-up after the first.
+let watching = false;
+const say = text => { sayExact(text); if (!watching) { watching = true; watchForHangup(); } };
+
+// The call is over once the API has no active call: exit so `npm run loop` starts a clean session.
+function watchForHangup() {
+  const timer = setInterval(async () => {
+    let active;
+    try { active = await api('GET', '/v1/calls/active'); } catch { return; }
+    if (!active) { clearInterval(timer); console.log('[bridge] call ended'); process.exit(0); }
+  }, 2000);
+}
+
+openai.on('open', async () => {
+  await agent.refresh();
   send({
     type: 'session.update',
     session: {
       type: 'realtime',
-      instructions,
+      instructions: agent.instructions + ENGLISH,
+      tools: agent.tools,
+      tool_choice: 'auto',
       audio: {
-        input: { format: { type: 'audio/pcm', rate: RATE }, turn_detection: { type: 'server_vad', threshold: 0.7, silence_duration_ms: 700 } },
+        input: {
+          format: { type: 'audio/pcm', rate: RATE },
+          transcription: { model: 'gpt-4o-mini-transcribe' },
+          turn_detection: { type: 'server_vad', threshold: 0.7, silence_duration_ms: 700 },
+        },
         output: { format: { type: 'audio/pcm', rate: RATE }, voice: 'marin' },
       },
     },
@@ -65,17 +93,48 @@ openai.on('open', () => {
   mic.stdout.on('data', chunk => send({ type: 'input_audio_buffer.append', audio: chunk.toString('base64') }));
   mic.on('exit', code => { console.error(`[bridge] could not read "${CALLER_DEVICE}" (sox exit ${code})`); process.exit(1); });
   console.log(`[bridge] Ready. Hearing "${CALLER_DEVICE}", speaking into "${AGENT_DEVICE}".`);
-  console.log('[bridge] Answer the FaceTime call, then press Enter to have the agent greet.');
+  console.log('[bridge] Greets on its own once mac.answerd picks up. Press Enter to greet by hand if the API is down.');
+  void agent.onCallStart(say);
 });
+
+// Run the tools the model asked for once its response finishes, then send the outputs back in one go.
+async function runTools(calls) {
+  let fixed = null;
+  for (const call of calls) {
+    console.log(`[bridge] tool ${call.name} ${call.arguments}`);
+    const output = await agent.onToolCall(call.name, call.arguments || '{}');
+    send({ type: 'conversation.item.create', item: { type: 'function_call_output', call_id: call.call_id, output } });
+    try { const parsed = JSON.parse(output); if (parsed.fixed && parsed.say) fixed = parsed.say; } catch {}
+  }
+  if (fixed) sayExact(fixed);
+  else send({ type: 'response.create' });
+}
 
 openai.on('message', raw => {
   const event = JSON.parse(raw);
   if (event.type === 'response.output_audio.delta' || event.type === 'response.audio.delta') play(Buffer.from(event.delta, 'base64'));
+  else if (event.type === 'response.created') responding = true;
+  else if (event.type === 'response.done') {
+    responding = false;
+    const calls = (event.response?.output || []).filter(item => item.type === 'function_call');
+    if (calls.length) void runTools(calls);
+  }
   else if (event.type === 'input_audio_buffer.speech_started') { console.log('[bridge] caller speaking'); interrupt(); }
   else if (event.type === 'input_audio_buffer.speech_stopped') console.log('[bridge] caller stopped, agent replying');
+  else if (event.type === 'conversation.item.input_audio_transcription.completed') {
+    console.log(`[bridge] caller: ${event.transcript}`);
+    const line = agent.onTranscript(event.transcript || '');
+    if (line) sayExact(line);
+  }
   else if (event.type === 'error') console.error('[bridge] OpenAI error:', event.error?.message);
 });
 
 openai.on('close', (code, reason) => { console.error(`[bridge] OpenAI connection closed (${code}) ${reason}`); process.exit(1); });
 
-readline.createInterface({ input: process.stdin }).on('line', () => send({ type: 'response.create', response: { instructions: greeting } }));
+// Fallback when the API or mac.answerd is down: Enter greets with the hook's fallback line.
+// No hang-up watch here (there is no active call to watch); _greeted stops the hook greeting twice.
+readline.createInterface({ input: process.stdin }).on('line', () => {
+  if (agent._greeted) return;
+  agent._greeted = true;
+  sayExact(agent.greeting);
+});
