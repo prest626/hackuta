@@ -3,12 +3,18 @@
 import asyncio
 import inspect
 import json
+import logging
 import math
 import os
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote
 
 from contracts.models import CallResult
+
+log = logging.getLogger("chert.wire")
 
 if __package__:
     from chert import homeward
@@ -378,6 +384,44 @@ def submit(box: dict, end_reason: str = "agent_hangup") -> str:
     return REVIEW_LINE
 
 
+def finish_call(box: dict, end_reason: str = "agent_hangup") -> str:
+    line = submit(box, end_reason=end_reason)
+    if box.get("hangup"):
+        box["hangup"]()
+    return line
+
+
+def end_chert_call(call_id) -> bool:
+    """POST Chert's end endpoint. True on 2xx. The key is never logged."""
+    key = os.environ.get("CHERT_API_KEY") or ""
+    project = os.environ.get("CHERT_PROJECT_ID") or ""
+    if not key or not project or not call_id:
+        return False
+    base = (os.environ.get("CHERT_API_BASE") or "https://facetime.trychert.com").rstrip("/")
+    url = f"{base}/api/v1/calls/{quote(str(call_id), safe='')}/end"
+    req = urllib.request.Request(
+        url,
+        data=b"{}",
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {key}",
+            "X-Chert-Project-Id": project,
+            "Idempotency-Key": f"homeward-end-{call_id}",
+            "Content-Type": "application/json",
+        },
+    )
+    status = 0
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            status = resp.status
+    except urllib.error.HTTPError as exc:
+        status = exc.code
+    except Exception:
+        status = 0
+    log.info("chert end status=%s", status)
+    return 200 <= status < 300
+
+
 def recent_frames(directory, *, seconds=25.0) -> list[tuple[float, str]]:
     root = Path(directory)
     frames = []
@@ -500,6 +544,7 @@ def build_agent(instructions: str, box: dict):
     from livekit.agents import Agent, function_tool
 
     run_breathing = breathing_check
+    file_and_hangup = finish_call
 
     class Homeward(Agent):
         @function_tool()
@@ -530,6 +575,6 @@ def build_agent(instructions: str, box: dict):
         @function_tool()
         async def finish_call(self, end_reason: str = "agent_hangup") -> str:
             """Post this check-in for the nurse to review. end_reason is agent_hangup, hard_stop, patient_hangup, no_answer, bridge_error, or error. Do not call anyone."""
-            return submit(box, end_reason=end_reason)
+            return file_and_hangup(box, end_reason)
 
     return Homeward(instructions=instructions)

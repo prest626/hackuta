@@ -4,6 +4,7 @@ Run from the repo root: ``python -m chert.agent``.
 """
 
 import asyncio
+import inspect
 import json
 import logging
 import time
@@ -21,6 +22,8 @@ log = logging.getLogger("chert")
 GREETING = "Hi, I'm Homeward, an automated assistant for your care team. This is a prototype, and not a medical device."
 ROOT = Path(__file__).resolve().parents[1]
 CALL_CAP = 120
+# shortcut: 5s for the goodbye, upgrade = await playout when RealtimeModel allows it
+GOODBYE_WAIT = 5
 BUDGET = 600
 GREET_WINDOW = 10
 
@@ -77,6 +80,19 @@ def greet_once(metadata, state, now: float):
     return GREETING
 
 
+def chert_call_id(metadata) -> str:
+    """Raw Chert id from room metadata key chert_call. Not the Homeward call_ id."""
+    if isinstance(metadata, (bytes, bytearray)):
+        metadata = metadata.decode()
+    try:
+        data = json.loads(metadata) if isinstance(metadata, str) and metadata else {}
+    except json.JSONDecodeError:
+        return ""
+    if isinstance(data, dict) and data.get("chert_call"):
+        return str(data["chert_call"])
+    return ""
+
+
 def _call_id(metadata, identity: str) -> str:
     raw = ""
     try:
@@ -112,6 +128,99 @@ def _unmute_pair(args):
         elif participant is None and hasattr(arg, "identity"):
             participant = arg
     return participant, publication
+
+
+def cap_goodbye(box) -> str:
+    """The 2:00 line. Rosa's call says her name; no name drops the comma-name."""
+    patient = box.get("patient") if isinstance(box.get("patient"), dict) else {}
+    name = patient.get("display_name") if isinstance(patient, dict) else None
+    first = name.strip().split()[0] if isinstance(name, str) and name.strip() else ""
+    if first:
+        return f"We're out of time today. Your nurse will review this. Take care, {first}."
+    return "We're out of time today. Your nurse will review this. Take care."
+
+
+def arm_hangup(box, start):
+    """box['hangup'] runs start once. finish_call, the cap, and the 911 path share it."""
+    def hangup():
+        if box.get("ending"):
+            return
+        box["ending"] = True
+        start()
+    box["hangup"] = hangup
+
+
+async def _await_or_skip(value):
+    if inspect.isawaitable(value):
+        await value
+
+
+async def play_cap_goodbye(box, sleep=asyncio.sleep) -> str:
+    """session.interrupt(), a normal say, then about 5 seconds."""
+    line = cap_goodbye(box)
+    interrupt = box.get("interrupt")
+    if callable(interrupt):
+        try:
+            await _await_or_skip(interrupt())
+        except Exception as exc:
+            log.info("cap interrupt failed: %s", type(exc).__name__)
+    speak = box.get("speak")
+    if callable(speak):
+        try:
+            said = speak(line)
+        except Exception as exc:
+            log.info("cap say failed: %s", type(exc).__name__)
+            said = None
+        if asyncio.iscoroutine(said):
+            asyncio.create_task(said)
+    await sleep(GOODBYE_WAIT)
+    return line
+
+
+async def hang_until_end(ctx, box):
+    """Wait out the review line, end the Chert call, then delete the room."""
+    if not box.get("goodbye_done"):
+        try:
+            await asyncio.sleep(GOODBYE_WAIT)
+        except Exception as exc:
+            log.info("hangup wait failed: %s", type(exc).__name__)
+    try:
+        cid = chert_call_id(ctx.room.metadata)
+    except Exception as exc:
+        log.info("chert call id failed: %s", type(exc).__name__)
+        cid = ""
+    try:
+        await asyncio.to_thread(wire.end_chert_call, cid)
+    except Exception as exc:
+        log.info("end call failed: %s", type(exc).__name__)
+    try:
+        done = ctx.delete_room()
+        if inspect.isawaitable(done):
+            await done
+    except Exception as exc:
+        log.info("delete room failed: %s", type(exc).__name__)
+
+
+async def stop_at_cap(box, sleep=asyncio.sleep):
+    """At CALL_CAP, file one hard_stop, play the goodbye, then hang up."""
+    await sleep(CALL_CAP)
+    already = bool(box.get("posted"))
+    ending = bool(box.get("ending"))
+    try:
+        wire.submit(box, end_reason="hard_stop")
+    except Exception as exc:
+        log.info("hard stop submit failed: %s", type(exc).__name__)
+    if already or ending:
+        return None
+    await play_cap_goodbye(box, sleep=sleep)
+    box["goodbye_done"] = True
+    hang = box.get("hangup")
+    if hang:
+        try:
+            hang()
+        except Exception as exc:
+            log.info("hard stop hangup failed: %s", type(exc).__name__)
+    return cap_goodbye(box)
 
 
 async def entrypoint(ctx):
@@ -177,7 +286,13 @@ async def entrypoint(ctx):
             tts=openai.TTS(),
         )
         box["speak"] = session.say
+        box["interrupt"] = getattr(session, "interrupt", None)
         box["handoff"] = wire.handoff_line(call, homeward_request)
+        arm_hangup(box, lambda: spawn(hang_until_end(ctx, box)))
+        if not box.get("capped"):
+            box["capped"] = True
+            spawn(stop_at_cap(box))
+
         await session.start(
             agent=wire.build_agent(
                 wire.instructions(wire.load_prompt(), call, box["handoff"]),
