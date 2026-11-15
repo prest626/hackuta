@@ -1,4 +1,4 @@
-"""POST /v1/vision/pillcheck. Mounted by api.main include_optional."""
+"""POST /v1/vision/pillcheck and /v1/vision/breathing. Mounted by api.main include_optional."""
 
 import os
 import re
@@ -11,9 +11,17 @@ from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 
 from api import db
-from contracts.models import MedSchedule, Patient, PillCheck
+from contracts.models import Breathing, MedSchedule, Patient, PillCheck
 from mac import capture
+from vision.breath import fixture_breathing, measure_breathing
 from vision.pills import check_pillbox, expected_empty
+
+# #102 body. tools.mjs treats anything without mode as "skip the check".
+NOT_AVAILABLE = {
+    "ok": True,
+    "data": {"available": False, "reason": "not_available_yet"},
+    "say": "I can't check your breathing on this call yet.",
+}
 
 router = APIRouter()
 _CALL_ID = re.compile(r"^call_[a-z0-9]{4,40}$")
@@ -116,14 +124,63 @@ def pillcheck(body: PillIn, authorization: Annotated[str | None, Header()] = Non
     return pill
 
 
+def _mock_patient(call_id: str) -> Patient:
+    with db.conn() as c:
+        row = c.execute("SELECT patient_id FROM scheduled_calls WHERE id = ?", (call_id,)).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="call not found")
+        patient_row = c.execute(
+            "SELECT doc, is_mock FROM patients WHERE id = ?", (row["patient_id"],)
+        ).fetchone()
+        if patient_row is None or patient_row["is_mock"] != 1:
+            raise HTTPException(status_code=404, detail="patient not found")
+        try:
+            return Patient.model_validate_json(patient_row["doc"])
+        except ValueError:
+            raise HTTPException(status_code=404, detail="patient not found") from None
+
+
+def _breath_payload(call_id: str, breath: Breathing, patient_id: str | None = None) -> dict:
+    payload: dict = {"call_id": call_id, "mode": breath.mode}
+    if patient_id:
+        payload["patient_id"] = patient_id
+    if breath.sqi is not None:
+        payload["sqi"] = breath.sqi
+    if breath.rate_per_min is not None:
+        payload["rate_per_min"] = breath.rate_per_min
+    return payload
+
+
+def _unavailable(call_id: str, sqi: float | None = None) -> dict:
+    payload: dict = {"call_id": call_id, "mode": "skipped", "reason": "not_available_yet"}
+    if sqi is not None:
+        payload["sqi"] = sqi
+    db.log_event("vision.breathing", "agent", payload)
+    return NOT_AVAILABLE
+
+
 @router.post("/v1/vision/breathing")
-def breathing(authorization: Annotated[str | None, Header()] = None) -> dict:
-    # shortcut: constant until video breathing lands (VISION-4 #37), upgrade = a Breathing from vision/breath.py
+def breathing(body: PillIn, authorization: Annotated[str | None, Header()] = None):
     from api.main import require_agent
 
     require_agent(authorization)
-    return {
-        "ok": True,
-        "data": {"available": False, "reason": "not_available_yet"},
-        "say": "I can't check your breathing on this call yet.",
-    }
+    if _CALL_ID.fullmatch(body.call_id) is None:
+        raise HTTPException(status_code=404, detail="call not found")
+    if os.environ.get("VISION_FAKE") == "fixtures":
+        breath = fixture_breathing()
+        db.log_event("vision.breathing", "agent", _breath_payload(body.call_id, breath))
+        return breath.model_dump(exclude_none=True)
+    patient = _mock_patient(body.call_id)
+    if not patient.consent.video_analysis:
+        breath = Breathing(mode="skipped", note="Wellness check only.")
+        db.log_event("vision.breathing", "agent", _breath_payload(body.call_id, breath, patient.id))
+        return breath.model_dump(exclude_none=True)
+    try:
+        breath = measure_breathing(capture.breathing_burst())
+    except Exception as exc:
+        print(f"vision.breathing error {exc}")
+        return _unavailable(body.call_id)
+    if breath.mode == "abstained":
+        return _unavailable(body.call_id, breath.sqi)
+    db.log_event("vision.breathing", "agent", _breath_payload(body.call_id, breath, patient.id))
+    return breath.model_dump(exclude_none=True)

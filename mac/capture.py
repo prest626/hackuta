@@ -2,7 +2,8 @@
 
 Writes var/frames/ring/<ms>.jpg at CAPTURE_FPS (default 1.5), keeps the last 30,
 and atomically replaces var/frames/latest.jpg. burst() grabs a breathing clip;
-if screencapture cannot hold 4 fps it falls back to ffmpeg avfoundation.
+breathing_burst() is that clip at a fixed 5 fps for 20–30 s.
+If screencapture cannot hold 4 fps it falls back to ffmpeg avfoundation.
 MAC_DRY_RUN=1 prints the command and copies mac/fixtures/frame.jpg.
 """
 
@@ -153,6 +154,8 @@ def latest(max_age_s: float = 1.5) -> str | None:
 def _ffmpeg_burst(seconds: float, rate: float, bounds: tuple[int, int, int, int]) -> list[tuple[float, str]]:
     if seconds <= 0:
         return []
+    for old in BURST_DIR.glob("ffmpeg_*.jpg"):
+        old.unlink()
     pattern = BURST_DIR / "ffmpeg_%04d.jpg"
     argv = ffmpeg_argv(bounds, seconds, rate, pattern)
     proc = subprocess.run(argv, capture_output=True, text=True)
@@ -163,6 +166,24 @@ def _ffmpeg_burst(seconds: float, rate: float, bounds: tuple[int, int, int, int]
     for path in sorted(BURST_DIR.glob("ffmpeg_*.jpg")):
         frames.append((path.stat().st_mtime, str(path)))
     return frames
+
+
+BREATH_FPS = 5.0
+
+
+def breathing_burst(seconds: float = 20) -> list[tuple[float, str]]:
+    """FaceTime-window frames for the breathing check. Fixed 5 fps, 20–30 s.
+
+    Clears the burst directory first so an older ffmpeg clip cannot leak in.
+    """
+    if seconds < 20:
+        seconds = 20
+    elif seconds > 30:
+        seconds = 30
+    _ensure()
+    for old in BURST_DIR.glob("*.jpg"):
+        old.unlink()
+    return burst(seconds, BREATH_FPS)
 
 
 def burst(seconds: float = 20, fps: float = 5) -> list[tuple[float, str]]:

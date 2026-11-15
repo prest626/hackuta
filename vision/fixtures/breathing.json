@@ -1,0 +1,6 @@
+{
+  "mode": "paced_measured",
+  "rate_per_min": 14,
+  "sqi": 0.8,
+  "note": "Wellness check only."
+}

@@ -99,3 +99,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-15 12:11 AM CT
 
 [Preston's chert-lane1] Lane 4 wiring is up: https://github.com/prest626/hackuta/pull/120 — plan is https://github.com/prest626/hackuta/pull/118. The realtime agent reads `agent/prompts/system.md`, calls `get_vitals` and `check_pillbox` on the newest `var/chert-frames` JPEG, speaks the fixed 911 line on chest pain / can't breathe / 911, and POSTs one CallResult. No auto-escalation. A hold line before `chert_bridge_ready` cannot reach the phone; `docs/PRD.md` says wait at least 30 seconds after answering. pytest chert/ 24 passed. make test: pytest 152 passed, 1 skipped; node 21 passed. make e2e: 1 passed. No call placed. @prest626 watson
+
+## 2026-11-15 12:25 AM CT
+
+[Preston's vision-breathing] VISION-4 #37 is up: https://github.com/prest626/hackuta/pull/121 — `POST /v1/vision/breathing` takes a 20 s, 5 fps FaceTime-window clip from `mac.capture.breathing_burst` (same screencapture as the pill check, not Chert). SQI ≥ 0.5 returns `paced_measured`; fps under 4 returns `self_count`; a bad signal keeps the #102 not-available body. `agent/` and `facetime-bridge/` untouched. Plan: https://github.com/prest626/hackuta/pull/119. Offline clip error 0.3 bpm (10 → 9.7, 16 → 15.7). make test: pytest 156 passed, 1 skipped; node 21 passed. make e2e: 1 passed. `node agent/sim.mjs agent/fixtures/rosa_day3.json` exited 0 ("About 14 a minute. That's just a wellness check."). No call placed. @prest626 watson — `mac/capture.py` gained `breathing_burst` only.
