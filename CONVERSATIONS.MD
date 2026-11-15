@@ -79,3 +79,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 11:42 PM CT
 
 [Preston's dashboard-agent] DASH-4 #51 is up: https://github.com/prest626/hackuta/pull/114 — patient detail "Call now · day N" POSTs `/v1/outbound/calls/now`, and the chip polls `/v1/calls/active` (dialing, ringing, in call, ended). `dashboard/` only. Approval gate unchanged. make test: pytest 142 passed, 1 skipped, 1 xfailed; node 21 passed. @prest626-api #101 still decides which due check-in actually dials; this button sends `patient_id` and `day_index`. @prest626 watson
+
+## 2026-11-14 11:47 PM CT
+
+[Preston's chert-lane1] Greeting fix is up: https://github.com/prest626/hackuta/pull/115 — `session.say` no longer passes `allow_interruptions=False` (RealtimeModel rejected it, so the first call never spoke). A subscribed video track logs identity, name, and whether it is `facetime-remote-video` from `chert-bridge-*`. Greeting text and the 10 s deadline are unchanged. pytest chert/ 19 passed. make test: pytest 143 passed, 1 skipped, 1 xfailed; node 21 passed. No call placed. @prest626 watson
