@@ -2,11 +2,13 @@
 
 import json
 import os
+import re
 from datetime import date, datetime, timezone
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import Response
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 
 from api import db
@@ -382,3 +384,96 @@ def hangup(call_id: str, _=Depends(require_agent)):
         c.execute("UPDATE scheduled_calls SET status = 'done' WHERE id = ?", (call_id,))
     db.log_event("call.ended", "agent", {"call_id": call_id})
     return Response(status_code=204)
+
+
+def proof_dir() -> Path:
+    return Path(os.environ.get("PROOF_DIR", "var/proof"))
+
+
+def _scheduled(row) -> dict:
+    return {
+        "id": row["id"],
+        "patient_id": row["patient_id"],
+        "day_index": row["day_index"],
+        "kind": row["kind"],
+        "due_at": row["due_at"],
+        "status": row["status"],
+        "attempts": row["attempts"],
+        "approval_id": row["approval_id"],
+        "direction": row["direction"],
+    }
+
+
+@router.get("/v1/patients/{patient_id}/timeline")
+def timeline(patient_id: str, _=Depends(require_reader)):
+    with db.conn() as c:
+        _patient(c, patient_id)
+        calls = [
+            _scheduled(row)
+            for row in c.execute(
+                "SELECT * FROM scheduled_calls WHERE patient_id = ? ORDER BY due_at DESC",
+                (patient_id,),
+            )
+        ]
+        call_ids = {row["id"] for row in calls}
+        results = []
+        for row in c.execute(
+            "SELECT call_id, tier, doc, received_at FROM call_results WHERE patient_id = ? ORDER BY received_at DESC",
+            (patient_id,),
+        ):
+            doc = json.loads(row["doc"])
+            doc["tier"] = row["tier"]
+            if (proof_dir() / f"{row['call_id']}_pill.jpg").is_file():
+                doc["proof_url"] = f"/proof/{row['call_id']}"
+            results.append(doc)
+        flags = [json.loads(row["doc"]) for row in c.execute("SELECT doc FROM flags WHERE patient_id = ?", (patient_id,))]
+        approvals = [
+            json.loads(row["doc"])
+            for row in c.execute("SELECT doc FROM approvals WHERE patient_id = ?", (patient_id,))
+        ]
+        events = []
+        for row in c.execute("SELECT id, t, name, actor, payload FROM events ORDER BY id DESC"):
+            payload = json.loads(row["payload"])
+            if payload.get("patient_id") == patient_id or payload.get("call_id") in call_ids:
+                events.append(
+                    {"id": row["id"], "t": row["t"], "name": row["name"], "actor": row["actor"], "payload": payload}
+                )
+    flags.sort(key=lambda doc: doc.get("created_at") or "", reverse=True)
+    approvals.sort(key=lambda doc: doc.get("created_at") or "", reverse=True)
+    return {
+        "scheduled_calls": calls,
+        "results": results,
+        "flags": flags,
+        "approvals": approvals,
+        "events": events,
+    }
+
+
+@router.get("/v1/flags")
+def list_flags(status: str = "open", _=Depends(require_reader)):
+    with db.conn() as c:
+        rows = c.execute("SELECT doc FROM flags WHERE status = ? ORDER BY id DESC", (status,))
+        return [json.loads(row["doc"]) for row in rows]
+
+
+_CALL_ID = re.compile(r"^call_[a-z0-9]{4,40}$")
+
+
+@router.get("/proof/{call_id}")
+def proof(call_id: str):
+    # shortcut: open so a dashboard <img> can load it, upgrade = cookie auth
+    if not _CALL_ID.fullmatch(call_id):
+        raise HTTPException(status_code=404, detail="not found")
+    with db.conn() as c:
+        row = c.execute("SELECT doc FROM call_results WHERE call_id = ?", (call_id,)).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="not found")
+    ref = ((json.loads(row["doc"]).get("pill_check") or {}).get("proof_ref")) or ""
+    # Only the filename under PROOF_DIR, and only the name tied to this call id.
+    if Path(ref).name != f"{call_id}_pill.jpg":
+        raise HTTPException(status_code=404, detail="not found")
+    root = proof_dir().resolve()
+    full = (root / Path(ref).name).resolve()
+    if root not in full.parents or not full.is_file():
+        raise HTTPException(status_code=404, detail="not found")
+    return FileResponse(full, media_type="image/jpeg")
