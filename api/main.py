@@ -21,16 +21,21 @@ OPTIONAL_ROUTERS = (
 )
 
 
+def presented_token(authorization: str | None) -> str:
+    if not authorization:
+        return ""
+    parts = authorization.split(" ", 1)
+    if len(parts) == 2 and parts[0].lower() == "bearer":
+        return parts[1].strip()
+    return authorization.strip()
+
+
 def check_token(authorization: str | None, env_var: str) -> None:
     # shortcut: unset token leaves the local demo open, upgrade = always require it
     expected = os.environ.get(env_var, "")
     if not expected:
         return
-    got = ""
-    if authorization:
-        parts = authorization.split(" ", 1)
-        got = parts[1].strip() if len(parts) == 2 and parts[0].lower() == "bearer" else authorization.strip()
-    if got != expected:
+    if presented_token(authorization) != expected:
         raise HTTPException(status_code=401, detail="unauthorized")
 
 
@@ -40,6 +45,17 @@ def require_agent(authorization: Annotated[str | None, Header()] = None) -> None
 
 def require_dashboard(authorization: Annotated[str | None, Header()] = None) -> None:
     check_token(authorization, "DASHBOARD_TOKEN")
+
+
+def require_reader(authorization: Annotated[str | None, Header()] = None) -> None:
+    """Agent or dashboard token. Open when neither secret is set."""
+    needed = [v for v in ("AGENT_API_TOKEN", "DASHBOARD_TOKEN") if os.environ.get(v, "")]
+    if not needed:
+        return
+    got = presented_token(authorization)
+    if any(got == os.environ[v] for v in needed):
+        return
+    raise HTTPException(status_code=401, detail="unauthorized")
 
 
 def include_optional(app: FastAPI, names: tuple[str, ...] = OPTIONAL_ROUTERS) -> list[str]:
