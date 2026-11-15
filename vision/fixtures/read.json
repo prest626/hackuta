@@ -1,0 +1,10 @@
+{
+  "pillbox_visible": true,
+  "compartments": [
+    {"label": "SAT-PM", "has_pills": true},
+    {"label": "SUN-AM", "has_pills": false},
+    {"label": "SUN-PM", "has_pills": true}
+  ],
+  "confidence": 0.86,
+  "reason": "Saturday evening still has pills. Sunday morning looks empty."
+}
