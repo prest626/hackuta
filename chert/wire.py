@@ -236,8 +236,10 @@ async def read_pill_tool(box) -> str:
     """Yield for the hold, then the sharpest recent frame. Does not block the loop."""
     await asyncio.sleep(PILL_HOLD_S)
     attempt = int(box.get("pill_attempt") or 0)
-    jpeg = sharpest_jpeg(box.get("frames") or "")
-    line, pill = read_pillbox(jpeg, RING, box.get("call_id") or "", attempt)
+    jpeg = await asyncio.to_thread(sharpest_jpeg, box.get("frames") or "")
+    line, pill = await asyncio.to_thread(
+        read_pillbox, jpeg, RING, box.get("call_id") or "", attempt
+    )
     box["pill"] = pill
     box["pill_attempt"] = attempt + 1
     return line

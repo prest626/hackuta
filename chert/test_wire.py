@@ -255,6 +255,39 @@ def test_pill_hold_leaves_the_loop_free(tmp_path, monkeypatch):
     asyncio.run(run())
 
 
+def test_slow_pill_read_leaves_the_loop_free(tmp_path, monkeypatch):
+    monkeypatch.setattr(wire, "PILL_HOLD_S", 0)
+    (tmp_path / "1000.jpg").write_bytes(b"\xff\xd8\xff\xd9")
+
+    async def run():
+        marks = {"ticks": 0, "reading": False}
+
+        async def ticker():
+            while True:
+                if marks["reading"]:
+                    marks["ticks"] += 1
+                await asyncio.sleep(0.01)
+
+        def slow(jpeg, ring, call_id, attempt=0):
+            import time
+
+            marks["reading"] = True
+            try:
+                time.sleep(0.5)
+            finally:
+                marks["reading"] = False
+            return homeward.EMPTY, {"state": "ok"}
+
+        monkeypatch.setattr(wire, "read_pillbox", slow)
+        task = asyncio.create_task(ticker())
+        line = await wire.read_pill_tool({"frames": tmp_path, "call_id": "call_rosa01d3"})
+        task.cancel()
+        assert line == homeward.EMPTY
+        assert marks["ticks"] >= 2
+
+    asyncio.run(run())
+
+
 def test_read_pillbox_posts_jpeg_b64(tmp_path, monkeypatch):
     jpeg = tmp_path / "frame.jpg"
     payload = b"\xff\xd8\xff\xd9"
