@@ -55,8 +55,11 @@ def test_missing_optional_routers_do_not_crash():
     from api.main import include_optional
 
     fresh = FastAPI()
-    # approvals.routes exists once APPR-2 lands; this still checks a missing router.
-    assert include_optional(fresh, names=("vision.routes", "no.such.routes")) == []
+    # vision.routes and approvals.routes both exist. A missing name is still skipped.
+    assert include_optional(fresh, names=("vision.routes", "approvals.routes", "no.such.routes")) == [
+        "vision.routes",
+        "approvals.routes",
+    ]
 
 
 def test_mounts_router_when_the_module_exists():
