@@ -175,7 +175,7 @@ async def entrypoint(ctx):
             sentence = greet_once(ctx.room.metadata, state, time.time())
             if sentence:
                 log.info("greet")
-                await session.say(sentence, allow_interruptions=False)
+                await session.say(sentence)
 
     async def save_video(track, publication, identity):
         out = ROOT / "var" / "chert-frames" / _call_id(ctx.room.metadata, identity)
@@ -232,6 +232,19 @@ async def entrypoint(ctx):
 
     @ctx.room.on("track_subscribed")
     def _subscribed(track, publication, participant):
+        if track.kind == rtc.TrackKind.KIND_VIDEO:
+            name = getattr(publication, "name", "") or ""
+            identity = getattr(participant, "identity", "")
+            match = (
+                str(identity).startswith(media.BRIDGE_PREFIX)
+                and name == media.VIDEO_TRACK
+            )
+            log.info(
+                "track_subscribed identity=%s name=%s matches_facetime_remote_video=%s",
+                identity,
+                name,
+                match,
+            )
         consider(track, publication, participant)
 
     @ctx.room.on("track_unmuted")

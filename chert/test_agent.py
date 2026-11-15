@@ -2,6 +2,7 @@ import inspect
 import json
 import sys
 from datetime import datetime
+from pathlib import Path
 
 import chert.agent as agent
 
@@ -9,6 +10,12 @@ import chert.agent as agent
 def test_import_does_not_pull_livekit():
     assert not any(name == "livekit" or name.startswith("livekit.") for name in sys.modules)
     assert inspect.iscoroutinefunction(agent.entrypoint)
+
+
+def test_greeting_does_not_pass_allow_interruptions():
+    text = Path(agent.__file__).read_text()
+    assert "allow_interruptions" not in text
+    assert agent.GREETING in text
 
 
 def test_greet_fires_once_on_fake_metadata():
