@@ -116,7 +116,8 @@ def test_simli_import_failure_skips_without_a_second_audio_track(monkeypatch, ca
     assert got["status"] == "skipped"
     assert got["audio"] is False
     assert room.local_participant.published == []
-    assert "face skipped" in caplog.text
+    assert "face skipped: ImportError" in caplog.text
+    assert "livekit.plugins.simli" not in caplog.text
     assert "simli-key-do-not-print" not in caplog.text
     assert "simli-face-do-not-print" not in caplog.text
 
@@ -132,6 +133,30 @@ def test_simli_skips_when_the_agent_already_publishes_audio(monkeypatch):
         assert got["status"] == "skipped"
         assert got["audio"] is False
         assert room.local_participant.published == []
+
+
+def test_selected_mode_accepts_case_and_space():
+    assert face.selected_mode("FALLBACK") == "fallback"
+    assert face.selected_mode(" fallback ") == "fallback"
+    room = _room("homeward-agent")
+    got = asyncio.run(face.start(room, SimpleNamespace(), " FALLBACK "))
+    assert got["mode"] == "fallback"
+    assert got["audio"] is False
+    assert [track.kind for track in room.local_participant.published] == ["video"]
+
+
+def test_publish_failure_returns_skipped(monkeypatch, caplog):
+    def boom(*_args, **_kwargs):
+        raise RuntimeError("do-not-print-this-face-error")
+
+    monkeypatch.setattr(face, "_publish_fallback", boom)
+    with caplog.at_level(logging.INFO, logger="chert"):
+        got = asyncio.run(face.start(_room(), SimpleNamespace(), "fallback"))
+    assert got["status"] == "skipped"
+    assert got["audio"] is False
+    assert got["video"] is False
+    assert "face skipped: RuntimeError" in caplog.text
+    assert "do-not-print-this-face-error" not in caplog.text
 
 
 def test_simli_missing_key_skips(monkeypatch):

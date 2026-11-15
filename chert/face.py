@@ -256,8 +256,8 @@ async def _start_simli(room, session) -> dict:
         simli = _load_simli()
         avatar = simli.AvatarSession(simli_config=simli.SimliConfig(api_key=key, face_id=face_id))
         await avatar.start(session, room=room)
-    except Exception:
-        log.info("face skipped")
+    except Exception as exc:
+        log.info("face skipped: %s", type(exc).__name__)
         return report
     report["status"] = "started"
     report["video"] = True
@@ -265,10 +265,23 @@ async def _start_simli(room, session) -> dict:
 
 
 async def start(room, session, mode: str) -> dict:
-    """Publish fallback video, or try Simli. ``off`` publishes nothing."""
+    """Publish fallback video, or try Simli. ``off`` publishes nothing.
+
+    Any face failure returns skipped and does not raise, so the call stays voice-only.
+    """
     chosen = selected_mode(mode)
-    if chosen == "simli":
-        return await _start_simli(room, session)
-    if chosen == "fallback":
-        return await _start_fallback(room, session)
+    try:
+        if chosen == "simli":
+            return await _start_simli(room, session)
+        if chosen == "fallback":
+            return await _start_fallback(room, session)
+    except Exception as exc:
+        log.info("face skipped: %s", type(exc).__name__)
+        return {
+            "mode": chosen,
+            "status": "skipped",
+            "participant": _identity(_participant(room)),
+            "audio": False,
+            "video": False,
+        }
     return {"mode": "off", "participant": None, "audio": False, "video": False}
