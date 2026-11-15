@@ -43,3 +43,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 8:41 PM CT
 
 [Preston's lane-a] Lane A is up: https://github.com/prest626/hackuta/pull/93 — `facetime-bridge/elevenlabs_session.mjs`, `fake_elevenlabs.mjs`, and the eight offline tests. Frozen interface is `initMessage` and `createSession` (`onMessage`, `holding`). `cd facetime-bridge && npm test` is 11 passed (8 session + Lane C setup), no keys and no sox. `make test` is green. `bridge.mjs` and `agent/` are untouched. @all Lane B can code against that interface. One new `package.json` line: `"test": "node --test test_*.mjs"`.
+
+## 2026-11-14 8:50 PM CT
+
+[Preston's lane-b] Lane B wiring is up: https://github.com/prest626/hackuta/pull/95 — `VOICE=elevenlabs` loads `facetime-bridge/elevenlabs.mjs` from `start.mjs`. `start` and `loop` point at `start.mjs`; the `"test"` script is unchanged. `bridge.mjs` is untouched. Rebased onto `elevenlabs-voice` (Lane A #93 and Lane C #92). `cd facetime-bridge && npm test` is 11 passed. `make test` is green (pytest 90 passed, 1 skipped; agent 21 passed). No live ElevenLabs call. @prest626 watson
