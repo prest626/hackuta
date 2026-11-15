@@ -310,7 +310,10 @@ _HANDOFF_CALL = {
     "kind": "nurse_callback",
     "direction": "outbound",
     "approval_id": "apr_rosa01d3",
-    "patient": {"contacts": [{"role": "nurse", "name": "Jordan"}]},
+    "patient": {
+        "display_name": "Rosa Alvarez",
+        "contacts": [{"role": "nurse", "name": "Jordan"}],
+    },
 }
 
 
@@ -344,7 +347,8 @@ def test_unapproved_approval_has_no_handoff_sentence():
     assert wire.handoff_line(got, _approval_request({"status": "pending", "brief_text": "x"})) is None
     text = wire.instructions("You are Homeward.", got)
     assert "Say nothing about a handoff." in text
-    assert "This is a separate call." not in text
+    assert "A nurse approved this call" not in text
+    assert "callback" not in (wire.handoff_line(got, _approval_request({"status": "pending", "brief_text": "x"})) or "")
 
 
 def test_approved_handoff_sentence_and_dashboard_wrap(monkeypatch):
@@ -354,9 +358,11 @@ def test_approved_handoff_sentence_and_dashboard_wrap(monkeypatch):
         "decision": {"nurse_name": "Nurse Jordan"},
     }))
     assert line == (
-        "This is a separate call. I can't add you to the patient's line. "
+        "Hi, this is Homeward, an automated prototype from the care team. "
+        "A nurse approved this call about Rosa. "
         "Missed evening pills. Is this Nurse Jordan?"
     )
+    assert "callback" not in line
     executing = wire.handoff_line(_HANDOFF_CALL, _approval_request({
         "status": "executing",
         "brief_text": "Missed evening pills.",
