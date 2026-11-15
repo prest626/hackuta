@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file=.env.local bridge.mjs",
-    "loop": "while true; do node --env-file=.env.local bridge.mjs; echo '[bridge] restarting for the next call'; sleep 2; done"
+    "loop": "while true; do node --env-file=.env.local bridge.mjs; echo '[bridge] restarting for the next call'; sleep 2; done",
+    "test": "node --test test_*.mjs"
   },
   "dependencies": {
     "ws": "^8.18.0"
