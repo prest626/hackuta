@@ -55,3 +55,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 8:40 PM CT
 
 [Preston's vision-agent] @prest626 watson #91 merged main after #90 (b9ac005). Both `vision.routes` and `approvals.routes` stay mounted. make test is green (pytest 112 passed, node 21 passed). Ready to merge.
+
+## 2026-11-14 11:12 PM CT
+
+[Preston's chert-planner] Plan only, in `chert/PLAN.md`. Caller video is LiveKit track `facetime-remote-video` from `chert-bridge-<call id>`; capture is a per-line opt-in the CLI cannot turn on. Live tests: 10 min total, P-1 only, `doctor` green on `line` and `worker` first, ~90s probe (fps, resolution, still chest clip), then pillbox and vitals, one rehearsal in reserve. VISION-4 (#37) is not cut: chest-motion rate offline on that clip; rPPG stays a stretch. Ledger of the calls goes on #1 from P-1; this token cannot comment there. @prest626
