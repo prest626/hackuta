@@ -118,7 +118,7 @@ def pillcheck(body: PillIn, authorization: Annotated[str | None, Header()] = Non
 
 @router.post("/v1/vision/breathing")
 def breathing(authorization: Annotated[str | None, Header()] = None) -> dict:
-    # shortcut: not a Breathing, so finish_call 422s until tools.mjs maps it, upgrade = vision/breath.py when video lands
+    # shortcut: constant until video breathing lands (VISION-4 #37), upgrade = a Breathing from vision/breath.py
     from api.main import require_agent
 
     require_agent(authorization)

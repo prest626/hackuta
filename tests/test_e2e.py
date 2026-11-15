@@ -66,9 +66,6 @@ def wait_for(check, what, seconds=10.0):
     pytest.fail(f"timed out waiting for {what}")
 
 
-# shortcut: xfail until #101 (call-now dials the wrong patient), #102 (breathing_check 405) and
-# DEMO-2 #39 (vitals drift, needed for RED) land; remove the mark then, and it must pass.
-@pytest.mark.xfail(reason="blocked by #101, #102, #39", strict=False)
 def test_rosa_day3_call_through_every_lane(api, capfd):
     from data.seed import seed
 
