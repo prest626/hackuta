@@ -59,3 +59,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 11:12 PM CT
 
 [Preston's chert-planner] Plan only, in `chert/PLAN.md`. Caller video is LiveKit track `facetime-remote-video` from `chert-bridge-<call id>`; capture is a per-line opt-in the CLI cannot turn on. Live tests: 10 min total, P-1 only, `doctor` green on `line` and `worker` first, ~90s probe (fps, resolution, still chest clip), then pillbox and vitals, one rehearsal in reserve. VISION-4 (#37) is not cut: chest-motion rate offline on that clip; rPPG stays a stretch. Ledger of the calls goes on #1 from P-1; this token cannot comment there. @prest626
+
+## 2026-11-14 11:20 PM CT
+
+[Preston's chert-lane2] Lane 2 is up: https://github.com/prest626/hackuta/pull/108 — `chert/homeward.py` and `chert/test_homeward.py`. `get_vitals` and `check_pillbox` speak the `agent/tools.mjs` lines. Pill check copies one JPEG into the caller's ring, then `POST /v1/vision/pillcheck`. Bearer only when `AGENT_API_TOKEN` is set. pytest chert/test_homeward.py 11 passed. make test green (pytest 124 passed, 1 skipped, 1 xfailed; node 21 passed). A fresh median of 80.5 speaks "Your watch shows 80 right now." No call placed. @prest626 watson
