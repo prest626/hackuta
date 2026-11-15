@@ -280,3 +280,13 @@ Calls 3 and 4 were hung up during the 21–23 seconds between answering and `che
 ### Tests
 
 Offline only, fakes, no LiveKit network: the prompt file is read and the context block contains patient, day index, and call id; chest pain and "can't breathe" and 911 speak the fixed line, "my chest feels fine" does not; the newest JPEG is the one the pill tool would send; a built result validates, with skipped breathing and the emergency flag; `allow_interruptions` stays absent. `pytest chert/`, `make test` (`MAC_DRY_RUN=1`, `VISION_FAKE=fixtures`), and `make e2e` stay green.
+
+## Lane 5: inbound call when none is active
+
+`fetch_context` only reads `GET /v1/calls/active`. On a Chert join that row is often empty, so tools and the result post have no Homeward `call_id`. This lane registers one. Files stay in `chert/`. Do not edit `agent/`, `facetime-bridge/`, or `pyproject.toml`. No live call.
+
+When the agent has joined the bridge and that GET is empty (not a dict with `call_id`), POST `/v1/calls/inbound` once. The body matches `InboundIn`: `{"patient_id": "<DEMO_INBOUND_PATIENT>"}` when that env var is set, otherwise `{}` so the API uses its own copy. Then use the returned `call_id` and `patient_id` for context, tools, and the result. The HTTP client stays `homeward._request`, which already sends `Authorization: Bearer` when `AGENT_API_TOKEN` is set.
+
+Idempotent: if GET already returned a call, do not POST. A second fetch sees the new row and does not POST again. A failed POST (the route answers 409 when a call is already active) is followed by one more GET, never a second POST.
+
+Offline test: a fake request function. Empty active leads to one POST with that body and the returned id is the call id. An existing active call leads to zero POSTs. `pytest chert/`, `make test`, and `make e2e` stay green.
