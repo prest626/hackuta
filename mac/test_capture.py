@@ -142,13 +142,29 @@ def test_burst_falls_back_to_ffmpeg_when_slow(dirs, monkeypatch, capsys):
     monkeypatch.setattr(capture.time, "time", mono)
     monkeypatch.setattr(capture.time, "sleep", sleep)
     monkeypatch.setattr(capture.subprocess, "run", fake_run)
+    stale = dirs / "burst" / "ffmpeg_0099.jpg"
+    stale.parent.mkdir(parents=True, exist_ok=True)
+    stale.write_bytes(FIXTURE.read_bytes())
     frames = capture.burst(seconds=20, fps=5)
     assert ffmpeg, "expected an ffmpeg fallback"
     assert "avfoundation" in ffmpeg[0]
     assert "crop=100:80:0:0" in ffmpeg[0]
     assert any(path.endswith("ffmpeg_0001.jpg") for _, path in frames)
+    assert not any(path.endswith("ffmpeg_0099.jpg") for _, path in frames)
     assert "via=ffmpeg" in capsys.readouterr().out
     assert len(frames) >= 4
+
+
+def test_breathing_burst_is_20_to_30s_at_5fps(dirs, monkeypatch):
+    monkeypatch.setenv("MAC_DRY_RUN", "1")
+    stale = dirs / "burst" / "old.jpg"
+    stale.parent.mkdir(parents=True, exist_ok=True)
+    stale.write_bytes(b"stale")
+    frames = capture.breathing_burst(40)
+    assert len(frames) == 150
+    assert not stale.exists()
+    assert Path(frames[0][1]).read_bytes().startswith(b"\xff\xd8")
+    assert len(capture.breathing_burst(1)) == 100
 
 
 def test_capture_once_stops_when_screencapture_fails(dirs, monkeypatch):
