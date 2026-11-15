@@ -7,6 +7,7 @@ import asyncio
 import inspect
 import json
 import logging
+import os
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,7 +25,10 @@ _fallback_logged = set()
 
 GREETING = "Hi, I'm Homeward, an automated assistant for your care team. This is a prototype, and not a medical device. Hold the organizer still, facing the camera, about a foot away, and say when it's up."
 ROOT = Path(__file__).resolve().parents[1]
-CALL_CAP = 120
+try:
+    CALL_CAP = int(os.environ.get("HOMEWARD_CALL_CAP", "120"))
+except (TypeError, ValueError):
+    CALL_CAP = 120
 # shortcut: 5s for the goodbye, upgrade = await playout when RealtimeModel allows it
 GOODBYE_WAIT = 5
 BUDGET = 600

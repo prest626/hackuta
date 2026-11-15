@@ -37,6 +37,8 @@ def test_breathing_comes_right_after_the_pill_check():
     symptoms = order.index("record_answer")
     vitals = order.index("get_vitals")
     assert pill < breath < symptoms < vitals
+    assert "Do check_pillbox and breathing_check before any symptom question." in order
+    assert "Ask symptom questions only after both." in order
     spoken = wire.instructions("prompt", {"kind": "checkin", "patient": {}})
     assert order in spoken
     assert "20 seconds" in spoken and "2:00" in spoken
@@ -713,6 +715,22 @@ def test_wrapped_finish_call_hangs_up(monkeypatch):
 
 def test_say_stays_interruptible():
     assert "allow_interruptions" not in Path(wire.__file__).read_text()
+
+
+def test_record_answer_works_with_no_quote():
+    box = {"symptoms": []}
+    line = asyncio.run(wire.bind_tools(box)["record_answer"]("overall", "same"))
+    assert line == wire.ANSWER_OK
+    assert box["symptoms"] == [{
+        "slot": "overall",
+        "value": "same",
+        "quote": "",
+        "confirmed": False,
+    }]
+    text = Path(wire.__file__).read_text()
+    assert 'async def record_answer(slot: str, value: str, quote: str = "", confirmed: bool = False)' in text
+    assert 'async def record_answer(self, slot: str, value: str, quote: str = "", confirmed: bool = False)' in text
+    assert '"""Short args. quote is optional, a few words at most."""' in text
 
 
 def test_each_tool_exception_is_a_calm_line(monkeypatch, caplog):
