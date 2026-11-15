@@ -160,7 +160,7 @@ function noCall() {
 
 async function getVitals() {
   if (noCall()) return { ok: false, error: 'no active call' };
-  const live = await api('GET', `/v1/patients/${session.active.patient_id}/vitals/live`);
+  const live = await api('GET', `/v1/patients/${session.active.patient_id}/vitals/live`, undefined, { timeoutMs: 8000 });
   session.vitals = live;
   if (live.stale || live.hr_median_60s == null) {
     return { ok: true, say: "I don't have a fresh watch reading right now.", data: live };
