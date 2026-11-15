@@ -26,7 +26,8 @@ The Swift sources are already in this folder. Xcode has to be the thing that sig
      - `Uploader.swift`
      - `Config.swift`
      - `Batching.swift`
-   - Check the HomewardWatch target for each. Do not add `watch/fixtures/watch_hr_post.json` to the app.
+   - Check the HomewardWatch target for each. Do not add `watch/fixtures/watch_hr_post.json` or `Config.template.swift`.
+   - `Config.swift` is gitignored. Copy it once before adding it: `cp watch/HomewardWatch/Config.template.swift watch/HomewardWatch/Config.swift`
 7. Test target:
    - If the template made a test target, delete its sample test and add `../HomewardWatchTests/BatchingTests.swift` to that target only.
    - If it did not: File → New → Target → watchOS → Unit Testing Bundle. Name it `HomewardWatchTests`. Target to test: HomewardWatch. Add `BatchingTests.swift` to that target only.
@@ -72,29 +73,36 @@ The watch has to be paired to the iPhone, on the wrist, and unlocked.
 3. Xcode → Window → Devices and Simulators. The iPhone should appear, and under it the paired watch. If the watch is missing, open the Watch app on the iPhone and confirm it is connected.
 4. On the watch: Settings → Privacy & Security → Developer Mode → On. Restart the watch. The row sometimes shows up only after Xcode has seen the watch once. If it is still missing, select the watch in Devices and Simulators and wait a minute, then look again.
 
-## 5. Point the app at the Mac
+## 5. Point the app at the spare Mac
 
-Edit `watch/HomewardWatch/Config.swift` locally. Do not commit this edit.
+Xcode and the simulator are on P-1's Mac. The spare Mac runs the API and `cloudflared` and has no Xcode. The tunnel URL is only known there, and it changes whenever `cloudflared` restarts.
 
-- `API_BASE`: no trailing slash.
-  - Preferred: the `https://….trycloudflare.com` URL from the tunnel below.
-  - Or `http://<mac-lan-ip>:8000` if the watch is on that Wi-Fi (the iPhone on that Wi-Fi is enough when the watch is using the phone). This path needs Allow Local Networking from step 2. Find the IP with `ipconfig getifaddr en0`.
-- `deviceToken`: replace `PLACEHOLDER` with the same string you export as `WATCH_DEVICE_TOKEN` on the Mac. Use a made-up demo string such as `dev-watch-token`. It is not a production secret, and it still must not be committed.
-- `deviceId` stays `watch_team01`.
+`watch/HomewardWatch/Config.swift` is gitignored. `make watch-url` writes `API_BASE` into it (no trailing slash). The simulator and the real watch both compile that file. The committed placeholders are `Config.template.swift`. Do not commit `Config.swift`.
 
-Before any later commit:
+On P-1, from the repo root. `ssh <spare-host>` must already work with no password prompt. `<spare-host>` is whatever that SSH config calls the spare Mac.
 
 ```bash
-git diff -- watch/HomewardWatch/Config.swift
+SPARE_MAC=<spare-host> make watch-url
 ```
 
-The committed file has to still say `PLACEHOLDER` and `http://127.0.0.1:8000`. Restore it with:
+That prints `https://….trycloudflare.com` and runs `curl <url>/v1/health`. The same command with the host as an argument is `python3 watch/set_api_base.py <spare-host>`.
+
+Set `deviceToken` in `Config.swift` to the same string as `WATCH_DEVICE_TOKEN` on the spare Mac (a demo string such as `dev-watch-token`). `deviceId` stays `watch_team01`. Later runs of `make watch-url` replace `API_BASE` and leave `deviceToken` alone.
+
+Add a Run Script phase on the HomewardWatch target, above Compile Sources, so each build picks up a new tunnel. It runs on P-1. Xcode does not see a terminal's `SPARE_MAC`, so the host is in the script:
 
 ```bash
-git checkout -- watch/HomewardWatch/Config.swift
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+cd "$SRCROOT/../.." && SPARE_MAC=<spare-host> make watch-url
 ```
 
-## 6. Start the ingest on the Mac
+`$SRCROOT` is `watch/HomewardWatch` when the project lives there.
+
+`git check-ignore watch/HomewardWatch/Config.swift` should print that path, and `git status` should not list the file.
+
+If ports 20241–20245 have no `/quicktunnel`, set `CLOUDFLARED_LOG` to the cloudflared log's absolute path on the spare Mac and run `make watch-url` again. The script uses the last `https://….trycloudflare.com` line in that file.
+
+## 6. Start the ingest on the spare Mac
 
 From the repo root, on the branch that contains `ingest/routes.py` (this one, or main after the watch PRs merge). `api/main.py` already mounts the router:
 
@@ -131,15 +139,15 @@ make dev
 cloudflared tunnel --url http://127.0.0.1:8000
 ```
 
-Put the printed `https://….trycloudflare.com` URL in `Config.API_BASE`.
+Leave that running. On P-1, `SPARE_MAC=<spare-host> make watch-url` reads `http://127.0.0.1:<port>/quicktunnel` (ports 20241–20245) over SSH. Do not copy the URL by hand.
 
-For a LAN IP instead of a tunnel, stop `make dev` and run:
+If that endpoint never answers, restart the tunnel with a log and point P-1 at it:
 
 ```bash
-export WATCH_DEVICE_TOKEN='dev-watch-token'
-export DB_PATH=var/homeward.db
-uvicorn api.main:app --host 0.0.0.0 --port 8000
+cloudflared tunnel --url http://127.0.0.1:8000 2>&1 | tee var/cloudflared.log
 ```
+
+`CLOUDFLARED_LOG` is the absolute path of that file on the spare Mac (`var/` is gitignored). Then, on P-1: `SPARE_MAC=<spare-host> CLOUDFLARED_LOG=<that-path> make watch-url`.
 
 ## 7. Ten-minute heart-rate run
 
@@ -148,7 +156,7 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000
 3. Open Homeward. The screen says "Prototype · not a medical device".
 4. Tap **Start check-in mode**. A number and `bpm` should replace "— bpm" within a few seconds while the watch is on the wrist. The first post goes out after 5 samples or 5 seconds. The status line then says `posted 5` (or `posted 1` if only one sample was ready at 5 seconds).
 5. Leave it running for 10 minutes. Sitting still is fine. This is not a medical check.
-6. On the Mac:
+6. On the spare Mac:
 
 ```bash
 sqlite3 var/homeward.db "SELECT t, value, source FROM vitals WHERE metric='hr' ORDER BY t DESC LIMIT 5;"
@@ -163,7 +171,7 @@ If the status stays `not posted`:
 
 - `401` in the API log means `deviceToken` and `WATCH_DEVICE_TOKEN` differ, or the token is still `PLACEHOLDER`.
 - `404` means no patient row has `watch_device_id` `watch_team01`. Re-run the seed in step 6.
-- A connection error means `API_BASE` is wrong, the tunnel is down, or the LAN path is missing Allow Local Networking.
+- A connection error means the tunnel is down or `API_BASE` is stale. On P-1, run `make watch-url` again.
 
 Samples stay queued for 10 minutes and are dropped after that. A failed post retries every 5 seconds while they are still queued.
 
