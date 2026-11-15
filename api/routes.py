@@ -10,9 +10,10 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 
 from api import db
-from api.main import require_reader
+from api.main import require_agent, require_reader
+from api.rules import evaluate
 from api.vitals import history, live_vitals
-from contracts.models import MedSchedule, Patient
+from contracts.models import CallResult, Flag, MedSchedule, Patient
 
 router = APIRouter()
 ACTIVE = ("dialing", "ringing", "in_call")
@@ -226,3 +227,158 @@ def inbound(body: InboundIn | None = None, _=Depends(require_reader)):
         body_out = _active_body(row)
     db.log_event("call.inbound", "scheduler", {"call_id": call_id, "patient_id": patient.id})
     return body_out
+
+
+def _result_view(c, call_id: str, tier: str) -> dict:
+    flags = []
+    for row in c.execute("SELECT doc FROM flags WHERE call_id = ? ORDER BY id", (call_id,)):
+        doc = json.loads(row["doc"])
+        flags.append({"code": doc["code"], "tier": doc["tier"], "reason": doc["reason"]})
+    approval_ids = []
+    for row in c.execute("SELECT id, doc FROM approvals"):
+        if json.loads(row["doc"]).get("call_id") == call_id:
+            approval_ids.append(row["id"])
+    return {"tier": tier, "flags": flags, "approval_ids": approval_ids}
+
+
+def _brief(result: CallResult, flags: list[Flag], tier: str) -> str:
+    text = "; ".join(flag.reason for flag in flags)
+    quotes = [s.quote for s in result.symptoms if s.quote]
+    if quotes:
+        text += " Quotes: " + " | ".join(quotes)
+    if tier == "RED":
+        text = "Urgent: " + text
+    return text[:400]
+
+
+def _fallback_propose(c, result: CallResult, flags: list[Flag], tier: str):
+    # shortcut: APPR-1 (#42) owns this write, upgrade = delete once approvals.core.propose imports
+    from contracts.models import Approval
+
+    if tier not in ("YELLOW", "RED") or not flags:
+        return []
+    approval = Approval.model_validate(
+        {
+            "id": db.new_id("apr"),
+            "patient_id": result.patient_id,
+            "call_id": result.call_id,
+            "flag_ids": [flag.id for flag in flags],
+            "tier": tier,
+            "action": "nurse_callback",
+            "recipients": ["nurse"],
+            "brief_text": _brief(result, flags, tier),
+            "status": "pending",
+            "created_at": db.now(),
+            "decision": None,
+            "executed_call_id": None,
+            "error": None,
+        }
+    )
+    c.execute(
+        "INSERT INTO approvals (id, patient_id, status, doc) VALUES (?, ?, ?, ?)",
+        (approval.id, approval.patient_id, approval.status, approval.model_dump_json()),
+    )
+    return [approval]
+
+
+def _propose(c, result: CallResult, flags: list[Flag], tier: str):
+    try:
+        from approvals.core import propose
+    except ImportError:
+        return _fallback_propose(c, result, flags, tier)
+    return propose(result, flags)
+
+
+def _ids(items) -> list[str]:
+    out = []
+    for item in items or []:
+        out.append(item.id if hasattr(item, "id") else item["id"])
+    return out
+
+
+def _mac_hangup() -> None:
+    try:
+        import mac.facetime as ft
+    except ImportError:
+        if os.environ.get("MAC_DRY_RUN") == "1":
+            return
+        raise
+    ft.hangup()
+
+
+@router.post("/v1/calls/{call_id}/result")
+def post_result(call_id: str, result: CallResult, _=Depends(require_agent)):
+    if result.call_id != call_id:
+        raise HTTPException(status_code=422, detail="call_id does not match")
+    with db.conn() as c:
+        sched = c.execute("SELECT patient_id FROM scheduled_calls WHERE id = ?", (call_id,)).fetchone()
+        if sched is None:
+            raise HTTPException(status_code=404, detail="call not found")
+        if sched["patient_id"] != result.patient_id:
+            raise HTTPException(status_code=422, detail="patient_id does not match the scheduled call")
+        existing = c.execute("SELECT tier FROM call_results WHERE call_id = ?", (call_id,)).fetchone()
+        if existing:
+            return _result_view(c, call_id, existing["tier"])
+        patient = _patient(c, result.patient_id)
+        last_row = c.execute(
+            "SELECT doc FROM call_results WHERE patient_id = ? AND call_id != ? ORDER BY received_at DESC LIMIT 1",
+            (result.patient_id, call_id),
+        ).fetchone()
+        last = None
+        if last_row:
+            try:
+                last = CallResult.model_validate(json.loads(last_row["doc"]))
+            except ValueError:
+                last = None
+        tier, raw_flags = evaluate(result, None, patient, last)
+        stored: list[Flag] = []
+        created = db.now()
+        for raw in raw_flags:
+            flag = Flag.model_validate(
+                {
+                    "id": db.new_id("flg"),
+                    "patient_id": result.patient_id,
+                    "call_id": call_id,
+                    "code": raw["code"],
+                    "tier": raw["tier"],
+                    "reason": raw["reason"],
+                    "rule_id": raw["rule_id"],
+                    "created_at": created,
+                    "status": "open",
+                    "evidence": raw.get("evidence") or {},
+                }
+            )
+            c.execute(
+                "INSERT INTO flags (id, patient_id, call_id, code, tier, status, doc) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (flag.id, flag.patient_id, flag.call_id, flag.code, flag.tier, flag.status, flag.model_dump_json()),
+            )
+            stored.append(flag)
+        c.execute(
+            "INSERT INTO call_results (call_id, patient_id, tier, doc, received_at) VALUES (?, ?, ?, ?, ?)",
+            (call_id, result.patient_id, tier, result.model_dump_json(), created),
+        )
+        call_status = "no_answer" if result.status == "no_answer" else "done"
+        c.execute("UPDATE scheduled_calls SET status = ? WHERE id = ?", (call_status, call_id))
+        approvals = [] if tier == "GREEN" else _propose(c, result, stored, tier)
+        view = _result_view(c, call_id, tier)
+        # Prefer ids the proposal function returned (dashboard may write on its own connection).
+        returned = _ids(approvals)
+        if returned:
+            view["approval_ids"] = returned
+    db.log_event("call.result", "rules", {"call_id": call_id, "tier": view["tier"]})
+    for flag in stored:
+        db.log_event("rules.flag", "rules", {"call_id": call_id, "code": flag.code, "tier": flag.tier})
+    return view
+
+
+@router.post("/v1/calls/{call_id}/hangup")
+def hangup(call_id: str, _=Depends(require_agent)):
+    with db.conn() as c:
+        row = c.execute("SELECT id FROM scheduled_calls WHERE id = ?", (call_id,)).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="call not found")
+    _mac_hangup()
+    with db.conn() as c:
+        c.execute("UPDATE scheduled_calls SET status = 'done' WHERE id = ?", (call_id,))
+    db.log_event("call.ended", "agent", {"call_id": call_id})
+    return Response(status_code=204)
