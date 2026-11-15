@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import sqlite3
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Annotated
@@ -387,9 +388,17 @@ def store_result(result: CallResult) -> dict:
             )
             stored.append(flag)
         c.execute(
-            "INSERT INTO call_results (call_id, patient_id, tier, doc, received_at) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO call_results (call_id, patient_id, tier, doc, received_at) VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(call_id) DO NOTHING",
             (call_id, result.patient_id, tier, result.model_dump_json(), created),
         )
+        if c.execute("SELECT changes()").fetchone()[0] == 0:
+            # The other finish_call stored the row. Drop this writer's flags and return that row.
+            c.rollback()
+            existing = c.execute("SELECT tier FROM call_results WHERE call_id = ?", (call_id,)).fetchone()
+            if existing is None:
+                raise sqlite3.IntegrityError(f"call_results conflict for {call_id}")
+            return _result_view(c, call_id, existing["tier"])
         call_status = "no_answer" if result.status == "no_answer" else "done"
         c.execute("UPDATE scheduled_calls SET status = ? WHERE id = ?", (call_status, call_id))
         approvals = [] if tier == "GREEN" else _propose(c, result, stored, tier)

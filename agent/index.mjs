@@ -8,6 +8,25 @@ import { TOOLS, api, bind, dispatch, endCall, getSession, reset as resetTools } 
 const SYSTEM = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'prompts/system.md'), 'utf8');
 const FALLBACK = "Hi, it's Homeward from your care team.";
 
+// onTranscript must return a string: bridge.mjs speaks it immediately. The sim ends with process.exit.
+let untilEnded = Promise.resolve();
+const realExit = process.exit;
+process.exit = (code = 0) => {
+  void (async () => {
+    try {
+      await untilEnded;
+    } catch {
+      // The post already failed. Still end the process.
+    }
+    realExit(code);
+  })();
+};
+
+function finishBeforeEnd(work) {
+  const run = Promise.resolve(work);
+  untilEnded = untilEnded.then(() => run, () => run).then(() => {}, () => {});
+}
+
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -143,7 +162,7 @@ const hook = {
     const line = urgentLine(text, session.context?.patient?.red_flags?.urgent_911 || []);
     if (line) {
       session.emergency = true;
-      void dispatch('finish_call', { status: 'emergency_script', end_reason: 'agent_hangup' });
+      finishBeforeEnd(dispatch('finish_call', { status: 'emergency_script', end_reason: 'agent_hangup' }));
       return line;
     }
     if (session.mode === 'escalation' && String(text || '').trim() && !session.finished) {
