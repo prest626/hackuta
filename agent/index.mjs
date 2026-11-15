@@ -8,19 +8,12 @@ import { TOOLS, api, bind, dispatch, endCall, getSession, reset as resetTools } 
 const SYSTEM = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'prompts/system.md'), 'utf8');
 const FALLBACK = "Hi, it's Homeward from your care team.";
 
-// onTranscript must return a string: bridge.mjs speaks it immediately. The sim ends with process.exit.
+// Bridge reads the transcript return as a string. sim.mjs awaits settled() before it exits.
 let untilEnded = Promise.resolve();
-const realExit = process.exit;
-process.exit = (code = 0) => {
-  void (async () => {
-    try {
-      await untilEnded;
-    } catch {
-      // The post already failed. Still end the process.
-    }
-    realExit(code);
-  })();
-};
+
+export function settled() {
+  return untilEnded;
+}
 
 function finishBeforeEnd(work) {
   const run = Promise.resolve(work);
