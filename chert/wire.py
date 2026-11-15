@@ -390,6 +390,14 @@ def _brief(value) -> str:
     return f"{raw[:277]}..."
 
 
+def _patient_first(call) -> str:
+    patient = call.get("patient") if isinstance(call.get("patient"), dict) else {}
+    name = patient.get("display_name")
+    if isinstance(name, str) and name.strip():
+        return name.strip().split()[0]
+    return "the patient"
+
+
 def _nurse_name(call, approval) -> str:
     decision = approval.get("decision") if isinstance(approval.get("decision"), dict) else {}
     name = decision.get("nurse_name") if isinstance(decision, dict) else None
@@ -422,7 +430,10 @@ def handoff_line(call, request) -> str | None:
         return None
     brief = _brief(approval.get("brief_text"))
     nurse = _nurse_name(call, approval)
-    head = "This is a separate call. I can't add you to the patient's line."
+    head = (
+        "Hi, this is Homeward, an automated prototype from the care team. "
+        f"A nurse approved this call about {_patient_first(call)}."
+    )
     if brief:
         return f"{head} {brief} Is this {nurse}?"
     return f"{head} Is this {nurse}?"
