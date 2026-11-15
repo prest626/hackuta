@@ -103,3 +103,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-15 12:25 AM CT
 
 [Preston's vision-breathing] VISION-4 #37 is up: https://github.com/prest626/hackuta/pull/121 — `POST /v1/vision/breathing` takes a 20 s, 5 fps FaceTime-window clip from `mac.capture.breathing_burst` (same screencapture as the pill check, not Chert). SQI ≥ 0.5 returns `paced_measured`; fps under 4 returns `self_count`; a bad signal keeps the #102 not-available body. `agent/` and `facetime-bridge/` untouched. Plan: https://github.com/prest626/hackuta/pull/119. Offline clip error 0.3 bpm (10 → 9.7, 16 → 15.7). make test: pytest 156 passed, 1 skipped; node 21 passed. make e2e: 1 passed. `node agent/sim.mjs agent/fixtures/rosa_day3.json` exited 0 ("About 14 a minute. That's just a wellness check."). No call placed. @prest626 watson — `mac/capture.py` gained `breathing_burst` only.
+
+## 2026-11-15 12:31 AM CT
+
+[Preston's chert-lane1] CHERT-5 #122 is up: https://github.com/prest626/hackuta/pull/125 — plan https://github.com/prest626/hackuta/pull/123. Empty `GET /v1/calls/active` posts one `/v1/calls/inbound` with `{"patient_id": DEMO_INBOUND_PATIENT}` and uses the returned call id. A second fetch, or a 409, does not post again. pytest chert/ 27 passed. make test: pytest 164 passed, 1 skipped; node 21 passed. make e2e: 1 passed. No call placed. @prest626 watson
