@@ -18,7 +18,7 @@ else:
 
 log = logging.getLogger("chert")
 
-GREETING = "Hi, this is Homeward, a prototype, and not a medical device."
+GREETING = "Hi, it's Homeward from your care team. This is a prototype, and not a medical device."
 ROOT = Path(__file__).resolve().parents[1]
 CALL_CAP = 120
 BUDGET = 600
@@ -176,8 +176,13 @@ async def entrypoint(ctx):
             # TTS so say() speaks the fixed lines; the realtime model alone may paraphrase them.
             tts=openai.TTS(),
         )
+        box["speak"] = session.say
+        box["handoff"] = wire.handoff_line(call, homeward_request)
         await session.start(
-            agent=wire.build_agent(wire.instructions(wire.load_prompt(), call), box),
+            agent=wire.build_agent(
+                wire.instructions(wire.load_prompt(), call, box["handoff"]),
+                box,
+            ),
             room=ctx.room,
         )
 
@@ -207,6 +212,15 @@ async def entrypoint(ctx):
             if not bridge_here():
                 return
             session = await ensure_session()
+            if box.get("kind") in wire.HANDOFF_KINDS:
+                if state.get("spoken"):
+                    return
+                state["spoken"] = True
+                line = box.get("handoff")
+                if line:
+                    log.info("handoff")
+                    await session.say(line)
+                return
             sentence = greet_once(ctx.room.metadata, state, time.time())
             if sentence:
                 log.info("greet")
