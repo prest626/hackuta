@@ -4,9 +4,9 @@ Homeward prototype. Mock patient Rosa. Not a medical device. A nurse approves ev
 
 ## Box
 
-7×2, Monday start, lids open, day letters toward the lens. Contrasting candies, not real medicine. Empty Mon-AM through Sat-AM. Sat-PM still has pills (the miss). Sun-AM empty (taken; only after 8:00 AM). Sun-PM still has pills (due 8:00 PM, not a miss). Before 8:00 AM, leave Sun-AM full too.
+7×1, Monday start, lids open, day letters toward the lens. Contrasting candies, not real medicine. One single row, Sunday through Saturday. Empty Monday through Friday. Sat-PM still has pills (the miss). Sun-PM still has pills (due 8:00 PM, not a miss).
 
-Light in front of the box, not a window behind it. No glare on the plastic. Box fills most of the frame, all 14 lids visible, hold still two seconds, self-view not covering the box.
+Light in front of the box, not a window behind it. No glare on the plastic. Box fills most of the frame, all 7 lids visible, hold still two seconds, self-view not covering the box.
 
 Photo fallback, said out loud if used: hold up `vision/eval/photos/03-sat-pm.jpg`.
 

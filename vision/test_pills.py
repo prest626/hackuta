@@ -133,11 +133,12 @@ def test_provider_switch_and_shrink(monkeypatch):
     from vision import pills
 
     monkeypatch.delenv("VISION_FAKE", raising=False)
+    monkeypatch.delenv("OPENAI_VISION_MODEL", raising=False)
     seen = {}
 
-    def grab(jpeg, layout):
+    def grab(jpeg, sched):
         seen["jpeg"] = jpeg
-        seen["layout"] = layout
+        seen["n"] = len(pills.allowed_labels(sched))
         return {"pillbox_visible": True, "compartments": [], "confidence": 0.9, "reason": "clear"}
 
     monkeypatch.setattr(pills, "_openai", grab)
@@ -145,16 +146,97 @@ def test_provider_switch_and_shrink(monkeypatch):
     big = Image.new("RGB", (2000, 10), (10, 20, 30))
     buf = io.BytesIO()
     big.save(buf, format="JPEG")
-    read = pills.read_organizer(buf.getvalue(), "7x2")
-    assert read["model"] == pills.OPENAI_MODEL
-    assert seen["layout"] == "7x2"
+    read = pills.read_organizer(buf.getvalue(), schedule())
+    assert read["model"] == pills.openai_model() == "gpt-4.1"
+    assert seen["n"] == 14
     opened = Image.open(io.BytesIO(seen["jpeg"]))
     assert max(opened.size) <= 1024
 
+    wide = json.loads(json.dumps(schedule()))
+    wide["organizer_layout"] = "7x4"
+    wide["slots"] = [
+        {"slot": "AM", "local_time": "08:00"},
+        {"slot": "NOON", "local_time": "12:00"},
+        {"slot": "PM", "local_time": "18:00"},
+        {"slot": "BED", "local_time": "22:00"},
+    ]
     monkeypatch.setenv("VISION_PROVIDER", "gemini")
-    read = pills.read_organizer(buf.getvalue(), "7x4")
+    read = pills.read_organizer(buf.getvalue(), wide)
     assert read["model"] == pills.GEMINI_MODEL
-    assert seen["layout"] == "7x4"
+    assert seen["n"] == 28
+
+
+def _rosa():
+    rows = json.loads((Path(__file__).resolve().parents[1] / "data" / "mock" / "med_schedules.json").read_text())
+    return next(row for row in rows if row["patient_id"] == "pat_rosa01")
+
+
+def test_rosa_schema_enum_is_sun_through_sat_pm():
+    from vision.pills import allowed_labels, read_schema
+
+    labels = [f"{day}-PM" for day in ("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")]
+    assert allowed_labels(_rosa()) == labels
+    enum = read_schema(_rosa())["properties"]["compartments"]["items"]["properties"]["label"]["enum"]
+    assert enum == labels
+
+
+def test_rosa_sunday_morning_due_is_mon_through_sat_pm():
+    from vision.pills import check_pillbox, expected_empty
+
+    morning = datetime(2026, 11, 15, 9, 0, tzinfo=CHICAGO)
+    due = ["MON-PM", "TUE-PM", "WED-PM", "THU-PM", "FRI-PM", "SAT-PM"]
+    assert expected_empty(_rosa(), morning) == due
+    assert check_pillbox(b"jpeg", _rosa(), morning).state == "missed_possible"
+
+
+def test_openai_request_uses_model_detail_and_temperature(monkeypatch):
+    import sys
+    import types
+
+    from vision import pills
+
+    monkeypatch.delenv("VISION_FAKE", raising=False)
+    monkeypatch.setenv("OPENAI_VISION_MODEL", "gpt-4.1")
+    seen = {}
+
+    class _Msg:
+        content = '{"pillbox_visible": true, "compartments": [], "confidence": 0.9, "reason": "clear"}'
+
+    class _Choice:
+        message = _Msg()
+
+    class _Resp:
+        choices = [_Choice()]
+
+    class _Completions:
+        def create(self, **kwargs):
+            seen.update(kwargs)
+            return _Resp()
+
+    class _Chat:
+        completions = _Completions()
+
+    class _Client:
+        def __init__(self, *args, **kwargs):
+            self.chat = _Chat()
+
+    mod = types.ModuleType("openai")
+    mod.OpenAI = _Client
+    monkeypatch.setitem(sys.modules, "openai", mod)
+    img = Image.new("RGB", (8, 8), (1, 2, 3))
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    pills._openai(buf.getvalue(), _rosa())
+    assert seen["model"] == "gpt-4.1"
+    assert seen["temperature"] == 0
+    image = seen["messages"][0]["content"][1]["image_url"]
+    assert image["detail"] == "high"
+    enum = seen["response_format"]["json_schema"]["schema"]["properties"]["compartments"]["items"]["properties"]["label"]["enum"]
+    assert enum == [f"{day}-PM" for day in ("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")]
+    text = seen["messages"][0]["content"][0]["text"]
+    assert "Do not name a medication." in text
+    assert "single row of 7 day compartments" in text
+    assert "translucent lids" in text
 
 
 def test_read_failure_is_unknown(monkeypatch):

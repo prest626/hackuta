@@ -19,19 +19,17 @@ def test_wake_up_card_and_live_words():
             assert stem not in lowered
         assert "not a medical device" in lowered
         for phrase in (
-            "7×2",
+            "7×1",
             "Monday start",
             "lids open",
             "day letters",
             "candies",
             "not real medicine",
             "Sat-PM still has pills",
-            "Sun-AM empty",
             "Sun-PM still has pills",
-            "8:00 AM",
             "8:00 PM",
             "Light in front",
-            "all 14 lids",
+            "all 7 lids",
             "hold still two seconds",
             "self-view",
             "python -m ingest.replay data/mock/hr_live_rosa.json",

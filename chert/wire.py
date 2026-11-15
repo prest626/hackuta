@@ -47,10 +47,15 @@ END_REASONS = (
 )
 HANDOFF_KINDS = ("nurse_callback", "family_group_call")
 BREATH_WAIT_S = 20
+PILL_HOLD_S = 2.0
+PILL_WINDOW_S = 1.5
+HOLD_STILL = "Hold the organizer still, facing the camera, about a foot away."
 # Replaces the 3:45 breathing slot in the loaded prompt. This call stops at 2:00.
 CHECKIN_ORDER = (
     "Call order for this 2:00 check-in: check_pillbox, then breathing_check right away, "
     "then record_answer, then get_vitals, then finish_call. "
+    f"Before check_pillbox, say: {HOLD_STILL} "
+    "Call check_pillbox only after the patient confirms the organizer is up. "
     "breathing_check asks them to sit still for 20 seconds. "
     "Start it immediately after the pill check so that wait ends before 2:00. "
     "Do not leave breathing until 3:45."
@@ -191,14 +196,53 @@ def emergency_line(text, phrases=PHRASES):
     return None
 
 
-def latest_jpeg(directory) -> Path | None:
+def _frame_stamp(path: Path) -> float:
+    try:
+        return int(path.stem) / 1000.0
+    except ValueError:
+        return path.stat().st_mtime
+
+
+def edge_variance(path: Path) -> float:
+    """PIL edges only. The spare Mac does not import cv2 for this pick."""
+    from PIL import Image, ImageFilter, ImageStat
+
+    try:
+        img = Image.open(path).convert("L")
+    except Exception:
+        return 0.0
+    return float(ImageStat.Stat(img.filter(ImageFilter.FIND_EDGES)).var[0])
+
+
+def sharpest_jpeg(directory, *, seconds: float = PILL_WINDOW_S) -> Path | None:
+    """Sharpest JPEG in the last `seconds` of frames. Newest is not enough."""
     root = Path(directory)
     if not root.is_dir():
         return None
-    files = [path for path in root.glob("*.jpg") if path.is_file()]
-    if not files:
+    ranked = []
+    for path in root.glob("*.jpg"):
+        if path.is_file():
+            ranked.append((_frame_stamp(path), path))
+    if not ranked:
         return None
-    return max(files, key=lambda path: (path.stat().st_mtime, path.name))
+    latest = max(stamp for stamp, _path in ranked)
+    window = [path for stamp, path in ranked if latest - seconds <= stamp <= latest]
+    if not window:
+        return None
+    return max(window, key=lambda path: (edge_variance(path), path.name))
+
+
+async def read_pill_tool(box) -> str:
+    """Yield for the hold, then the sharpest recent frame. Does not block the loop."""
+    await asyncio.sleep(PILL_HOLD_S)
+    attempt = int(box.get("pill_attempt") or 0)
+    jpeg = await asyncio.to_thread(sharpest_jpeg, box.get("frames") or "")
+    line, pill = await asyncio.to_thread(
+        read_pillbox, jpeg, RING, box.get("call_id") or "", attempt
+    )
+    box["pill"] = pill
+    box["pill_attempt"] = attempt + 1
+    return line
 
 
 def read_vitals(patient_id: str):
@@ -460,11 +504,8 @@ def build_agent(instructions: str, box: dict):
     class Homeward(Agent):
         @function_tool()
         async def check_pillbox(self) -> str:
-            """Compare the pill organizer on camera to the med schedule. Never identify a pill or advise a dose."""
-            jpeg = latest_jpeg(box.get("frames") or "")
-            line, pill = read_pillbox(jpeg, RING, box.get("call_id") or "")
-            box["pill"] = pill
-            return line
+            """Say "Hold the organizer still, facing the camera, about a foot away." Call this only after the patient confirms the organizer is up. Never identify a pill or advise a dose."""
+            return await read_pill_tool(box)
 
         @function_tool()
         async def breathing_check(self) -> str:

@@ -1,7 +1,6 @@
 import asyncio
 import base64
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -27,6 +26,8 @@ def test_prompt_includes_call_context():
     assert '"day_index": 3' in text
     assert wire.TONE in text
     assert wire.CHECKIN_ORDER in text
+    assert wire.HOLD_STILL in text
+    assert "confirms the organizer is up" in text
 
 
 def test_breathing_comes_right_after_the_pill_check():
@@ -160,14 +161,27 @@ def test_emergency_line_matches_the_call_agent():
     assert wire.EMERGENCY_LINE == "This could be serious. Please hang up and call 911 now."
 
 
-def test_latest_jpeg_is_the_pill_frame(tmp_path, monkeypatch):
-    old = tmp_path / "1.jpg"
-    new = tmp_path / "2.jpg"
-    payload = b"\xff\xd8\xff\xd9"
-    old.write_bytes(payload)
-    new.write_bytes(payload)
-    os.utime(old, (1, 1))
-    os.utime(new, (2, 2))
+def _jpeg(path: Path, sharp: bool) -> None:
+    from PIL import Image
+
+    img = Image.new("L", (48, 48), 30)
+    if sharp:
+        px = img.load()
+        for y in range(48):
+            for x in range(48):
+                px[x, y] = 255 if (x // 2 + y // 2) % 2 == 0 else 0
+    img.save(path, format="JPEG", quality=95)
+
+
+def test_sharpest_frame_in_the_last_second_and_a_half(tmp_path, monkeypatch):
+    newest = 1_700_000_000_000
+    _jpeg(tmp_path / f"{newest - 5_000}.jpg", sharp=True)
+    _jpeg(tmp_path / f"{newest - 1_000}.jpg", sharp=True)
+    _jpeg(tmp_path / f"{newest - 200}.jpg", sharp=False)
+    _jpeg(tmp_path / f"{newest}.jpg", sharp=False)
+    chosen = wire.sharpest_jpeg(tmp_path)
+    assert chosen is not None
+    assert chosen.name == f"{newest - 1_000}.jpg"
     seen = {}
 
     def copy(jpeg, ring):
@@ -175,19 +189,103 @@ def test_latest_jpeg_is_the_pill_frame(tmp_path, monkeypatch):
         return Path(ring) / "x.jpg"
 
     def request(method, path, body=None):
-        seen["path"] = path
         seen["body"] = body
-        return {"state": "ok"}
+        return {"state": "ok", "image_quality": "good", "confidence": 0.9}
 
     monkeypatch.setattr(homeward, "_copy_jpeg", copy)
     monkeypatch.setattr(homeward, "_request", request)
-    line, pill = wire.read_pillbox(wire.latest_jpeg(tmp_path), tmp_path / "ring", "call_rosa01d3")
-    assert seen["jpeg"] == new
-    assert seen["path"] == "/v1/vision/pillcheck"
+    line, pill = wire.read_pillbox(chosen, tmp_path / "ring", "call_rosa01d3")
+    assert seen["jpeg"] == chosen
     assert seen["body"]["call_id"] == "call_rosa01d3"
-    assert seen["body"]["jpeg_b64"] == base64.b64encode(payload).decode("ascii")
+    assert seen["body"]["jpeg_b64"] == base64.b64encode(chosen.read_bytes()).decode("ascii")
     assert line == homeward.EMPTY
     assert pill["state"] == "ok"
+
+
+def test_second_unknown_advances_the_attempt(tmp_path, monkeypatch):
+    monkeypatch.setattr(wire, "PILL_HOLD_S", 0)
+    (tmp_path / "1000.jpg").write_bytes(b"\xff\xd8\xff\xd9")
+    attempts = []
+    real = wire.read_pillbox
+
+    def spy(jpeg, ring, call_id, attempt=0):
+        attempts.append(attempt)
+        return real(jpeg, ring, call_id, attempt)
+
+    monkeypatch.setattr(wire, "read_pillbox", spy)
+    monkeypatch.setattr(homeward, "_copy_jpeg", lambda *_args, **_kwargs: tmp_path / "x.jpg")
+    monkeypatch.setattr(
+        homeward,
+        "_request",
+        lambda *_args, **_kwargs: {"state": "unknown", "image_quality": "glare", "confidence": 0.2},
+    )
+    box = {"frames": tmp_path, "call_id": "call_rosa01d3"}
+    first = asyncio.run(wire.read_pill_tool(box))
+    second = asyncio.run(wire.read_pill_tool(box))
+    third = asyncio.run(wire.read_pill_tool(box))
+    assert attempts == [0, 1, 2]
+    assert first == "Tilt it away from the light."
+    assert second == "Tilt it away from the light."
+    assert third == homeward.COULD_NOT_SEE
+
+
+def test_pill_hold_leaves_the_loop_free(tmp_path, monkeypatch):
+    monkeypatch.setattr(wire, "PILL_HOLD_S", 0.05)
+    (tmp_path / "1000.jpg").write_bytes(b"\xff\xd8\xff\xd9")
+    monkeypatch.setattr(homeward, "_copy_jpeg", lambda *_args, **_kwargs: tmp_path / "x.jpg")
+    monkeypatch.setattr(
+        homeward,
+        "_request",
+        lambda *_args, **_kwargs: {"state": "ok", "image_quality": "good", "confidence": 0.9},
+    )
+
+    async def run():
+        ticks = {"n": 0}
+
+        async def ticker():
+            while True:
+                ticks["n"] += 1
+                await asyncio.sleep(0.01)
+
+        task = asyncio.create_task(ticker())
+        await wire.read_pill_tool({"frames": tmp_path, "call_id": "call_rosa01d3"})
+        task.cancel()
+        assert ticks["n"] >= 2
+
+    asyncio.run(run())
+
+
+def test_slow_pill_read_leaves_the_loop_free(tmp_path, monkeypatch):
+    monkeypatch.setattr(wire, "PILL_HOLD_S", 0)
+    (tmp_path / "1000.jpg").write_bytes(b"\xff\xd8\xff\xd9")
+
+    async def run():
+        marks = {"ticks": 0, "reading": False}
+
+        async def ticker():
+            while True:
+                if marks["reading"]:
+                    marks["ticks"] += 1
+                await asyncio.sleep(0.01)
+
+        def slow(jpeg, ring, call_id, attempt=0):
+            import time
+
+            marks["reading"] = True
+            try:
+                time.sleep(0.5)
+            finally:
+                marks["reading"] = False
+            return homeward.EMPTY, {"state": "ok"}
+
+        monkeypatch.setattr(wire, "read_pillbox", slow)
+        task = asyncio.create_task(ticker())
+        line = await wire.read_pill_tool({"frames": tmp_path, "call_id": "call_rosa01d3"})
+        task.cancel()
+        assert line == homeward.EMPTY
+        assert marks["ticks"] >= 2
+
+    asyncio.run(run())
 
 
 def test_read_pillbox_posts_jpeg_b64(tmp_path, monkeypatch):

@@ -7,7 +7,9 @@ so the harness runs before real photos arrive.
 
 `python -m vision.eval --reader pixels` scores those drawings from the same
 cell geometry, with no network. `--dir` scores a photo folder (preston skips
-when empty; the CC set is a report, not a gate).
+when empty; the CC set is a report, not a gate). `make vision-test` is the
+demo gate and scores `vision/eval/preston/` once those frames are on disk.
+This synthetic set stays a report.
 """
 
 import argparse

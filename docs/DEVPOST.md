@@ -22,7 +22,7 @@ Homeward is a care agent that calls a patient on FaceTime in the first days afte
 
 FaceTime is the app. The parts of the call that matter use the camera:
 
-- **Looks at the pillbox.** "Can you hold up your pill organizer?" The agent takes the sharpest frame from the call video, sends it to a vision model, and compares each compartment with Rosa's med schedule and the dose times that have passed: empty, still full, or unknown. Saturday evening is still full, so it **asks** ("Did you take those from somewhere else?") and records a *possible* missed dose for the nurse. It never names a pill and never tells the patient to take, skip, or change a dose.
+- **Looks at the pillbox.** "Can you hold up your pill organizer?" The agent first says "Hold the organizer still, facing the camera, about a foot away," and calls the pill check only after the patient confirms it is up. It waits about two seconds, takes the sharpest frame from the last 1.5 seconds, sends that one frame to a vision model, and compares the single row of seven day compartments with Rosa's med schedule and the dose times that have passed: empty, still full, or unknown. Saturday evening is still full, so it **asks** ("Did you take those from somewhere else?") and records a *possible* missed dose for the nurse. It never names a pill and never tells the patient to take, skip, or change a dose.
   [VERIFY AT FREEZE: The pillbox read in the demo is live, from the FaceTime frame.
   Fallback: In the demo video, the pillbox read uses a canned fixture result, labeled on screen as a fixture; the live vision path is built and runs with an API key.]
 - **Listens and asks.** A short structured symptom check from Rosa's mock discharge plan: better, same or worse? More breathless on the stairs? Swollen ankles? Weight up? The agent confirms every "yes" once and stores the patient's own words.
@@ -46,7 +46,7 @@ Fallback: The callback is built and exercised in the simulated call. The demo ha
 
 ### What's AI, and what isn't
 
-- **AI:** the conversation (OpenAI Realtime, through LiveKit) and the pillbox read (gpt-4o-mini, returning structured JSON; Gemini 2.5 Flash is supported as an alternative).
+- **AI:** the conversation (OpenAI Realtime, through LiveKit) and the pillbox read (gpt-4.1 by default, `OPENAI_VISION_MODEL` to override, returning structured JSON; Gemini 2.5 Flash is supported as an alternative).
 - **Not AI:** the tier (a rules file), the approval gate, the call scheduler, and the safety-critical sentences. Those are fixed scripted lines spoken through text-to-speech, so the model can't paraphrase them. If a patient describes an emergency, the 911 line is chosen by code outside the model, and it's a fixed sentence.
 
 ### Safety, privacy and disclosure
@@ -61,7 +61,7 @@ Fallback: The callback is built and exercised in the simulated call. The demo ha
   The prompt adds one tone line: kind and straight to the point, one or two short sentences, warm, never cute. The greeting says it is an automated assistant for the care team, a prototype, and not a medical device. It does not claim to be a clinician.
   `CHERT_FACE` defaults off, so the call is voice only. `fallback` draws a face on the same participant and publishes no extra audio. `simli` is a guarded path that skips while the agent is publishing audio. We do not claim Simli works.
 - **Vision:** `vision/pills.py` reads the pillbox compartments against the schedule and returns empty, not-empty, or unknown. `vision/breath.py` estimates the breathing rate locally with NumPy and OpenCV (frame motion, then an FFT, then a peak in the breathing band, abstaining on a low-quality signal). An offline eval harness scores the pill read on 14 synthetic pillbox images and 33 public, Creative Commons–licensed pillbox photos with our own labels.
-  `make vision-test` scores `vision/eval/photos` against `vision/eval/labels.json`. The pill line passes at 80% or better. It also prints an information-only breathing line from real call frames when those frames are on disk. That line does not decide pass or fail. Pill-read accuracy on real photos of our own is not yet measured. The 80% figure is the pass bar, not a score from a live run.
+  `make vision-test` is the demo gate. It scores real frames in `vision/eval/preston/` against `vision/eval/preston/labels.json` once those photos are on disk, and the pill line passes at 80% or better. The synthetic set under `vision/eval/photos` is a report only (`python -m vision.eval`), not the gate. It also prints an information-only breathing line from real call frames when those frames are on disk. That line does not decide pass or fail. Pill-read accuracy on real photos of our own is not yet measured. The 80% figure is the pass bar, not a score from a live run.
 - **Backend:** FastAPI with SQLite: patients, schedules, calls, flags, approvals. A rules file (`api/rules.yaml`) with caps, a call scheduler, and an approvals module. JSON Schema contracts shared by every part of the system.
 - **Heart rate:** a watchOS app (SwiftUI, workout session) posts heart rate through a Cloudflare tunnel to the ingest API. `python -m ingest.replay` posts labeled mock heart rate when the watch is off, from a 60-day mock history with a deliberate resting-rate drift for Rosa.
 - **Dashboard:** plain HTML, CSS, and JavaScript: tier, reasons, quotes, pillbox frame, a heart-rate sparkline, and the Approve button.
@@ -81,7 +81,7 @@ Homeward has one human developer, Preston, working with a team of AI agents:
 ## Challenges we ran into
 
 - **Getting eyes and ears out of FaceTime.** FaceTime isn't an API. When the hosted Chert line was unstable during setup, we built our own spare-Mac bridge as a fallback. Both paths feed the same backend contract.
-- **Choosing which frame to trust.** The pill read uses the sharpest frame, and it answers "unknown" when the box is blurred, angled, or covered.
+- **Choosing which frame to trust.** The pill read uses the sharpest frame from the last 1.5 seconds, after a short hold, and it answers "unknown" when the box is blurred, angled, or covered.
 - **Keeping a realtime voice model on script.** It likes to paraphrase. Safety-critical lines go through fixed text-to-speech instead.
 - **Being kind without playing doctor.** The agent asks; it never advises.
 - An end reason outside the six allowed values is stored as `agent_hangup`, and a duplicate result is idempotent. Call 7 sent `check-in complete` and `finish_call` failed on that build.

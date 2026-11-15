@@ -60,8 +60,10 @@ def test_seed_twice_leaves_three_mock_patients(db_path):
         rosa_box = json.loads(
             c.execute("SELECT doc FROM med_schedules WHERE patient_id = 'pat_rosa01'").fetchone()["doc"]
         )
-    assert rosa_box["organizer_layout"] == "7x2"
+    assert rosa_box["organizer_layout"] == "7x1"
     assert rosa_box["week_starts_on"] == "MON"
+    assert rosa_box["slots"] == [{"slot": "PM", "local_time": "20:00"}]
+    assert [med["slots"] for med in rosa_box["meds"]] == [["PM"], ["PM"]]
     assert "DEMO_PATIENT_PHONE" not in json.dumps(docs)
 
 

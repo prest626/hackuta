@@ -2,24 +2,23 @@
   {
     "patient_id": "pat_rosa01",
     "is_mock": true,
-    "organizer_layout": "7x2",
+    "organizer_layout": "7x1",
     "week_starts_on": "MON",
     "slots": [
-      {"slot": "AM", "local_time": "08:00"},
       {"slot": "PM", "local_time": "20:00"}
     ],
     "meds": [
       {
         "name": "Medication A (mock diuretic)",
         "dose": "1 tablet",
-        "slots": ["AM"],
-        "instructions": "Take in the morning (mock instruction)."
+        "slots": ["PM"],
+        "instructions": "Evening compartment (mock instruction)."
       },
       {
         "name": "Medication B (mock beta blocker)",
         "dose": "1 tablet",
-        "slots": ["AM", "PM"],
-        "instructions": "Take twice daily (mock instruction)."
+        "slots": ["PM"],
+        "instructions": "Evening compartment (mock instruction)."
       }
     ],
     "start_date": "2026-11-12"

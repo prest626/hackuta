@@ -31,13 +31,35 @@ READ_SCHEMA = {
     },
     "required": ["pillbox_visible", "compartments", "confidence", "reason"],
 }
-OPENAI_MODEL = "gpt-4o-mini"
+OPENAI_MODEL = "gpt-4.1"
 GEMINI_MODEL = "gemini-2.5-flash"
 CONFIDENCE_MIN = 0.7
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "read.json"
 GREEN = Path(__file__).resolve().parent / "fixtures" / "read_green.json"
 _DAYS = ("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
+# Printed left to right on the single-row organizer. week_starts_on is only for due times.
+_ROW = ("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")
 _LABEL = re.compile(r"^(SUN|MON|TUE|WED|THU|FRI|SAT)-(AM|NOON|PM|BED)$")
+
+
+def openai_model() -> str:
+    return os.environ.get("OPENAI_VISION_MODEL") or OPENAI_MODEL
+
+
+def allowed_labels(schedule) -> list[str]:
+    """Compartments that exist: one label per day in the row, for each schedule slot."""
+    schedule = _schedule(schedule)
+    slots = [slot.slot for slot in sorted(schedule.slots, key=lambda slot: slot.local_time)]
+    return [f"{day}-{name}" for day in _ROW for name in slots]
+
+
+def read_schema(schedule) -> dict:
+    schema = json.loads(json.dumps(READ_SCHEMA))
+    schema["properties"]["compartments"]["items"]["properties"]["label"] = {
+        "type": "string",
+        "enum": allowed_labels(schedule),
+    }
+    return schema
 
 
 def _schedule(schedule) -> MedSchedule:
@@ -84,12 +106,15 @@ def _shrink(jpeg: bytes) -> bytes:
     return buf.getvalue()
 
 
-def _prompt(layout: str) -> str:
+def _prompt(labels: list[str]) -> str:
+    listed = ", ".join(labels)
     return (
         "This is one photo of a weekly pill organizer. "
-        f"Layout {layout}. "
-        "Say whether the organizer is visible. For each compartment you can see, "
-        "give the label (MON-AM, SAT-PM, and so on) and whether it has pills. "
+        "It is a single row of 7 day compartments with translucent lids. "
+        "A lid that is open or see-through counts. "
+        "If you cannot see inside, say the organizer is not visible. "
+        f"Use only these labels: {listed}. "
+        "For each compartment you can see, give its label and whether it has pills. "
         "Give a confidence from 0 to 1 and a short reason. "
         "Do not name a medication. Do not say to take or skip a dose."
     )
@@ -102,51 +127,57 @@ def _parse(text: str) -> dict:
     return data
 
 
-def _openai(jpeg: bytes, layout: str) -> dict:
+def _openai(jpeg: bytes, schedule) -> dict:
     import base64
 
     from openai import OpenAI
 
+    labels = allowed_labels(schedule)
     encoded = base64.b64encode(jpeg).decode()
     resp = OpenAI().chat.completions.create(
-        model=OPENAI_MODEL,
+        model=openai_model(),
+        temperature=0,
         messages=[
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": _prompt(layout)},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded}"}},
+                    {"type": "text", "text": _prompt(labels)},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{encoded}", "detail": "high"},
+                    },
                 ],
             }
         ],
         response_format={
             "type": "json_schema",
-            "json_schema": {"name": "pill_read", "strict": True, "schema": READ_SCHEMA},
+            "json_schema": {"name": "pill_read", "strict": True, "schema": read_schema(schedule)},
         },
     )
     return _parse(resp.choices[0].message.content or "")
 
 
-def _gemini(jpeg: bytes, layout: str) -> dict:
+def _gemini(jpeg: bytes, schedule) -> dict:
     from google import genai
     from google.genai import types
 
+    labels = allowed_labels(schedule)
     client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
     resp = client.models.generate_content(
         model=GEMINI_MODEL,
         contents=[
             types.Part.from_bytes(data=jpeg, mime_type="image/jpeg"),
-            _prompt(layout),
+            _prompt(labels),
         ],
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
-            response_json_schema=READ_SCHEMA,
+            response_json_schema=read_schema(schedule),
         ),
     )
     return _parse(resp.text or "")
 
 
-def read_organizer(jpeg: bytes, layout: str) -> dict:
+def read_organizer(jpeg: bytes, schedule) -> dict:
     """One structured read. VISION_FAKE=fixtures or green skips the network."""
     fake = os.environ.get("VISION_FAKE")
     if fake == "fixtures" or fake == "green":
@@ -156,11 +187,11 @@ def read_organizer(jpeg: bytes, layout: str) -> dict:
         return data
     jpeg = _shrink(jpeg)
     if os.environ.get("VISION_PROVIDER") == "gemini":
-        data = _gemini(jpeg, layout)
+        data = _gemini(jpeg, schedule)
         data["model"] = GEMINI_MODEL
         return data
-    data = _openai(jpeg, layout)
-    data["model"] = OPENAI_MODEL
+    data = _openai(jpeg, schedule)
+    data["model"] = openai_model()
     return data
 
 
@@ -212,7 +243,7 @@ def check_pillbox(jpeg: bytes, schedule, now: datetime) -> PillCheck:
     schedule = _schedule(schedule)
     expected = expected_empty(schedule, now)
     try:
-        read = read_organizer(jpeg, schedule.organizer_layout)
+        read = read_organizer(jpeg, schedule)
     except Exception as exc:
         print(f"vision.pill_check read failed {type(exc).__name__}")
         return PillCheck(state="unknown", expected_empty=expected, image_quality="partial", confidence=0)
