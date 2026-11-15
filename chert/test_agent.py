@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import json
 import sys
@@ -5,6 +6,8 @@ from datetime import datetime
 from pathlib import Path
 
 import chert.agent as agent
+import chert.homeward as homeward
+import chert.wire as wire
 
 
 def test_import_does_not_pull_livekit():
@@ -53,3 +56,157 @@ def test_budget_guard_fake_clock():
     assert agent.can_place(clock["now"], call) is True
     clock["now"] = 501
     assert agent.can_place(clock["now"], call) is False
+
+
+def test_cap_goodbye_uses_the_patients_first_name():
+    rosa = {"patient": {"display_name": "Rosa Alvarez"}}
+    assert agent.cap_goodbye(rosa) == (
+        "We're out of time today. Your nurse will review this. Take care, Rosa."
+    )
+    assert agent.cap_goodbye({}) == "We're out of time today. Your nurse will review this. Take care."
+
+
+def test_chert_call_id_is_raw_metadata():
+    raw = "c7161775-cd89-44e4-b1b1-93cc9c346b21"
+    meta = json.dumps({"chert_call": raw, "call_id": "call_rosa01d3"})
+    assert agent.chert_call_id(meta) == raw
+    assert agent.chert_call_id(meta.encode()) == raw
+    assert agent.chert_call_id("") == ""
+    assert agent.chert_call_id("{") == ""
+    assert agent.chert_call_id(json.dumps({"call_id": "call_rosa01d3"})) == ""
+
+
+def test_hangup_arms_once():
+    started = []
+    box = {}
+    agent.arm_hangup(box, lambda: started.append(1))
+    box["hangup"]()
+    box["hangup"]()
+    assert started == [1]
+
+
+def _cap_box():
+    return {
+        "call_id": "call_rosa01d3",
+        "patient_id": "pat_rosa01",
+        "day_index": 3,
+        "kind": "checkin",
+        "direction": "outbound",
+        "posted": False,
+        "symptoms": [],
+        "started_at": "2026-11-15T00:00:00Z",
+    }
+
+
+def test_stop_at_cap_interrupts_says_goodbye_then_hangs_up(monkeypatch):
+    posts = []
+    monkeypatch.setattr(wire, "post_result", lambda body: posts.append(body["end_reason"]))
+    order = []
+    slept = []
+
+    async def sleep(seconds):
+        slept.append(seconds)
+
+    async def interrupt():
+        order.append("interrupt")
+
+    async def speak(line):
+        order.append(("say", line))
+
+    box = _cap_box()
+    box["patient"] = {"display_name": "Rosa Alvarez"}
+    box["interrupt"] = interrupt
+    box["speak"] = speak
+    box["hangup"] = lambda: order.append("hangup")
+    line = asyncio.run(agent.stop_at_cap(box, sleep=sleep))
+    goodbye = "We're out of time today. Your nurse will review this. Take care, Rosa."
+    assert slept == [agent.CALL_CAP]
+    assert line == goodbye
+    assert order == ["interrupt", ("say", goodbye), "hangup"]
+    assert posts == ["hard_stop"]
+    assert box["result"]["end_reason"] == "hard_stop"
+    assert not any(name == "livekit" or name.startswith("livekit.") for name in sys.modules)
+
+
+def test_cap_and_hangup_post_one_result(monkeypatch):
+    posts = []
+    monkeypatch.setattr(wire, "post_result", lambda body: posts.append(body["end_reason"]))
+
+    async def sleep(_seconds):
+        return None
+
+    async def speak(_line):
+        return None
+
+    box = _cap_box()
+    box["patient"] = {"display_name": "Rosa"}
+    box["speak"] = speak
+    started = []
+    agent.arm_hangup(box, lambda: started.append(1))
+    asyncio.run(agent.stop_at_cap(box, sleep=sleep))
+    asyncio.run(agent.stop_at_cap(box, sleep=sleep))
+    assert wire.finish_call(box) == "Already sent to your nurse."
+    assert wire.submit(box, "patient_hangup") == "Already sent to your nurse."
+    box["hangup"]()
+    assert posts == ["hard_stop"]
+    assert started == [1]
+    assert box["result"]["end_reason"] == "hard_stop"
+
+
+def test_finish_call_then_cap_does_not_post_again(monkeypatch):
+    posts = []
+    monkeypatch.setattr(homeward, "_request", lambda *_a, **_k: posts.append(1))
+
+    async def sleep(_seconds):
+        return None
+
+    def speak(*_args, **_kwargs):
+        raise AssertionError("cap should not speak over a finished call")
+
+    box = _cap_box()
+    started = []
+    agent.arm_hangup(box, lambda: started.append(1))
+    assert wire.finish_call(box) == wire.REVIEW_LINE
+    box["speak"] = speak
+    assert asyncio.run(agent.stop_at_cap(box, sleep=sleep)) is None
+    assert wire.finish_call(box) == "Already sent to your nurse."
+    assert posts == [1]
+    assert started == [1]
+    assert box["result"]["end_reason"] == "agent_hangup"
+
+
+def test_cap_sleeps_when_say_returns_no_handle(monkeypatch):
+    monkeypatch.setattr(wire, "post_result", lambda body: None)
+    slept = []
+
+    async def sleep(seconds):
+        slept.append(seconds)
+
+    box = _cap_box()
+    box["patient"] = {"display_name": "Rosa"}
+    box["speak"] = lambda _line: None
+    box["hangup"] = lambda: None
+    asyncio.run(agent.stop_at_cap(box, sleep=sleep))
+    assert slept == [agent.CALL_CAP, agent.CAP_PLAYOUT]
+
+
+def test_cap_still_hangs_up_when_say_and_interrupt_fail(monkeypatch):
+    monkeypatch.setattr(wire, "post_result", lambda body: None)
+    hung = []
+
+    async def sleep(_seconds):
+        return None
+
+    def interrupt():
+        raise RuntimeError("busy")
+
+    def speak(*_args, **_kwargs):
+        raise RuntimeError("tts")
+
+    box = _cap_box()
+    box["interrupt"] = interrupt
+    box["speak"] = speak
+    box["hangup"] = lambda: hung.append(1)
+    line = asyncio.run(agent.stop_at_cap(box, sleep=sleep))
+    assert line == "We're out of time today. Your nurse will review this. Take care."
+    assert hung == [1]

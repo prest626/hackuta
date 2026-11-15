@@ -576,3 +576,103 @@ def test_approved_handoff_sentence_and_dashboard_wrap(monkeypatch):
         "started_at": "2026-11-15T00:00:00Z",
     }
     assert wire.submit(checkin) == "I've sent this to your care team. Your nurse will review it."
+
+
+class _Resp:
+    def __init__(self, status):
+        self.status = status
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+
+def test_end_chert_call_posts_end(monkeypatch, caplog):
+    import logging
+
+    seen = {}
+
+    def urlopen(req, timeout=0):
+        seen["url"] = req.full_url
+        seen["method"] = req.get_method()
+        seen["timeout"] = timeout
+        seen["data"] = req.data
+        seen["headers"] = {key.lower(): value for key, value in req.header_items()}
+        return _Resp(202)
+
+    monkeypatch.setenv("CHERT_API_KEY", "ftk_test_secret")
+    monkeypatch.setenv("CHERT_PROJECT_ID", "proj-1")
+    monkeypatch.setenv("CHERT_API_BASE", "http://127.0.0.1:9")
+    monkeypatch.setattr(wire.urllib.request, "urlopen", urlopen)
+    with caplog.at_level(logging.INFO, logger="chert.wire"):
+        assert wire.end_chert_call("abc-123") is True
+    assert seen["url"] == "http://127.0.0.1:9/api/v1/calls/abc-123/end"
+    assert seen["method"] == "POST"
+    assert seen["timeout"] == 5
+    assert seen["data"] == b"{}"
+    assert seen["headers"]["authorization"] == "Bearer ftk_test_secret"
+    assert seen["headers"]["x-chert-project-id"] == "proj-1"
+    assert seen["headers"]["idempotency-key"] == "homeward-end-abc-123"
+    assert seen["headers"]["content-type"] == "application/json"
+    assert "ftk_test_secret" not in caplog.text
+    assert "status=202" in caplog.text
+    assert not any(name == "livekit" or name.startswith("livekit.") for name in sys.modules)
+
+
+def test_end_chert_call_uses_the_documented_host(monkeypatch):
+    seen = {}
+
+    def urlopen(req, timeout=0):
+        seen["url"] = req.full_url
+        return _Resp(200)
+
+    monkeypatch.setenv("CHERT_API_KEY", "ftk_test")
+    monkeypatch.setenv("CHERT_PROJECT_ID", "proj-1")
+    monkeypatch.delenv("CHERT_API_BASE", raising=False)
+    monkeypatch.setattr(wire.urllib.request, "urlopen", urlopen)
+    assert wire.end_chert_call("abc-123") is True
+    assert seen["url"] == "https://facetime.trychert.com/api/v1/calls/abc-123/end"
+
+
+def test_end_chert_call_false_when_unset_or_rejected(monkeypatch, caplog):
+    import logging
+
+    def urlopen(req, timeout=0):
+        raise wire.urllib.error.HTTPError(req.full_url, 409, "conflict", hdrs=None, fp=None)
+
+    monkeypatch.setattr(wire.urllib.request, "urlopen", urlopen)
+    monkeypatch.delenv("CHERT_API_KEY", raising=False)
+    monkeypatch.delenv("CHERT_PROJECT_ID", raising=False)
+    assert wire.end_chert_call("abc-123") is False
+    monkeypatch.setenv("CHERT_API_KEY", "ftk_test_secret")
+    assert wire.end_chert_call("abc-123") is False
+    monkeypatch.setenv("CHERT_PROJECT_ID", "proj-1")
+    assert wire.end_chert_call("") is False
+    assert wire.end_chert_call(None) is False
+    with caplog.at_level(logging.INFO, logger="chert.wire"):
+        assert wire.end_chert_call("abc-123") is False
+    assert "status=409" in caplog.text
+    assert "ftk_test_secret" not in caplog.text
+
+
+def test_finish_call_invokes_hangup_once(monkeypatch):
+    monkeypatch.setattr(homeward, "_request", lambda *_args, **_kwargs: {})
+    calls = []
+    box = {
+        "call_id": "call_rosa01d3",
+        "patient_id": "pat_rosa01",
+        "day_index": 3,
+        "kind": "checkin",
+        "direction": "outbound",
+        "posted": False,
+        "symptoms": [],
+        "started_at": "2026-11-15T00:00:00Z",
+        "hangup": lambda: calls.append(1),
+    }
+    assert wire.finish_call(box) == "I've sent this to your care team. Your nurse will review it."
+    assert calls == [1]
+    assert box["posted"] is True
+    assert box["result"]["end_reason"] == "agent_hangup"
+    assert not any(name == "livekit" or name.startswith("livekit.") for name in sys.modules)
