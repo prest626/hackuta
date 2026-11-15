@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -143,6 +144,16 @@ def test_selected_mode_accepts_case_and_space():
     assert got["mode"] == "fallback"
     assert got["audio"] is False
     assert [track.kind for track in room.local_participant.published] == ["video"]
+
+
+def test_face_hook_follows_the_911_listener():
+    text = (Path(__file__).resolve().parent / "agent.py").read_text()
+    heard = text.index('session.on("user_input_transcribed", _heard)')
+    start = text.index("await face.start(")
+    box = text.index('session_box["session"] = session')
+    assert heard < start < box
+    assert "try:" in text[heard:start]
+    assert 'log.info("face skipped: %s"' in text[start:box]
 
 
 def test_publish_failure_returns_skipped(monkeypatch, caplog):
