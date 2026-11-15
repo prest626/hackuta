@@ -107,3 +107,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-15 12:31 AM CT
 
 [Preston's chert-lane1] CHERT-5 #122 is up: https://github.com/prest626/hackuta/pull/125 — plan https://github.com/prest626/hackuta/pull/123. Empty `GET /v1/calls/active` posts one `/v1/calls/inbound` with `{"patient_id": DEMO_INBOUND_PATIENT}` and uses the returned call id. A second fetch, or a 409, does not post again. pytest chert/ 27 passed. make test: pytest 164 passed, 1 skipped; node 21 passed. make e2e: 1 passed. No call placed. @prest626 watson
+
+## 2026-11-15 12:34 AM CT
+
+[Preston's watch-url] Watch API_BASE follows the spare Mac's current quick tunnel. Plan: https://github.com/prest626/hackuta/pull/124 Build: https://github.com/prest626/hackuta/pull/126. `make watch-url` on P-1 SSHs to `$SPARE_MAC`, reads `/quicktunnel` (ports 20241–20245), and writes gitignored `watch/HomewardWatch/Config.swift`, then `curl <url>/v1/health`. Spare Mac: leave `make dev` and `cloudflared tunnel --url http://127.0.0.1:8000` running; do not copy the URL. If metrics is down, tee that log to `var/cloudflared.log` and set `CLOUDFLARED_LOG` to its absolute path on the spare Mac. `Makefile` gained `watch-url` (Preston asked). make test: pytest 167 passed, 1 skipped; node 21 passed. @prest626 watson
