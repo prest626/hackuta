@@ -407,9 +407,10 @@ def _record_ended(c, call_id: str, end_reason: str) -> None:
 
 def release_in_call(end_reason: str = "patient_hangup") -> str | None:
     # No CallResult and no mac hangup: finish_call may still post, and the caller already left.
+    # Ringing counts too: answerd ends a row that never reached in_call.
     with db.conn() as c:
         row = c.execute(
-            "SELECT id FROM scheduled_calls WHERE status = 'in_call' ORDER BY due_at LIMIT 1"
+            "SELECT id FROM scheduled_calls WHERE status IN ('ringing', 'in_call') ORDER BY due_at LIMIT 1"
         ).fetchone()
         if row is None:
             return None

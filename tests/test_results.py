@@ -172,6 +172,26 @@ def test_hangup_without_finish_call_accepts_the_next_ring(tmp_path, monkeypatch)
             ).fetchone()["n"] == 1
 
 
+def test_ended_clears_a_ringing_row(tmp_path, monkeypatch):
+    monkeypatch.setenv("DB_PATH", str(tmp_path / "homeward.db"))
+    monkeypatch.setenv("MAC_DRY_RUN", "1")
+    _seed_call(status="done")
+    with _client(tmp_path, monkeypatch) as client:
+        started = client.post("/v1/calls/inbound", json={"patient_id": "pat_rosa01"}, headers=_auth())
+        assert started.status_code == 200
+        assert started.json()["state"] == "ringing"
+        ended = client.post(
+            "/v1/calls/active/ended",
+            json={"end_reason": "patient_hangup"},
+            headers=_auth(),
+        )
+        assert ended.status_code == 204
+        assert client.get("/v1/calls/active", headers=_auth()).status_code == 204
+        nxt = client.post("/v1/calls/inbound", json={"patient_id": "pat_rosa01"}, headers=_auth())
+        assert nxt.status_code == 200
+        assert nxt.json()["call_id"] != started.json()["call_id"]
+
+
 def test_hangup_calls_mac_and_marks_done(tmp_path, monkeypatch):
     monkeypatch.setenv("DB_PATH", str(tmp_path / "homeward.db"))
     _seed_call(call_id="call_rosa01d1", status="in_call")

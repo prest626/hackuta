@@ -16,6 +16,8 @@ from mac.facetime import answer, state
 
 API = "http://127.0.0.1:8000"
 POLL_S = 0.5
+# One ended POST per stale ring, so the next ring can POST /inbound again.
+_stale_cleared = False
 
 
 def dry_run() -> bool:
@@ -59,11 +61,23 @@ def active_call() -> dict | None:
 
 
 def tick() -> bool:
-    if state() != "ringing_in":
+    global _stale_cleared
+    face = state()
+    # Click failed or the caller hung up: the row is still ringing and FaceTime is idle.
+    if face == "idle":
+        active = active_call()
+        if active and active.get("state") == "ringing" and not _stale_cleared:
+            _request("POST", "/v1/calls/active/ended", {"end_reason": "patient_hangup"})
+            _stale_cleared = True
+        return False
+    if face != "ringing_in":
         return False
     active = active_call()
     if active and active.get("state") == "in_call":
         return False
+    if _stale_cleared and active and active.get("state") == "ringing":
+        active = None
+    _stale_cleared = False
     if not active:
         patient = os.environ.get("DEMO_INBOUND_PATIENT") or ""
         payload = {"patient_id": patient} if patient else {}

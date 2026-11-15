@@ -1,3 +1,4 @@
+import json
 import subprocess
 from pathlib import Path
 
@@ -155,6 +156,44 @@ def test_answerd_posts_inbound_then_in_call(monkeypatch):
         ("POST", "/v1/calls/inbound", {}),
         ("POST", "/v1/calls/active/state", {"state": "in_call"}),
     ]
+
+
+def test_idle_while_ringing_posts_ended_once(monkeypatch):
+    monkeypatch.setenv("MAC_DRY_RUN", "1")
+    answerd._stale_cleared = False
+    posts = []
+    row = {"call_id": "call_in1", "state": "ringing"}
+
+    def fake_request(method, path, body=None):
+        posts.append((method, path, body))
+        if method == "GET" and row is not None:
+            return 200, json.dumps(row)
+        return 204, ""
+
+    clicked = {"n": 0}
+    monkeypatch.setattr(answerd, "_request", fake_request)
+    monkeypatch.setattr(answerd, "answer", lambda: clicked.__setitem__("n", clicked["n"] + 1) or True)
+    monkeypatch.setattr(answerd, "state", lambda: "idle")
+    assert answerd.tick() is False
+    assert answerd.tick() is False
+    ended = [item for item in posts if item[1] == "/v1/calls/active/ended"]
+    assert ended == [("POST", "/v1/calls/active/ended", {"end_reason": "patient_hangup"})]
+    assert not any(item[1] == "/v1/calls/active/state" for item in posts)
+    assert clicked["n"] == 0
+
+    # The stale row is gone, so the next ring registers a new inbound.
+    posts.clear()
+    monkeypatch.setattr(answerd, "state", lambda: "ringing_in")
+
+    def gone(method, path, body=None):
+        posts.append((method, path, body))
+        return 204, ""
+
+    monkeypatch.setattr(answerd, "_request", gone)
+    assert answerd.tick() is True
+    assert ("POST", "/v1/calls/inbound", {}) in posts
+    assert ("POST", "/v1/calls/active/state", {"state": "in_call"}) in posts
+    assert not any(item[1] == "/v1/calls/active/ended" for item in posts)
 
 
 def test_answerd_skips_when_already_in_call_or_idle(monkeypatch):
