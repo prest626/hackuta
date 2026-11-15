@@ -233,7 +233,11 @@ def test_pending_and_rejected_cannot_execute(tmp_path, monkeypatch):
         dials = c.execute(
             "SELECT COUNT(*) AS n FROM scheduled_calls WHERE kind != 'checkin'"
         ).fetchone()["n"]
+        ringing = c.execute(
+            "SELECT COUNT(*) AS n FROM events WHERE name = 'call.dialing'"
+        ).fetchone()["n"]
     assert dials == 0
+    assert ringing == 0
 
 
 def test_approve_without_name_is_422(tmp_path, monkeypatch):

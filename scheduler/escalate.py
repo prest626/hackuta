@@ -1,4 +1,4 @@
-"""Dial a nurse only after that nurse approves. Check-ins are the only other outbound calls."""
+"""Place one separate 1:1 call only after a named nurse approves."""
 
 import json
 
@@ -38,7 +38,13 @@ def place_escalation(approval_id: str) -> dict:
             pass
         else:
             patient = _patient(c, approval.patient_id)
-            fallback = approval.action != "nurse_callback"
+            # family_group_call is the emergency-contact 1:1. Anything else stays a nurse 1:1.
+            if approval.action == "family_group_call":
+                kind = "family_group_call"
+                fallback = False
+            else:
+                kind = "nurse_callback"
+                fallback = approval.action != "nurse_callback"
             day = 0
             if approval.call_id:
                 linked = c.execute(
@@ -51,8 +57,8 @@ def place_escalation(approval_id: str) -> dict:
             c.execute(
                 "INSERT INTO scheduled_calls "
                 "(id, patient_id, day_index, kind, due_at, status, attempts, direction, approval_id) "
-                "VALUES (?, ?, ?, 'nurse_callback', ?, 'scheduled', 0, 'outbound', ?)",
-                (call_id, patient.id, day, db.now(), approval_id),
+                "VALUES (?, ?, ?, ?, ?, 'scheduled', 0, 'outbound', ?)",
+                (call_id, patient.id, day, kind, db.now(), approval_id),
             )
     if reason:
         db.log_event("escalation.refused", "scheduler", {"approval_id": approval_id, "reason": reason})

@@ -37,6 +37,11 @@ def test_index_banner_and_known_endpoints(tmp_path, monkeypatch):
     assert res.status_code == 200
     assert "Homeward prototype · mock patients · not a medical device." in res.text
     js = (ROOT / "dashboard" / "app.js").read_text()
+    assert 'nurse_callback: "Nurse, 1:1"' in js
+    assert 'family_group_call: "Emergency contact, 1:1"' in js
+    assert "Approving places a separate 1:1 call. It does not add anyone to the live call." in js
+    assert "Emergency contact:" in js
+    assert 'id="nurse-name"' in res.text and ">Approve<" in js and ">Deny<" in js
     assert "2000" in js
     assert "<button" in js and "<label>" in js
     section = (ROOT / "docs" / "CONTRACTS.md").read_text().split("## 4. API", 1)[1].split("## 5.", 1)[0]

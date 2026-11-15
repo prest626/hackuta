@@ -304,3 +304,46 @@ def test_escalation_dials_nurse(mac):
             "SELECT name FROM events WHERE name = 'escalation.fallback_1to1'"
         ).fetchone()
     assert event is not None
+
+
+def _contact_phone(doc, role):
+    return next(item["phone_e164"] for item in doc["contacts"] if item["role"] == role)
+
+
+def test_family_group_call_dials_family_not_nurse(mac):
+    from api import db
+    from scheduler.escalate import place_escalation
+
+    patient = _patient()
+    _seed(patient)
+    family = _contact_phone(patient, "family")
+    nurse = _contact_phone(patient, "nurse")
+    doc = json.loads((EXAMPLES / "approval.json").read_text())
+    doc["action"] = "family_group_call"
+    _store_approval(doc)
+    placed = place_escalation(doc["id"])
+    assert placed["kind"] == "family_group_call"
+    assert placed["status"] == "dialing"
+    assert mac.calls == [("dial", family)]
+    assert all(number != nurse for _kind, number in mac.calls)
+    with db.conn() as c:
+        fallback = c.execute(
+            "SELECT COUNT(*) AS n FROM events WHERE name = 'escalation.fallback_1to1'"
+        ).fetchone()["n"]
+    assert fallback == 0
+
+
+def test_no_dial_on_pending_or_rejected(mac):
+    from scheduler.escalate import EscalationRefused, place_escalation
+
+    _seed(_patient())
+    base = json.loads((EXAMPLES / "approval.json").read_text())
+    for status, approval_id in (("pending", "apr_pending0002"), ("rejected", "apr_reject00002")):
+        doc = dict(base)
+        doc["id"] = approval_id
+        doc["status"] = status
+        doc["decision"] = None
+        _store_approval(doc)
+        with pytest.raises(EscalationRefused):
+            place_escalation(doc["id"])
+        assert mac.calls == []
