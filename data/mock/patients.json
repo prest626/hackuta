@@ -1,0 +1,143 @@
+[
+  {
+    "id": "pat_rosa01",
+    "is_mock": true,
+    "display_name": "Rosa",
+    "phone_e164": "DEMO_PATIENT_PHONE",
+    "tz": "America/Chicago",
+    "discharge_date": "2026-11-12",
+    "condition_tag": "hf",
+    "checkin_days": [1, 2, 3, 4],
+    "checkin_local_time": "10:00",
+    "contacts": [
+      {
+        "role": "nurse",
+        "name": "Nurse Jordan (mock)",
+        "phone_e164": "DEMO_NURSE_PHONE"
+      },
+      {
+        "role": "family",
+        "name": "Maya (mock daughter)",
+        "phone_e164": "DEMO_FAMILY_PHONE"
+      }
+    ],
+    "consent": {
+      "calls": true,
+      "video_analysis": true,
+      "proof_frames": true,
+      "family_share": true,
+      "watch_vitals": true
+    },
+    "symptom_questions": [
+      {
+        "slot": "overall",
+        "prompt": "How are you feeling today compared with yesterday?",
+        "answer_type": "better_same_worse"
+      },
+      {
+        "slot": "breathless",
+        "prompt": "Are you more short of breath than yesterday, for example on stairs or lying flat?",
+        "answer_type": "yes_no"
+      },
+      {
+        "slot": "swelling",
+        "prompt": "Any new swelling in your ankles or legs?",
+        "answer_type": "yes_no"
+      },
+      {
+        "slot": "weight_up",
+        "prompt": "Did your scale this morning show a gain of more than 2 pounds since yesterday?",
+        "answer_type": "yes_no"
+      }
+    ],
+    "red_flags": {
+      "urgent_911": ["chest pain", "can't breathe", "fainted", "passed out"],
+      "call_care_team": ["breathless=yes", "swelling=yes", "weight_up=yes", "overall=worse"]
+    },
+    "watch_device_id": "watch_team01",
+    "baseline": {
+      "rhr_bpm_mean": 66,
+      "rhr_bpm_sd": 3.5,
+      "source": "mock"
+    }
+  },
+  {
+    "id": "pat_luis01",
+    "is_mock": true,
+    "display_name": "Luis",
+    "phone_e164": "DEMO_PATIENT_PHONE",
+    "tz": "America/Chicago",
+    "discharge_date": "2026-11-09",
+    "condition_tag": "general",
+    "checkin_days": [1, 2, 3, 4],
+    "checkin_local_time": "10:00",
+    "contacts": [
+      {
+        "role": "nurse",
+        "name": "Nurse Jordan (mock)",
+        "phone_e164": "DEMO_NURSE_PHONE"
+      }
+    ],
+    "consent": {
+      "calls": true,
+      "video_analysis": true,
+      "proof_frames": true,
+      "family_share": false,
+      "watch_vitals": false
+    },
+    "symptom_questions": [
+      {
+        "slot": "overall",
+        "prompt": "How are you feeling today compared with yesterday?",
+        "answer_type": "better_same_worse"
+      }
+    ],
+    "red_flags": {
+      "urgent_911": ["chest pain", "can't breathe", "fainted", "passed out"],
+      "call_care_team": []
+    },
+    "watch_device_id": null
+  },
+  {
+    "id": "pat_ada01",
+    "is_mock": true,
+    "display_name": "Ada",
+    "phone_e164": "DEMO_PATIENT_PHONE",
+    "tz": "America/Chicago",
+    "discharge_date": "2026-11-13",
+    "condition_tag": "general",
+    "checkin_days": [1, 2, 3, 4],
+    "checkin_local_time": "10:00",
+    "contacts": [
+      {
+        "role": "nurse",
+        "name": "Nurse Jordan (mock)",
+        "phone_e164": "DEMO_NURSE_PHONE"
+      },
+      {
+        "role": "family",
+        "name": "Family (mock)",
+        "phone_e164": "DEMO_FAMILY_PHONE"
+      }
+    ],
+    "consent": {
+      "calls": true,
+      "video_analysis": true,
+      "proof_frames": true,
+      "family_share": false,
+      "watch_vitals": false
+    },
+    "symptom_questions": [
+      {
+        "slot": "overall",
+        "prompt": "How are you feeling today compared with yesterday?",
+        "answer_type": "better_same_worse"
+      }
+    ],
+    "red_flags": {
+      "urgent_911": ["chest pain", "can't breathe", "fainted", "passed out"],
+      "call_care_team": ["overall=worse"]
+    },
+    "watch_device_id": null
+  }
+]

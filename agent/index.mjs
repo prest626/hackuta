@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { arm, disarm, escalationLines } from './script.mjs';
 import { urgentLine } from './safety.mjs';
-import { TOOLS, api, bind, dispatch, getSession, reset as resetTools } from './tools.mjs';
+import { TOOLS, api, bind, dispatch, endCall, getSession, reset as resetTools } from './tools.mjs';
 
 const SYSTEM = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'prompts/system.md'), 'utf8');
 const FALLBACK = "Hi, it's Homeward from your care team.";
@@ -112,6 +112,15 @@ const hook = {
         return;
       }
       await delay(hook.pollMs);
+    }
+  },
+
+  // Does not mark the session finished, so a later finish_call still posts the result.
+  async onCallEnd() {
+    try {
+      return JSON.stringify(await endCall({ end_reason: 'patient_hangup' }));
+    } catch (err) {
+      return JSON.stringify({ ok: false, error: String(err.message || err) });
     }
   },
 

@@ -19,6 +19,14 @@ from contracts.models import CallResult, Flag, MedSchedule, Patient
 
 router = APIRouter()
 ACTIVE = ("dialing", "ringing", "in_call")
+END_REASONS = {
+    "agent_hangup",
+    "hard_stop",
+    "patient_hangup",
+    "no_answer",
+    "bridge_error",
+    "error",
+}
 
 
 class InboundIn(BaseModel):
@@ -27,6 +35,10 @@ class InboundIn(BaseModel):
 
 class StateIn(BaseModel):
     state: str
+
+
+class EndedIn(BaseModel):
+    end_reason: str | None = None
 
 
 def day_index(patient: Patient, today: date | None = None) -> int:
@@ -378,16 +390,56 @@ def store_result(result: CallResult) -> dict:
     return view
 
 
+def _record_ended(c, call_id: str, end_reason: str) -> None:
+    for row in c.execute("SELECT payload FROM events WHERE name = 'call.ended'"):
+        try:
+            payload = json.loads(row["payload"])
+        except ValueError:
+            continue
+        if payload.get("call_id") == call_id:
+            return
+    ended_at = db.now()
+    c.execute(
+        "INSERT INTO events (t, name, actor, payload) VALUES (?, 'call.ended', 'agent', ?)",
+        (ended_at, json.dumps({"call_id": call_id, "ended_at": ended_at, "end_reason": end_reason})),
+    )
+
+
+def release_in_call(end_reason: str = "patient_hangup") -> str | None:
+    # No CallResult and no mac hangup: finish_call may still post, and the caller already left.
+    with db.conn() as c:
+        row = c.execute(
+            "SELECT id FROM scheduled_calls WHERE status = 'in_call' ORDER BY due_at LIMIT 1"
+        ).fetchone()
+        if row is None:
+            return None
+        call_id = row["id"]
+        c.execute("UPDATE scheduled_calls SET status = 'done' WHERE id = ?", (call_id,))
+        _record_ended(c, call_id, end_reason)
+    return call_id
+
+
 @router.post("/v1/calls/{call_id}/hangup")
 def hangup(call_id: str, _=Depends(require_agent)):
     with db.conn() as c:
         row = c.execute("SELECT id FROM scheduled_calls WHERE id = ?", (call_id,)).fetchone()
         if row is None:
             raise HTTPException(status_code=404, detail="call not found")
-    _mac_hangup()
+        active = _active(c)
+        # A later finish_call must not click End once the next call has the line.
+        click = active is None or active["id"] == call_id
+    if click:
+        _mac_hangup()
     with db.conn() as c:
         c.execute("UPDATE scheduled_calls SET status = 'done' WHERE id = ?", (call_id,))
-    db.log_event("call.ended", "agent", {"call_id": call_id})
+        _record_ended(c, call_id, "agent_hangup")
+    return Response(status_code=204)
+
+
+@router.post("/v1/calls/active/ended")
+def call_ended(body: EndedIn | None = None, _=Depends(require_agent)):
+    reason = body.end_reason if body and body.end_reason in END_REASONS else "patient_hangup"
+    release_in_call(reason)
     return Response(status_code=204)
 
 

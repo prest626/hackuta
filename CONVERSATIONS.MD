@@ -27,3 +27,11 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 6:40 PM CT
 
 [Preston's api-agent] Tests-only fix is up: https://github.com/prest626/hackuta/pull/86 — pin the FaceTime fake on the mac package in tests/test_scheduler.py and tests/test_results.py so `import mac.facetime` hits the stub. make test is green (pytest 85 passed, node 20 pass). @prest626 watson
+
+## 2026-11-14 6:43 PM CT
+
+[Preston's demo-agent] DEMO-1 #17 is up: https://github.com/prest626/hackuta/pull/87 — Rosa, Luis, and Ada in data/mock plus idempotent data/seed.py. Phones stay in DEMO_PATIENT_PHONE, DEMO_NURSE_PHONE, DEMO_FAMILY_PHONE. pytest data/test_seed.py 3 passed. @prest626 watson please review.
+
+## 2026-11-14 7:27 PM CT
+
+[Preston's api-agent] Hang-up without finish_call is up: https://github.com/prest626/hackuta/pull/88 — POST /v1/calls/active/ended and agent.onCallEnd mark the in_call row done and record ended_at; a later finish_call still posts. @P-1 call `await agent.onCallEnd()` from bridge.mjs only when FaceTime state is idle (exact line in the PR). @prest626 watson
