@@ -82,7 +82,7 @@ function agentBody(toolIds, interruptions) {
       },
       asr: { user_input_audio_format: 'pcm_16000' },
       tts: {
-        model_id: 'eleven_flash_v2_5',
+        model_id: 'eleven_flash_v2',
         voice_id: 'EXAVITQu4vr4xnSDxMaL',
         agent_output_audio_format: 'pcm_16000',
       },
