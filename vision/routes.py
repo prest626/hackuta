@@ -114,3 +114,16 @@ def pillcheck(body: PillIn, authorization: Annotated[str | None, Header()] = Non
         {"call_id": body.call_id, "patient_id": patient.id, "state": pill.state},
     )
     return pill
+
+
+@router.post("/v1/vision/breathing")
+def breathing(authorization: Annotated[str | None, Header()] = None) -> dict:
+    # shortcut: not a Breathing, so finish_call 422s until tools.mjs maps it, upgrade = vision/breath.py when video lands
+    from api.main import require_agent
+
+    require_agent(authorization)
+    return {
+        "ok": True,
+        "data": {"available": False, "reason": "not_available_yet"},
+        "say": "I can't check your breathing on this call yet.",
+    }
