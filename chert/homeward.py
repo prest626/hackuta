@@ -24,9 +24,7 @@ NO_READING = "I don't have a fresh watch reading right now."
 HIGHER = " Your resting heart rate has been a bit higher than your usual this week."
 REPLAY = "The mock replay shows {hr}. It is not a live watch reading."
 EMPTY = "The compartments that should be empty look empty."
-COULD_NOT_SEE = (
-    "I could not see the organizer clearly. Tell me how this week went and I will pass that to your nurse."
-)
+COULD_NOT_SEE = "I couldn't quite see it. How did this week go with your pills?"
 STILL_HAS_PILLS = "One compartment still has pills. Did you take those from somewhere else?"
 HOLD_AGAIN = "Hold the organizer up again so I can see each day."
 
@@ -171,7 +169,7 @@ def _unreliable(pill: dict) -> bool:
 
 def _pill_line(pill: dict, attempt: int) -> str:
     state = "unknown" if _unreliable(pill) else pill.get("state")
-    if state == "unknown" and attempt < 2:
+    if state == "unknown" and attempt < 1:
         return HINT.get(pill.get("image_quality")) or HOLD_AGAIN
     if state == "missed_possible":
         questions = []
@@ -181,23 +179,12 @@ def _pill_line(pill: dict, attempt: int) -> str:
                 f"Did you take your {DAY.get(day, day)} {SLOT.get(slot, slot)} pills from somewhere else?"
             )
         return " ".join(questions) or STILL_HAS_PILLS
-    if state == "unknown":
-        return COULD_NOT_SEE
     if state == "ok":
         return EMPTY
-    return ""
+    return COULD_NOT_SEE
 
 
 def _pill_body(jpeg: str | Path, call_id: str) -> dict:
     """The frame travels with the request. The API's ring is on another machine."""
     raw = Path(jpeg).read_bytes()
     return {"call_id": call_id, "jpeg_b64": base64.b64encode(raw).decode("ascii")}
-
-
-def check_pillbox(jpeg: str | Path, ring: str | Path, call_id: str, attempt: int = 0) -> str:
-    """Copy one JPEG into ring, then POST /v1/vision/pillcheck with that frame."""
-    _copy_jpeg(Path(jpeg), Path(ring))
-    pill = _request("POST", "/v1/vision/pillcheck", _pill_body(jpeg, call_id))
-    if not pill:
-        return COULD_NOT_SEE
-    return _pill_line(pill, attempt)

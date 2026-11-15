@@ -7,7 +7,9 @@ import numpy as np
 
 from contracts.models import Breathing
 
-SQI_MIN = 0.5
+SQI_MIN = 0.7
+RATE_LOW = 6.0
+RATE_HIGH = 30.0
 FPS_MIN = 4.0
 BAND_HZ = (0.1, 0.7)
 # shortcut: fixed fraction of the FaceTime window, upgrade = caller crop when VISION-2 exists
@@ -102,11 +104,12 @@ def measure_breathing(frames: list[tuple[float, str]]) -> Breathing:
         return Breathing(mode="abstained", note=NOTE)
     rate, sqi = _rate_and_sqi(np.array(kept_t, dtype=np.float64), np.array(kept_v, dtype=np.float64))
     sqi_out = round(sqi, 2)
-    if rate is None or sqi < SQI_MIN:
+    rate_out = None if rate is None else round(float(rate), 1)
+    if rate_out is None or sqi < SQI_MIN or not (RATE_LOW <= rate_out <= RATE_HIGH):
         return Breathing(mode="abstained", sqi=sqi_out, note=NOTE)
     return Breathing(
         mode="paced_measured",
-        rate_per_min=round(float(rate), 1),
+        rate_per_min=rate_out,
         sqi=sqi_out,
         note=NOTE,
     )

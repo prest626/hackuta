@@ -11,15 +11,19 @@ from pathlib import Path
 import pytest
 
 import chert.homeward as homeward
+import chert.wire as wire
 
 NO_READING = "I don't have a fresh watch reading right now."
 WATCH_81 = "Your watch shows 81 right now."
 HIGHER = " Your resting heart rate has been a bit higher than your usual this week."
 EMPTY = "The compartments that should be empty look empty."
-COULD_NOT_SEE = (
-    "I could not see the organizer clearly. Tell me how this week went and I will pass that to your nurse."
-)
+COULD_NOT_SEE = "I couldn't quite see it. How did this week go with your pills?"
 JPEG = b"\xff\xd8\xff\xd9"
+
+
+def _pill_say(jpeg, ring, call_id, attempt=0):
+    line, _pill = wire.read_pillbox(jpeg, ring, call_id, attempt)
+    return line
 
 
 class _Server(ThreadingHTTPServer):
@@ -183,7 +187,7 @@ def test_pill_ok_copies_jpeg_then_posts(api, tmp_path):
     ring = tmp_path / "ring"
     api.ring = ring
     api.pill = {"state": "ok"}
-    say = homeward.check_pillbox(jpeg, ring, "call_rosa01d3")
+    say = _pill_say(jpeg, ring, "call_rosa01d3")
     assert say == EMPTY
     files = list(ring.glob("*.jpg"))
     assert len(files) == 1
@@ -202,20 +206,22 @@ def test_pill_lines_match_tools(api, tmp_path):
     ring = tmp_path / "ring"
 
     api.pill = {"state": "missed_possible", "mismatches": ["SAT-PM"]}
-    assert homeward.check_pillbox(jpeg, ring, "call_rosa01d3") == (
+    assert _pill_say(jpeg, ring, "call_rosa01d3") == (
         "Did you take your Saturday evening pills from somewhere else?"
     )
     api.pill = {"state": "missed_possible", "mismatches": []}
-    assert homeward.check_pillbox(jpeg, ring, "call_rosa01d3") == (
+    assert _pill_say(jpeg, ring, "call_rosa01d3") == (
         "One compartment still has pills. Did you take those from somewhere else?"
     )
     api.pill = {"state": "unknown", "image_quality": "glare", "confidence": 0.4}
-    assert homeward.check_pillbox(jpeg, ring, "call_rosa01d3", attempt=0) == "Tilt it away from the light."
-    assert homeward.check_pillbox(jpeg, ring, "call_rosa01d3", attempt=2) == COULD_NOT_SEE
+    assert _pill_say(jpeg, ring, "call_rosa01d3", attempt=0) == "Tilt it away from the light."
+    assert _pill_say(jpeg, ring, "call_rosa01d3", attempt=1) == COULD_NOT_SEE
     api.pill = {"state": "ok", "confidence": 0.4}
-    assert homeward.check_pillbox(jpeg, ring, "call_rosa01d3") == (
+    assert _pill_say(jpeg, ring, "call_rosa01d3") == (
         "Hold the organizer up again so I can see each day."
     )
+    api.pill = {"error": "model"}
+    assert _pill_say(jpeg, ring, "call_rosa01d3") == COULD_NOT_SEE
 
 
 def test_bearer_header_only_when_token_set(api, monkeypatch, tmp_path):
@@ -231,7 +237,7 @@ def test_bearer_header_only_when_token_set(api, monkeypatch, tmp_path):
     jpeg.write_bytes(JPEG)
     ring = tmp_path / "ring"
     api.pill = {"state": "ok"}
-    homeward.check_pillbox(jpeg, ring, "call_rosa01d3")
+    _pill_say(jpeg, ring, "call_rosa01d3")
     assert api.seen[-1][2] == "Bearer test-token"
 
     monkeypatch.setenv("AGENT_API_TOKEN", "")
@@ -246,7 +252,7 @@ def test_http_error_returns_the_fallback_line(api, tmp_path):
     jpeg = tmp_path / "frame.jpg"
     jpeg.write_bytes(JPEG)
     ring = tmp_path / "ring"
-    assert homeward.check_pillbox(jpeg, ring, "call_rosa01d3") == COULD_NOT_SEE
+    assert _pill_say(jpeg, ring, "call_rosa01d3") == COULD_NOT_SEE
     assert list(ring.glob("*.jpg"))
 
 

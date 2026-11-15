@@ -327,7 +327,7 @@ Tools (CALL-2): `get_vitals()`, `check_pillbox()`, `breathing_check()`, `record_
 
 | Method | Path | Body → returns |
 |---|---|---|
-| POST | `/v1/vision/pillcheck` | `{call_id}` → PillCheck. Best of the last 3 frames from `mac.capture` (sharpness), crop to the caller (`vision.crop`), one model read, deterministic decision, annotated proof saved if `consent.proof_frames` |
+| POST | `/v1/vision/pillcheck` | `{call_id, jpeg_b64}` → PillCheck. The posted frame is the one read (Chert sends the sharpest JPEG from the last 1.5 s). If `jpeg_b64` is absent, the route uses the sharpest recent capture. One model read, deterministic decision, proof saved if `consent.proof_frames` |
 | POST | `/v1/vision/breathing` | `{call_id}` → Breathing. `mac.capture.burst(20, 5)`; `mode=self_count` if fps < 4 |
 
 ### 4.8 Vision Python API (lane: vision)
@@ -376,7 +376,7 @@ Python, stdlib + `subprocess`. Every function honors `MAC_DRY_RUN=1` (print the 
 | `pill_unknown` | `pill_check.state = unknown` and no `self_report` | `pill_check_unknown` | YELLOW |
 | `hr_high_at_rest` | `hr_median_60s ≥ 110` while seated on the call | `hr_high_at_rest` | YELLOW |
 | `rhr_drift` | `rhr_z ≥ 1.5` (7-day vs baseline) | `rhr_drift` | YELLOW |
-| `breathing_range` | `breathing.rate_per_min` outside 10–24 with `sqi ≥ 0.5` (wellness only) | `breathing_outside_wellness_range` | YELLOW (max) |
+| `breathing_range` | `breathing.rate_per_min` outside 10–24 with `sqi ≥ 0.7` (wellness only) | `breathing_outside_wellness_range` | YELLOW (max) |
 | `vitals_stale` | `vitals_snapshot.stale` and `consent.watch_vitals` | `vitals_stale` | YELLOW |
 | `no_answer` | `status = no_answer` after retries | `no_answer` | YELLOW |
 | `call_incomplete` | `status in (partial, failed)` | `call_incomplete` | YELLOW |
@@ -447,5 +447,5 @@ DEMO_INBOUND_PATIENT=pat_rosa01
 3. Tiers come only from `api/rules.py`; the LLM can't lower one.
 4. `is_mock = 1` on every patient; no real PHI anywhere.
 5. No diagnosis or dosing language on any surface; "Prototype · not a medical device" on every card and page.
-6. One call at a time on the spare Mac; greet once at `in_call`; wrap at 4:15, hard stop at 5:00.
+6. One call at a time on the spare Mac; greet once at `in_call`; this check-in stops at 2:00.
 7. No secrets, phone numbers, frames or recordings in git. `facetime-bridge/` changes only with @prest626's OK.
