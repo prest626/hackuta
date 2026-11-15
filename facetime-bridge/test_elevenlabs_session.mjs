@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { describe, test, beforeEach, after } from 'node:test';
+import { describe, mock, test, beforeEach, after } from 'node:test';
 import WebSocket from 'ws';
 import { listen as listenApi } from '../agent/fake_api.mjs';
 import hook, { resetHook } from '../agent/index.mjs';
@@ -8,7 +8,7 @@ import { getSession } from '../agent/tools.mjs';
 import { EMERGENCY_LINE } from '../agent/safety.mjs';
 import { ENGLISH, createSession, initMessage } from './elevenlabs_session.mjs';
 import { listen } from './fake_elevenlabs.mjs';
-import { fixedPcm, speakFixed } from './elevenlabs.mjs';
+import { fixedPcm, idleAfterInCall, speakFixed } from './elevenlabs.mjs';
 
 const patient = JSON.parse(readFileSync(new URL('../contracts/examples/patient.json', import.meta.url), 'utf8'));
 const active = {
@@ -339,5 +339,59 @@ describe('elevenlabs session', { concurrency: 1 }, () => {
       assert.equal(played.some((bytes) => bytes.equals(agentAudio)), false);
       assert.equal(session.holding, true);
     });
+  });
+
+  test('idle hang-up counts only after FaceTime has shown in_call', () => {
+    let saw = false;
+    let reads = 0;
+    ({ sawInCall: saw, idleReads: reads } = idleAfterInCall(saw, 'idle', reads));
+    ({ sawInCall: saw, idleReads: reads } = idleAfterInCall(saw, 'idle', reads));
+    assert.equal(saw, false);
+    assert.equal(reads, 0);
+    ({ sawInCall: saw, idleReads: reads } = idleAfterInCall(saw, 'in_call', reads));
+    ({ sawInCall: saw, idleReads: reads } = idleAfterInCall(saw, 'idle', reads));
+    ({ sawInCall: saw, idleReads: reads } = idleAfterInCall(saw, 'idle', reads));
+    assert.equal(saw, true);
+    assert.equal(reads, 2);
+  });
+
+  test('a failed get_vitals is an error result, and a hang times out', async () => {
+    const { session, sent } = harness({
+      async onToolCall() {
+        throw new Error('vitals down');
+      },
+      onTranscript() {
+        return null;
+      },
+    });
+    await session.onMessage({
+      type: 'client_tool_call',
+      client_tool_call: { tool_name: 'get_vitals', tool_call_id: 'v1', parameters: {} },
+    });
+    assert.equal(sent[0].tool_call_id, 'v1');
+    assert.equal(sent[0].is_error, true);
+    assert.match(sent[0].result, /vitals down/);
+
+    mock.timers.enable({ apis: ['setTimeout'] });
+    try {
+      const hung = harness({
+        onToolCall() {
+          return new Promise(() => {});
+        },
+        onTranscript() {
+          return null;
+        },
+      });
+      const pending = hung.session.onMessage({
+        type: 'client_tool_call',
+        client_tool_call: { tool_name: 'get_vitals', tool_call_id: 'v2', parameters: {} },
+      });
+      mock.timers.tick(8000);
+      await pending;
+      assert.equal(hung.sent[0].is_error, true);
+      assert.match(hung.sent[0].result, /timed out/);
+    } finally {
+      mock.timers.reset();
+    }
   });
 });

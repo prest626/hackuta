@@ -185,8 +185,16 @@ function say(text) {
   void speakFixed(text);
 }
 
+// "idle" also means the call controls were not recognised, so it only counts after in_call.
+export function idleAfterInCall(sawInCall, state, idleReads) {
+  const seen = sawInCall || state === 'in_call';
+  return { sawInCall: seen, idleReads: seen && state === 'idle' ? idleReads + 1 : 0 };
+}
+
 function watchForHangup() {
   let idleReads = 0;
+  let sawInCall = false;
+  let warned = false;
   let checking = false;
   const timer = setInterval(async () => {
     if (checking) return;
@@ -194,7 +202,12 @@ function watchForHangup() {
     try {
       let active = await api('GET', '/v1/calls/active');
       if (active?.state === 'in_call') {
-        idleReads = (await faceTimeState()) === 'idle' ? idleReads + 1 : 0;
+        const state = await faceTimeState();
+        ({ sawInCall, idleReads } = idleAfterInCall(sawInCall, state, idleReads));
+        if (!sawInCall && !warned) {
+          warned = true;
+          console.log(`[bridge] FaceTime reads "${state}" during the call, not in_call: hang-up detection is off for this call`);
+        }
         if (idleReads >= 2) {
           console.log('[bridge] FaceTime is idle: caller hung up');
           await agent.onCallEnd();

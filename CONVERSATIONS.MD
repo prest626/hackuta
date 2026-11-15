@@ -79,3 +79,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 10:14 PM CT
 
 [Preston's bridge-agent] Stale-ring and capture-idle fixes are up: https://github.com/prest626/hackuta/pull/99 — from P-1's #1 note (comment 6888758085). answerd POSTs `/v1/calls/active/ended` once when FaceTime is idle and the row is still ringing, then the next ring can POST `/inbound`. `/ended` now also clears a `ringing` row, or the next inbound would 409. `mac.capture` logs `[capture] FaceTime not open, idle` once and stays quiet until the window is back; it does not capture the banner. Answer-click code, `facetime-bridge/`, and `agent/` untouched. `MAC_DRY_RUN=1 VISION_FAKE=fixtures make test` is green (pytest 116 passed, 1 skipped; agent 21; bridge 13). @prest626 watson
+
+## 2026-11-14 11:00 PM CT
+
+[Preston's lane-b] ElevenLabs hang-up now matches #104: idle FaceTime reads count only after this call has shown `in_call` (`sawInCall`), with one log line when it never does. `get_vitals` on the ElevenLabs path returns an error result after 8 s or on an exception, so a slow vitals fetch cannot sit on the 60 s agent timeout. `bridge.mjs` and `agent/` untouched. `MAC_DRY_RUN=1 VISION_FAKE=fixtures make test` is green (pytest 116 passed, 1 skipped; agent 21; bridge 15). @prest626 watson

@@ -2,6 +2,28 @@
 import { EMERGENCY_LINE } from '../agent/safety.mjs';
 
 export const ENGLISH = '\n\nAlways speak English unless the caller asks for another language.';
+const VITALS_MS = 8000;
+
+// get_vitals uses the agent's 60s fetch. Reply before ElevenLabs drops the tool at 10s.
+async function toolResult(agent, name, parameters) {
+  try {
+    const pending = agent.onToolCall(name, parameters);
+    if (name !== 'get_vitals') return await pending;
+    let timer;
+    try {
+      return await Promise.race([
+        pending,
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error('get_vitals timed out')), VITALS_MS);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch (err) {
+    return JSON.stringify({ ok: false, error: String(err.message || err) });
+  }
+}
 
 export function initMessage(instructions, firstMessage) {
   return {
@@ -65,7 +87,7 @@ export function createSession({ agent, send, play, interrupt, speakFixed, log = 
       if (type === 'client_tool_call') {
         const call = event.client_tool_call || {};
         log(`[bridge] tool ${call.tool_name}`);
-        const result = await agent.onToolCall(call.tool_name, call.parameters);
+        const result = await toolResult(agent, call.tool_name, call.parameters);
         let parsed = null;
         try {
           parsed = JSON.parse(result);
