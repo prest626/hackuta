@@ -27,6 +27,7 @@ BUTTONS = {
 }
 
 CALL_TRIES = 5
+OSA_TIMEOUT_S = 15
 CALL_WINDOW_S = 3.0
 _E164 = re.compile(r"^\+?[1-9]\d{6,14}$")
 
@@ -46,7 +47,11 @@ def run(argv: list[str], *, ok_stdout: str = "clicked\n") -> subprocess.Complete
     if dry_run():
         print(shlex.join(argv))
         return subprocess.CompletedProcess(argv, 0, stdout=ok_stdout, stderr="")
-    return subprocess.run(argv, capture_output=True, text=True)
+    try:
+        # A hung UI scan must not freeze answerd or the scheduler; a timeout reads as a failed probe.
+        return subprocess.run(argv, capture_output=True, text=True, timeout=OSA_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(argv, 124, stdout="", stderr=f"timed out after {OSA_TIMEOUT_S}s")
 
 
 def parse_state(text: str) -> str:
