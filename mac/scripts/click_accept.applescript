@@ -1,56 +1,52 @@
--- Click Accept on an incoming FaceTime call (app window or notification).
+-- Click Accept on an incoming FaceTime call: the FaceTime window, or the
+-- Notification Center banner (the FaceTime window can disappear on ring).
 -- By hand: osascript mac/scripts/click_accept.applescript
 -- Prints "clicked" or "missing".
 
-on clickLabel(el, labelName)
-	try
-		if exists (button labelName of el) then
-			click button labelName of el
-			return true
-		end if
-	end try
-	try
-		repeat with g in (UI elements of el)
+-- Press the first Accept under el at any depth: a button named or described Accept,
+-- or an element with a custom Accept action (how banners expose it).
+on pressAccept(el)
+	tell application "System Events"
+		try
+			set kids to entire contents of el
+		on error
+			return false
+		end try
+		repeat with k in kids
 			try
-				if role of g is "AXButton" and name of g is labelName then
-					click g
-					return true
+				if role of k is "AXButton" then
+					set n to name of k
+					if n is missing value or (n as text) is "" then set n to description of k
+					if (n as text) is "Accept" then
+						click k
+						return true
+					end if
 				end if
 			end try
 			try
-				if exists (button labelName of g) then
-					click button labelName of g
-					return true
-				end if
+				repeat with a in actions of k
+					if (name of a as text) contains "Accept" then
+						perform a
+						return true
+					end if
+				end repeat
 			end try
 		end repeat
-	end try
-	return false
-end clickLabel
-
-on clickProcess(procName)
-	tell application "System Events"
-		if not (exists process procName) then return false
-		tell process procName
-			repeat with w in windows
-				if my clickLabel(w, "Accept") then return true
-				try
-					repeat with s in sheets of w
-						if my clickLabel(s, "Accept") then return true
-					end repeat
-				end try
-			end repeat
-		end tell
 	end tell
 	return false
-end clickProcess
+end pressAccept
 
-tell application "System Events"
-	if exists process "FaceTime" then
-		tell process "FaceTime" to set frontmost to true
-	end if
-end tell
-if clickProcess("FaceTime") then return "clicked"
-if clickProcess("NotificationCenter") then return "clicked"
-if clickProcess("Notification Center") then return "clicked"
+on acceptIn(procName)
+	tell application "System Events"
+		if not (exists process procName) then return false
+		set ws to windows of process procName
+	end tell
+	repeat with w in ws
+		if my pressAccept(w) then return true
+	end repeat
+	return false
+end acceptIn
+
+if acceptIn("NotificationCenter") then return "clicked"
+if acceptIn("FaceTime") then return "clicked"
 return "missing"

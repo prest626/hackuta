@@ -11,13 +11,19 @@ FICTIONAL = "+15555550100"
 
 def test_scripts_carry_the_button_labels():
     assert 'clickLabel(w, "Call")' in (SCRIPTS / "click_call.applescript").read_text()
-    assert 'clickLabel(w, "Accept")' in (SCRIPTS / "click_accept.applescript").read_text()
+    assert '"Accept"' in (SCRIPTS / "click_accept.applescript").read_text()
     assert "NotificationCenter" in (SCRIPTS / "click_accept.applescript").read_text()
     assert 'clickLabel(w, "End")' in (SCRIPTS / "click_end.applescript").read_text()
     assert 'tell application "FaceTime" to quit' in (SCRIPTS / "quit_facetime.applescript").read_text()
     assert "button=" in (SCRIPTS / "facetime_state.applescript").read_text()
+    assert "NotificationCenter" in (SCRIPTS / "facetime_state.applescript").read_text()
     for key, label in facetime.BUTTONS.items():
         assert label == {"call": "Call", "accept": "Accept", "end": "End"}[key]
+
+
+def test_banner_only_ring_is_ringing():
+    # The FaceTime window can vanish on ring; the state script then reports only the banner's buttons.
+    assert facetime.parse_state("button=Accept\nbutton=Decline\n") == "ringing_in"
 
 
 def test_normalize_rejects_injection_and_adds_plus():
