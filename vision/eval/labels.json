@@ -1,0 +1,21 @@
+{
+  "photos": [
+    {"file": "01-all-empty.jpg", "filled": []},
+    {
+      "file": "02-all-full.jpg",
+      "filled": [
+        "MON-AM", "MON-PM", "TUE-AM", "TUE-PM", "WED-AM", "WED-PM",
+        "THU-AM", "THU-PM", "FRI-AM", "FRI-PM", "SAT-AM", "SAT-PM",
+        "SUN-AM", "SUN-PM"
+      ]
+    },
+    {"file": "03-sat-pm.jpg", "filled": ["SAT-PM"]},
+    {"file": "04-sun-am.jpg", "filled": ["SUN-AM"]},
+    {"file": "05-sat-pm-sun-pm.jpg", "filled": ["SAT-PM", "SUN-PM"]},
+    {
+      "file": "06-partial.jpg",
+      "visible": ["SAT-AM", "SAT-PM", "SUN-AM", "SUN-PM"],
+      "filled": ["SAT-PM"]
+    }
+  ]
+}
