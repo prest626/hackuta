@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { arm, disarm, escalationLines } from './script.mjs';
 import { urgentLine } from './safety.mjs';
 import { TOOLS, api, bind, dispatch, getSession, reset as resetTools } from './tools.mjs';
 
@@ -87,6 +88,26 @@ const hook = {
         if (hook._greeted) return;
         hook._greeted = true;
         await hook.refresh();
+        const current = getSession().active || active;
+        arm({
+          say,
+          finish: (args) => dispatch('finish_call', args),
+        });
+        if (current.kind === 'nurse_callback') {
+          let approval = null;
+          if (current.approval_id) {
+            try {
+              approval = await api('GET', `/v1/approvals/${current.approval_id}`);
+            } catch {
+              approval = null;
+            }
+          }
+          getSession().mode = 'escalation';
+          const lines = escalationLines(approval, getSession().context?.patient);
+          hook.greeting = lines.opening;
+          say(lines.opening);
+          return;
+        }
         say(hook.greeting);
         return;
       }
@@ -108,16 +129,23 @@ const hook = {
   },
 
   onTranscript(text) {
-    const phrases = getSession().context?.patient?.red_flags?.urgent_911 || [];
-    const line = urgentLine(text, phrases);
-    if (!line) return null;
-    getSession().emergency = true;
-    void dispatch('finish_call', { status: 'emergency_script', end_reason: 'agent_hangup' });
-    return line;
+    const session = getSession();
+    const line = urgentLine(text, session.context?.patient?.red_flags?.urgent_911 || []);
+    if (line) {
+      session.emergency = true;
+      void dispatch('finish_call', { status: 'emergency_script', end_reason: 'agent_hangup' });
+      return line;
+    }
+    if (session.mode === 'escalation' && String(text || '').trim() && !session.finished) {
+      void dispatch('finish_call', { status: 'completed', end_reason: 'agent_hangup' });
+      return escalationLines().close;
+    }
+    return null;
   },
 };
 
 export function resetHook() {
+  disarm();
   resetTools();
   hook.instructions = SYSTEM;
   hook.greeting = FALLBACK;
