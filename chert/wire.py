@@ -639,7 +639,7 @@ def bind_tools(box: dict) -> dict:
     async def run_breathing() -> str:
         return await breathing_check(box)
 
-    async def record_answer(slot: str, value: str, quote: str = "", confirmed: bool = False) -> str:
+    async def record_answer(slot: str, value: str = "unclear", quote: str = "", confirmed: bool = False) -> str:
         return remember_answer(box["symptoms"], slot, value, quote, confirmed)
 
     async def get_vitals() -> str:
@@ -680,8 +680,8 @@ def build_agent(instructions: str, box: dict):
             return await tools["breathing_check"]()
 
         @function_tool()
-        async def record_answer(self, slot: str, value: str, quote: str = "", confirmed: bool = False) -> str:
-            """Short args. quote is optional, a few words at most."""
+        async def record_answer(self, slot: str, value: str = "unclear", quote: str = "", confirmed: bool = False) -> str:
+            """Short args. value and quote are optional, a few words at most."""
             return await tools["record_answer"](slot, value, quote, confirmed)
 
         @function_tool()

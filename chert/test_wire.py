@@ -728,9 +728,9 @@ def test_record_answer_works_with_no_quote():
         "confirmed": False,
     }]
     text = Path(wire.__file__).read_text()
-    assert 'async def record_answer(slot: str, value: str, quote: str = "", confirmed: bool = False)' in text
-    assert 'async def record_answer(self, slot: str, value: str, quote: str = "", confirmed: bool = False)' in text
-    assert '"""Short args. quote is optional, a few words at most."""' in text
+    assert 'async def record_answer(slot: str, value: str = "unclear", quote: str = "", confirmed: bool = False)' in text
+    assert 'async def record_answer(self, slot: str, value: str = "unclear", quote: str = "", confirmed: bool = False)' in text
+    assert '"""Short args. value and quote are optional, a few words at most."""' in text
 
 
 def test_each_tool_exception_is_a_calm_line(monkeypatch, caplog):
