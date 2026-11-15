@@ -3,7 +3,7 @@
 // the agent speaks into AGENT_DEVICE, which FaceTime uses as its microphone.
 // The prompt, tools, greeting and 911 line come from ../agent (CONTRACTS.md §4.5).
 // One process serves one call: it exits when the API's active call ends, and `npm run loop` restarts it.
-import { spawn } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import readline from 'node:readline';
 import WebSocket from 'ws';
 import agent from '../agent/index.mjs';
@@ -23,6 +23,9 @@ const openai = new WebSocket(`wss://api.openai.com/v1/realtime?model=${MODEL}`, 
   headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
 });
 const send = event => openai.readyState === WebSocket.OPEN && openai.send(JSON.stringify(event));
+// No connection in 15 s (network, key, outage): exit so `npm run loop` tries again instead of hanging.
+const connectTimer = setTimeout(() => { console.error('[bridge] OpenAI did not connect within 15 s'); process.exit(1); }, 15000);
+let ready = false;
 
 // One long-lived player. Agent audio waits in `queue` as 20 ms frames and is fed to sox about
 // 120 ms ahead of real time, so an interruption only has to drop the queue, not restart sox.
@@ -61,16 +64,38 @@ const sayExact = text => {
 let watching = false;
 const say = text => { sayExact(text); if (!watching) { watching = true; watchForHangup(); } };
 
+// FaceTime's own view of the call, from mac.facetime (async: a sync probe would stall the audio pacer).
+// A failed probe prints in_call, never idle. MAC_DRY_RUN=1 would make it always idle, so force it off.
+const REPO = new URL('..', import.meta.url).pathname;
+const faceTimeState = () => new Promise(resolve => execFile(`${REPO}.venv/bin/python`, ['-m', 'mac.facetime', 'state'],
+  { cwd: REPO, timeout: 10000, env: { ...process.env, MAC_DRY_RUN: '0' } }, (err, out) => resolve(err ? 'unknown' : String(out).trim())));
+
 // The call is over once the API has no active call: exit so `npm run loop` starts a clean session.
+// If the caller hangs up without finish_call, FaceTime goes idle while the API still says in_call:
+// two idle reads in a row (one could be a glitch) tell the API via agent.onCallEnd (#88).
 function watchForHangup() {
+  let idleReads = 0;
+  let checking = false;
   const timer = setInterval(async () => {
-    let active;
-    try { active = await api('GET', '/v1/calls/active'); } catch { return; }
-    if (!active) { clearInterval(timer); console.log('[bridge] call ended'); process.exit(0); }
+    if (checking) return;
+    checking = true;
+    try {
+      let active = await api('GET', '/v1/calls/active');
+      if (active?.state === 'in_call') {
+        idleReads = (await faceTimeState()) === 'idle' ? idleReads + 1 : 0;
+        if (idleReads >= 2) {
+          console.log('[bridge] FaceTime is idle: caller hung up');
+          await agent.onCallEnd();
+          active = await api('GET', '/v1/calls/active');
+        }
+      }
+      if (!active) { clearInterval(timer); console.log('[bridge] call ended'); process.exit(0); }
+    } catch {} finally { checking = false; }
   }, 2000);
 }
 
 openai.on('open', async () => {
+  clearTimeout(connectTimer);
   console.log('[bridge] OpenAI connected, loading the call agent');
   // A hung API must not block the call: after 3 s, go on with the hook's default prompt.
   await Promise.race([agent.refresh(), new Promise(resolve => setTimeout(resolve, 3000))]);
@@ -95,6 +120,7 @@ openai.on('open', async () => {
   const mic = spawn('sox', ['-q', '--buffer', '65536', '-t', 'coreaudio', CALLER_DEVICE, ...PCM, '-', 'remix', '1,2'], { stdio: ['ignore', 'pipe', 'inherit'] });
   mic.stdout.on('data', chunk => send({ type: 'input_audio_buffer.append', audio: chunk.toString('base64') }));
   mic.on('exit', code => { console.error(`[bridge] could not read "${CALLER_DEVICE}" (sox exit ${code})`); process.exit(1); });
+  ready = true;
   console.log(`[bridge] Ready. Hearing "${CALLER_DEVICE}", speaking into "${AGENT_DEVICE}".`);
   console.log('[bridge] Greets on its own once mac.answerd picks up. Press Enter to greet by hand if the API is down.');
   void agent.onCallStart(say);
@@ -137,6 +163,7 @@ openai.on('close', (code, reason) => { console.error(`[bridge] OpenAI connection
 // Fallback when the API or mac.answerd is down: Enter greets with the hook's fallback line.
 // No hang-up watch here (there is no active call to watch); _greeted stops the hook greeting twice.
 readline.createInterface({ input: process.stdin }).on('line', () => {
+  if (!ready) { console.log('[bridge] not ready yet, wait for Ready'); return; }
   if (agent._greeted) return;
   agent._greeted = true;
   sayExact(agent.greeting);
