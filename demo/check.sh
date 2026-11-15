@@ -21,7 +21,7 @@ elif [ -n "${AGENT_API_TOKEN:-}" ]; then
   auth+=(-H "Authorization: Bearer ${AGENT_API_TOKEN}")
 fi
 
-health_body=$(curl -sf --max-time 3 --stderr /dev/null "${auth[@]}" "$BASE/v1/health" || true)
+health_body=$(curl -sf --max-time 3 --stderr /dev/null ${auth[@]+"${auth[@]}"} "$BASE/v1/health" || true)
 if printf '%s' "$health_body" | python -c 'import json,sys
 try:
     ok = json.load(sys.stdin).get("ok") is True
@@ -71,8 +71,8 @@ fi
 
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
-curl -sf --max-time 3 --stderr /dev/null "${auth[@]}" -o "$tmp/live" "$BASE/v1/patients/pat_rosa01/vitals/live" || true
-curl -sf --max-time 3 --stderr /dev/null "${auth[@]}" -o "$tmp/hr" "$BASE/v1/patients/pat_rosa01/vitals?metric=hr" || true
+curl -sf --max-time 3 --stderr /dev/null ${auth[@]+"${auth[@]}"} -o "$tmp/live" "$BASE/v1/patients/pat_rosa01/vitals/live" || true
+curl -sf --max-time 3 --stderr /dev/null ${auth[@]+"${auth[@]}"} -o "$tmp/hr" "$BASE/v1/patients/pat_rosa01/vitals?metric=hr" || true
 word=$(python - "$tmp/live" "$tmp/hr" <<'PY' || true
 import json, sys
 try:

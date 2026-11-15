@@ -5,6 +5,8 @@ import os
 import re
 import subprocess
 import threading
+
+import pytest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -112,6 +114,39 @@ def test_port_8000_fails_when_health_is_down():
     assert "FAIL port-8000" in proc.stdout
     assert "in use by API, expected" not in proc.stdout
     _assert_clean(proc)
+
+
+def test_unset_tokens_do_not_trip_nounset():
+    """macOS bash 3.2 errors on an empty "${auth[@]}" under set -u. Spare Mac has no tokens."""
+    bash = "/bin/bash"
+    if not (os.path.isfile(bash) and os.access(bash, os.X_OK)):
+        pytest.skip("/bin/bash missing")
+    text = (ROOT / "demo" / "check.sh").read_text()
+    safe = '${auth[@]+"${auth[@]}"}'
+    assert text.count(safe) == 3
+    assert '"${auth[@]}"' not in text.replace(safe, "")
+    server = _serve(False, [{"t": "2026-11-15T14:00:00Z", "source": "watch_workout", "value": 80}])
+    env = os.environ.copy()
+    env.pop("DASHBOARD_TOKEN", None)
+    env.pop("AGENT_API_TOKEN", None)
+    env["DEMO_CHECK_BASE"] = f"http://127.0.0.1:{server.server_port}"
+    env["DEMO_CHECK_DOCTOR_TEXT"] = "PASS sox\nPASS node\n"
+    env["DEMO_CHECK_TUNNEL_URL"] = env["DEMO_CHECK_BASE"]
+    try:
+        proc = subprocess.run(
+            [bash, str(ROOT / "demo" / "check.sh")],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+    finally:
+        server.shutdown()
+    assert "unbound variable" not in proc.stderr
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "PASS health" in proc.stdout
+    assert "PASS port-8000 (in use by API, expected)" in proc.stdout
 
 
 def test_other_doctor_fails_still_fail_and_replay_is_labeled():
