@@ -48,7 +48,7 @@ The Mac's own speakers go silent while output is on BlackHole; the caller hears 
 
 ## ElevenLabs voice
 
-`npm start` and `npm run loop` run `start.mjs`. It loads `elevenlabs.mjs` when `.env.local` has `VOICE=elevenlabs`, and `bridge.mjs` otherwise. The default is OpenAI. Run only one bridge at a time; both use the same BlackHole devices.
+`npm start` and `npm run loop` currently pin OpenAI through `start.mjs` for the demo. Existing `VOICE=elevenlabs` settings do not override this rollback. The ElevenLabs path remains under live evaluation. Run only one bridge at a time; both use the same BlackHole devices.
 
 1. Put `ELEVENLABS_API_KEY` in `facetime-bridge/.env.local` only. Never commit it, print it, or post it.
 2. Create or update the agent. The command is idempotent and prints `ELEVENLABS_AGENT_ID=agent_…` for `.env.local`. `ELEVENLABS_VOICE_ID` is optional.
@@ -56,9 +56,9 @@ The Mac's own speakers go silent while output is on BlackHole; the caller hears 
    node --env-file=.env.local elevenlabs_setup.mjs
    ```
    `--print` writes the config and does not use the network. `--no-interruptions` drops interruption events. `--check-realtime` only reports whether the Realtime model is available.
-3. Add `VOICE=elevenlabs` to `.env.local`, then start the loop as in the setup steps above.
+3. For explicit ElevenLabs testing, run `node --env-file=.env.local elevenlabs.mjs`. The demo launcher stays on OpenAI.
 
-To roll back, delete the `VOICE=elevenlabs` line and restart the loop. That selects OpenAI again. No git change.
+For the OpenAI demo, run `npm run loop`. No environment-file changes are required.
 
 ## Troubleshooting
 
