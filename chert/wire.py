@@ -71,7 +71,12 @@ CHECKIN_ORDER = (
     "breathing_check asks them to sit still for 20 seconds. "
     "One question per turn. "
     "Do check_pillbox and breathing_check before any symptom question. "
-    "Ask symptom questions only after both."
+    "Ask symptom questions only after both. "
+    "You can see the patient's video. While the organizer is up, say only what you "
+    "actually see: which day lids show, open or closed, how many pills, and what is "
+    "covered or cut off. Ask them to move it until all seven days show, then call "
+    "check_pillbox. check_pillbox is the record; never claim more than you can see "
+    "and never give dosing advice."
 )
 PHRASES = (
     "chest pain",
@@ -500,9 +505,10 @@ def safe(fn, fallback_line):
             result = fn(*args, **kwargs)
             if inspect.isawaitable(result):
                 result = await result
+            log.info("tool %s -> %s", fn.__name__, str(result)[:120])
             return result
         except Exception as exc:
-            log.info("%s", type(exc).__name__)
+            log.info("tool %s failed: %s", fn.__name__, type(exc).__name__)
             return fallback_line
 
     return wrapped

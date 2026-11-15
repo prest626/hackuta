@@ -258,6 +258,8 @@ def test_http_error_returns_the_fallback_line(api, tmp_path):
 
 def test_request_keeps_dicts_and_drops_lists(monkeypatch):
     class _Res:
+        status_code = 200
+
         def raise_for_status(self):
             return None
 
@@ -276,3 +278,22 @@ def test_timeout_returns_the_fallback_line(api, monkeypatch):
     api.delay = 1
     api.vitals = {"stale": False, "hr_median_60s": 80.5}
     assert homeward.get_vitals("pat_rosa01") == NO_READING
+
+
+def test_request_logs_status_or_error(monkeypatch, caplog):
+    req = homeward.httpx.Request("POST", "http://api/v1/vision/pillcheck")
+
+    def not_found(*_args, **_kwargs):
+        return homeward.httpx.Response(404, request=req, json={"detail": "call not found"})
+
+    def timed_out(*_args, **_kwargs):
+        raise homeward.httpx.ReadTimeout("slow", request=req)
+
+    caplog.set_level("INFO", logger="chert.homeward")
+    monkeypatch.setattr(homeward.httpx, "request", not_found)
+    assert homeward._request("POST", "/v1/vision/pillcheck?x=1", {}) is None
+    monkeypatch.setattr(homeward.httpx, "request", timed_out)
+    assert homeward._request("GET", "/v1/vitals/live?patient_id=pat_rosa01") is None
+    lines = [r.getMessage() for r in caplog.records]
+    assert lines[0].startswith("api POST /v1/vision/pillcheck -> 404 ")
+    assert lines[1].startswith("api GET /v1/vitals/live -> ReadTimeout ")

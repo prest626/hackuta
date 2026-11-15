@@ -339,10 +339,11 @@ async def entrypoint(ctx):
     async def ensure_session():
         if session_box["session"] is not None:
             return session_box["session"]
-        from livekit.agents import AgentSession
+        from livekit.agents import AgentSession, room_io
         from livekit.plugins import openai
 
         call = wire.fetch_context(ctx.room.metadata, homeward_request)
+        log.info("call context call_id=%s patient_id=%s", call.get("call_id"), call.get("patient_id"))
         box.update(call)
         if call.get("vitals"):
             box["vitals"] = call["vitals"]
@@ -368,6 +369,7 @@ async def entrypoint(ctx):
                 box,
             ),
             room=ctx.room,
+            room_options=room_io.RoomOptions(video_input=True),
         )
 
         def _heard(ev):
