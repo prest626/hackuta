@@ -33,22 +33,25 @@ def _tracked():
     return [ROOT / line for line in out.splitlines() if line]
 
 
-def _skip_line(low: str) -> bool:
-    # The deny-list constant, and tests that assert a stem is absent.
-    return "unsafe" in low or "doesnotmatch" in low or ("assert" in low and "not in" in low)
+def _is_syntax(clause: str, at: int, stem: str) -> bool:
+    # A regex token (/stem or |stem) or an assertion needle ("stem" not in).
+    if at > 0 and clause[at - 1] in "/|":
+        return True
+    if at > 0 and clause[at - 1] in "\"'`":
+        after = clause[at + len(stem):].lstrip("\"'` ")
+        return after.startswith("not in")
+    return False
 
 
 def claim_hits(text: str) -> list[tuple[int, str]]:
     hits = []
     for n, line in enumerate(text.splitlines(), 1):
         low = line.lower()
-        if _skip_line(low):
-            continue
         for clause in re.split(r"[.;!?]", low):
             for stem in UNSAFE:
                 at = clause.find(stem)
                 while at != -1:
-                    if not any(tok in clause[:at] for tok in _NEG):
+                    if not _is_syntax(clause, at, stem) and not any(tok in clause[:at] for tok in _NEG):
                         hits.append((n, stem))
                     at = clause.find(stem, at + len(stem))
     return hits
@@ -59,6 +62,11 @@ def test_claim_scanner_sees_a_dose_and_skips_a_prohibition():
     assert claim_hits("No diagnosis.") == []
     assert claim_hits("Do not say to take or skip a dose.") == []
     assert claim_hits("It does not call the model for a diagnosis.") == []
+
+
+def test_unrelated_words_do_not_hide_a_claim():
+    assert claim_hits("You should take two. This is unsafe.")
+    assert claim_hits("You should take two. doesNotMatch is unrelated.")
 
 
 def test_tracked_text_has_no_unsafe_claims():
