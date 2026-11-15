@@ -805,8 +805,6 @@ dependencies = [
     { name = "fastapi" },
     { name = "google-genai" },
     { name = "httpx" },
-    { name = "livekit-agents" },
-    { name = "livekit-plugins-openai" },
     { name = "numpy" },
     { name = "openai" },
     { name = "opencv-python-headless" },
@@ -816,6 +814,10 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+chert = [
+    { name = "livekit-agents" },
+    { name = "livekit-plugins-openai" },
+]
 dev = [
     { name = "jsonschema" },
     { name = "pytest" },
@@ -826,8 +828,6 @@ requires-dist = [
     { name = "fastapi" },
     { name = "google-genai" },
     { name = "httpx" },
-    { name = "livekit-agents", specifier = "==1.8.12" },
-    { name = "livekit-plugins-openai", specifier = "==1.8.12" },
     { name = "numpy" },
     { name = "openai" },
     { name = "opencv-python-headless" },
@@ -837,6 +837,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+chert = [
+    { name = "livekit-agents", specifier = "==1.8.12" },
+    { name = "livekit-plugins-openai", specifier = "==1.8.12" },
+]
 dev = [
     { name = "jsonschema" },
     { name = "pytest" },

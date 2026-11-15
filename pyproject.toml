@@ -13,12 +13,11 @@ dependencies = [
     "opencv-python-headless",
     "openai",
     "google-genai",
-    "livekit-agents==1.8.12",
-    "livekit-plugins-openai==1.8.12",
 ]
 
 [dependency-groups]
 dev = ["pytest", "jsonschema"]
+chert = ["livekit-agents==1.8.12", "livekit-plugins-openai==1.8.12"]
 
 [tool.uv]
 package = false

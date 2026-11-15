@@ -2,6 +2,14 @@
 
 `python -m chert.agent` runs the Homeward check-in on a Chert FaceTime call. Prototype, not a medical device. Mock patients only.
 
+On the MacBook that runs the agent, from the repo root:
+
+```bash
+uv sync --inexact --group chert
+```
+
+The API Mac uses `uv sync --group dev`.
+
 ## Hang up
 
 `finish_call` posts the check-in for the nurse and returns the closing line. About 6 seconds later the agent ends the FaceTime call, so that line can play. `box["hangup"]` is safe to call again; a second call does not end the call twice. The 911 path can call it after the fixed emergency line.
