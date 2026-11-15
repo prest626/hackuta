@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TOOLS, api, bind, dispatch, reset as resetTools } from './tools.mjs';
+import { urgentLine } from './safety.mjs';
+import { TOOLS, api, bind, dispatch, getSession, reset as resetTools } from './tools.mjs';
 
 const SYSTEM = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'prompts/system.md'), 'utf8');
 const FALLBACK = "Hi, it's Homeward from your care team.";
@@ -106,8 +107,13 @@ const hook = {
     return dispatch(name, parsed);
   },
 
-  onTranscript() {
-    return null;
+  onTranscript(text) {
+    const phrases = getSession().context?.patient?.red_flags?.urgent_911 || [];
+    const line = urgentLine(text, phrases);
+    if (!line) return null;
+    getSession().emergency = true;
+    void dispatch('finish_call', { status: 'emergency_script', end_reason: 'agent_hangup' });
+    return line;
   },
 };
 
