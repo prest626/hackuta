@@ -26,6 +26,7 @@ let vitals;
 let pills;
 let pillAt;
 const results = [];
+const ended = [];
 
 beforeEach(() => {
   resetHook();
@@ -33,6 +34,7 @@ beforeEach(() => {
   pills = [callExample.pill_check];
   pillAt = 0;
   results.length = 0;
+  ended.length = 0;
   process.env.HOMEWARD_API = api.url;
 });
 
@@ -55,6 +57,10 @@ api = await listen(({ method, path, body }) => {
   if (method === 'POST' && path === '/v1/calls/call_rosa01d3/result') {
     results.push(body);
     return { tier: 'YELLOW', flags: [], approval_ids: [] };
+  }
+  if (method === 'POST' && path === '/v1/calls/active/ended') {
+    ended.push(body);
+    return 204;
   }
   if (method === 'POST' && path === '/v1/calls/call_rosa01d3/hangup') return 204;
   throw new Error(`unexpected ${method} ${path}`);
@@ -138,6 +144,24 @@ describe('tools', { concurrency: 1 }, () => {
     assert.match(second.say, /Tilt it away from the light/);
     assert.match(third.say, /could not see the organizer/);
     assert.equal(third.data.retries, 2);
+  });
+
+  test('caller hang-up posts ended without finish_call, then finish_call still posts', async () => {
+    await hook.refresh();
+    const first = JSON.parse(await hook.onCallEnd());
+    assert.equal(first.ok, true);
+    assert.equal(results.length, 0);
+    assert.deepEqual(ended, [{ end_reason: 'patient_hangup' }]);
+    const second = JSON.parse(await hook.onCallEnd());
+    assert.equal(second.ok, true);
+    const posted = JSON.parse(await hook.onToolCall('finish_call', {
+      status: 'completed',
+      end_reason: 'patient_hangup',
+    }));
+    assert.equal(posted.ok, true);
+    assert.equal(results.length, 1);
+    assert.equal(results[0].status, 'partial');
+    assert.equal(results[0].end_reason, 'patient_hangup');
   });
 
   test('finish_call early posts status partial', async () => {

@@ -112,6 +112,66 @@ def test_no_answer_marks_the_row_and_proposes(tmp_path, monkeypatch):
             assert c.execute("SELECT status FROM scheduled_calls WHERE id = 'call_rosa01d2'").fetchone()["status"] == "no_answer"
 
 
+def test_hangup_without_finish_call_accepts_the_next_ring(tmp_path, monkeypatch):
+    monkeypatch.setenv("DB_PATH", str(tmp_path / "homeward.db"))
+    _seed_call(status="done")
+    with _client(tmp_path, monkeypatch) as client:
+        started = client.post("/v1/calls/inbound", json={"patient_id": "pat_rosa01"}, headers=_auth())
+        assert started.status_code == 200
+        call_id = started.json()["call_id"]
+        assert client.post("/v1/calls/active/state", json={"state": "in_call"}, headers=_auth()).status_code == 204
+
+        ended = client.post(
+            "/v1/calls/active/ended",
+            json={"end_reason": "patient_hangup"},
+            headers=_auth(),
+        )
+        assert ended.status_code == 204
+
+        from api import db
+
+        with db.conn() as c:
+            row = c.execute("SELECT status FROM scheduled_calls WHERE id = ?", (call_id,)).fetchone()
+            event = json.loads(
+                c.execute("SELECT payload FROM events WHERE name = 'call.ended'").fetchone()["payload"]
+            )
+        assert row["status"] != "in_call"
+        assert row["status"] == "done"
+        assert event["call_id"] == call_id
+        assert event["ended_at"].endswith("Z")
+        assert event["end_reason"] == "patient_hangup"
+
+        again = client.post("/v1/calls/active/ended", json={}, headers=_auth())
+        assert again.status_code == 204
+        with db.conn() as c:
+            assert c.execute("SELECT COUNT(*) AS n FROM events WHERE name = 'call.ended'").fetchone()["n"] == 1
+
+        assert client.get("/v1/calls/active", headers=_auth()).status_code == 204
+        nxt = client.post("/v1/calls/inbound", json={"patient_id": "pat_rosa01"}, headers=_auth())
+        assert nxt.status_code == 200
+        assert nxt.json()["state"] == "ringing"
+        assert nxt.json()["call_id"] != call_id
+
+        result = json.loads((EXAMPLES / "call_result.json").read_text())
+        result["call_id"] = call_id
+        posted = client.post(f"/v1/calls/{call_id}/result", json=result, headers=_auth())
+        assert posted.status_code == 200
+        hung = client.post(f"/v1/calls/{call_id}/hangup", headers=_auth())
+        assert hung.status_code == 204
+        still = client.get("/v1/calls/active", headers=_auth())
+        assert still.status_code == 200
+        assert still.json()["call_id"] == nxt.json()["call_id"]
+        assert still.json()["state"] == "ringing"
+        with db.conn() as c:
+            assert c.execute(
+                "SELECT status FROM scheduled_calls WHERE id = ?", (call_id,)
+            ).fetchone()["status"] == "done"
+            assert c.execute("SELECT COUNT(*) AS n FROM events WHERE name = 'call.ended'").fetchone()["n"] == 1
+            assert c.execute(
+                "SELECT COUNT(*) AS n FROM call_results WHERE call_id = ?", (call_id,)
+            ).fetchone()["n"] == 1
+
+
 def test_hangup_calls_mac_and_marks_done(tmp_path, monkeypatch):
     monkeypatch.setenv("DB_PATH", str(tmp_path / "homeward.db"))
     _seed_call(call_id="call_rosa01d1", status="in_call")
