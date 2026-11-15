@@ -172,3 +172,14 @@ Samples stay queued for 10 minutes and are dropped after that. A failed post ret
 Select any watchOS Simulator and press ⌘U (Product → Test). `BatchingTests` does not need a heart-rate reading. They are not part of `make test`.
 
 If the test host fails to install because of the HealthKit signing error in step 3, the Linux check is still `pytest -q ingest/test_watch_payload.py`.
+
+## 9. Watch off
+
+From the repo root, with the API up and Rosa seeded (`watch_device_id` `watch_team01`):
+
+```bash
+export WATCH_DEVICE_TOKEN='dev-watch-token'   # same value the API expects; this is the default
+python -m ingest.replay                         # data/mock/hr_live_rosa.json
+```
+
+That posts one sample from the file to `/v1/watch/hr` every 5 seconds with `source` `mock_replay`. Pass another file if you need to. These rows are mock replay, not a live watch reading. Prototype, not a medical device.

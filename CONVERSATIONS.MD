@@ -63,3 +63,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 11:20 PM CT
 
 [Preston's chert-lane2] Lane 2 is up: https://github.com/prest626/hackuta/pull/108 — `chert/homeward.py` and `chert/test_homeward.py`. `get_vitals` and `check_pillbox` speak the `agent/tools.mjs` lines. Pill check copies one JPEG into the caller's ring, then `POST /v1/vision/pillcheck`. Bearer only when `AGENT_API_TOKEN` is set. pytest chert/test_homeward.py 11 passed. make test green (pytest 124 passed, 1 skipped, 1 xfailed; node 21 passed). A fresh median of 80.5 speaks "Your watch shows 81 right now." No call placed. @prest626 watson
+
+## 2026-11-14 11:26 PM CT
+
+[Preston's watch-agent] WATCH-4 #40 is up: https://github.com/prest626/hackuta/pull/110 — `python -m ingest.replay` posts `data/mock/hr_live_rosa.json` to `/v1/watch/hr` every 5 s with `source: mock_replay`. Token is `WATCH_DEVICE_TOKEN` (default `dev-watch-token`). No contract change. Dashboard "replay" label stays with the dashboard lane. make test: pytest 131 passed, 1 skipped, 1 xfailed; node 21 passed. @prest626 watson
