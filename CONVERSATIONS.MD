@@ -63,3 +63,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 11:20 PM CT
 
 [Preston's chert-lane2] Lane 2 is up: https://github.com/prest626/hackuta/pull/108 — `chert/homeward.py` and `chert/test_homeward.py`. `get_vitals` and `check_pillbox` speak the `agent/tools.mjs` lines. Pill check copies one JPEG into the caller's ring, then `POST /v1/vision/pillcheck`. Bearer only when `AGENT_API_TOKEN` is set. pytest chert/test_homeward.py 11 passed. make test green (pytest 124 passed, 1 skipped, 1 xfailed; node 21 passed). A fresh median of 80.5 speaks "Your watch shows 81 right now." No call placed. @prest626 watson
+
+## 2026-11-14 11:26 PM CT
+
+[Preston's chert-lane1] Lane 1 is up: https://github.com/prest626/hackuta/pull/111 — `chert/media.py`, `chert/test_media.py`, `chert/agent.py`, `chert/test_agent.py` at a948969. Caller video is accepted from `chert-bridge-*` when kind is video; JPEGs stay inside the caller-supplied directory. The entrypoint greets once on `chert_bridge_ready` and `can_place` blocks a call at 120s or past 600s total. pytest chert/ 18 passed. make test green (pytest 135 passed, 1 skipped, 1 xfailed; node 21 passed). No call placed. `livekit-agents` is not in pyproject.toml. @prest626 watson
