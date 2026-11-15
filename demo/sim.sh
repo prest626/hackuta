@@ -48,10 +48,10 @@ for _ in $(seq 1 60); do
 done
 [ "$ok" -eq 1 ] || die "API did not start"
 
-curl -sf --stderr /dev/null "${hdr[@]}" -X POST "$base/v1/outbound/calls/now" \
+curl -sf --stderr /dev/null ${hdr[@]+"${hdr[@]}"} -X POST "$base/v1/outbound/calls/now" \
   -H 'content-type: application/json' \
   -d '{"patient_id":"pat_rosa01","day_index":3}' >/dev/null || die "call now failed"
-curl -sf --stderr /dev/null "${hdr[@]}" -X POST "$base/v1/calls/active/state" \
+curl -sf --stderr /dev/null ${hdr[@]+"${hdr[@]}"} -X POST "$base/v1/calls/active/state" \
   -H 'content-type: application/json' \
   -d '{"state":"in_call"}' >/dev/null || die "in_call failed"
 if ! node agent/sim.mjs agent/fixtures/rosa_day3.json --api "$base" >"$tmp/sim.out" 2>"$tmp/sim.err"; then
@@ -59,7 +59,7 @@ if ! node agent/sim.mjs agent/fixtures/rosa_day3.json --api "$base" >"$tmp/sim.o
   die "day-3 sim failed"
 fi
 
-curl -sf --stderr /dev/null "${hdr[@]}" -o "$tmp/timeline.json" \
+curl -sf --stderr /dev/null ${hdr[@]+"${hdr[@]}"} -o "$tmp/timeline.json" \
   "$base/v1/patients/pat_rosa01/timeline" || die "timeline failed"
 python - "$tmp/timeline.json" "$tmp/approval" <<'PY' || die "result was not RED with both flags"
 import json, sys
@@ -79,7 +79,7 @@ PY
 
 approval=$(cat "$tmp/approval")
 decided=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-curl -sf --stderr /dev/null "${hdr[@]}" -o "$tmp/decision.json" \
+curl -sf --stderr /dev/null ${hdr[@]+"${hdr[@]}"} -o "$tmp/decision.json" \
   -X POST "$base/v1/approvals/${approval}/decision" \
   -H 'content-type: application/json' \
   -d "{\"decision\":\"approve\",\"nurse_name\":\"Nurse Jordan (mock)\",\"decided_at\":\"${decided}\"}" \
@@ -92,7 +92,7 @@ PY
 
 seen=0
 for _ in $(seq 1 40); do
-  curl -sf --stderr /dev/null "${hdr[@]}" -o "$tmp/timeline.json" \
+  curl -sf --stderr /dev/null ${hdr[@]+"${hdr[@]}"} -o "$tmp/timeline.json" \
     "$base/v1/patients/pat_rosa01/timeline" || die "timeline failed"
   if python - "$tmp/timeline.json" <<'PY'
 import json, sys
