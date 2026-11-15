@@ -10,9 +10,12 @@ import cv2
 import numpy as np
 
 from vision.breath import measure_breathing
-from vision.eval import LABELS
 
 PHOTOS = Path(__file__).resolve().parent / "eval" / "photos"
+# Demo gate. Photos are added later from call frames; do not draw stand-ins.
+PRESTON = Path(__file__).resolve().parent / "eval" / "preston"
+PRESTON_LABELS = PRESTON / "labels.json"
+ROSA_SCHEDULE = Path(__file__).resolve().parents[1] / "data" / "mock" / "med_schedules.json"
 FRAMES_ROOT = Path("var/chert-frames")
 _PASS_AT = 0.8
 _REAL_SECONDS = 25.0
@@ -30,23 +33,28 @@ def _key_name() -> str:
     return "OPENAI_API_KEY"
 
 
-def _photos() -> list[Path] | None:
-    if not PHOTOS.is_dir():
+def _photos(directory: Path) -> list[Path] | None:
+    if not directory.is_dir():
         return None
-    return sorted(path for path in PHOTOS.iterdir() if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg"})
+    return sorted(path for path in directory.iterdir() if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg"})
 
 
-def _label_rows() -> list | None:
-    if not LABELS.is_file():
+def _label_rows(path: Path) -> list | None:
+    if not path.is_file():
         return None
     try:
-        spec = json.loads(LABELS.read_text())
+        spec = json.loads(path.read_text())
     except (OSError, json.JSONDecodeError):
         return None
     rows = spec.get("photos") if isinstance(spec, dict) else None
     if not isinstance(rows, list) or not rows:
         return None
     return rows
+
+
+def _rosa() -> dict:
+    rows = json.loads(ROSA_SCHEDULE.read_text())
+    return next(row for row in rows if row.get("patient_id") == "pat_rosa01")
 
 
 def _verdict(read: dict, row: dict) -> str:
@@ -61,7 +69,7 @@ def _verdict(read: dict, row: dict) -> str:
     return "ok"
 
 
-def _scored(photos: list[Path], rows: list) -> tuple[bool, str]:
+def _scored(photos: list[Path], rows: list, schedule) -> tuple[bool, str]:
     from vision.pills import read_organizer
 
     by_name = {row["file"]: row for row in rows if isinstance(row, dict) and isinstance(row.get("file"), str)}
@@ -70,7 +78,7 @@ def _scored(photos: list[Path], rows: list) -> tuple[bool, str]:
         row = by_name.get(path.name)
         verdict = "wrong"
         try:
-            data = read_organizer(path.read_bytes(), "7x2")
+            data = read_organizer(path.read_bytes(), schedule)
             if isinstance(data, dict) and row is not None:
                 verdict = _verdict(data, row)
         except Exception:
@@ -85,13 +93,13 @@ def _scored(photos: list[Path], rows: list) -> tuple[bool, str]:
     return passed, f"pill model: {word} ({correct}/{total}, {percent}%)"
 
 
-def _unscored(photos: list[Path]) -> tuple[bool, str]:
+def _unscored(photos: list[Path], schedule) -> tuple[bool, str]:
     from vision.pills import read_organizer
 
     print("no labels (ran, not scored)")
     for path in photos:
         try:
-            data = read_organizer(path.read_bytes(), "7x2")
+            data = read_organizer(path.read_bytes(), schedule)
             if not isinstance(data, dict):
                 raise TypeError
         except Exception as exc:
@@ -101,13 +109,15 @@ def _unscored(photos: list[Path]) -> tuple[bool, str]:
 
 
 def _pill_line() -> tuple[bool, str]:
-    photos = _photos()
+    """Preston's real frames are the demo gate. The synthetic set is not scored here."""
+    photos = _photos(PRESTON)
     if not photos:
-        return False, "pill model: FAIL (no photos)"
-    rows = _label_rows()
+        return False, "pill model: FAIL (no photos in vision/eval/preston)"
+    schedule = _rosa()
+    rows = _label_rows(PRESTON_LABELS)
     if rows is None:
-        return _unscored(photos)
-    return _scored(photos, rows)
+        return _unscored(photos, schedule)
+    return _scored(photos, rows, schedule)
 
 
 def _bar_clip(directory: Path) -> list[tuple[float, str]]:
@@ -190,6 +200,7 @@ def main() -> int:
         failed = True
     else:
         print("vision key: present")
+        print("synthetic: report only (python -m vision.eval); demo gate is vision/eval/preston")
         ok, line = _pill_line()
         print(line)
         failed = not ok

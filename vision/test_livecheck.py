@@ -132,18 +132,26 @@ def _matching_read(row):
     }
 
 
+def _gate_synthetic(monkeypatch):
+    from vision.eval import LABELS
+    from vision.livecheck import PHOTOS
+
+    monkeypatch.setattr("vision.livecheck.PRESTON", PHOTOS)
+    monkeypatch.setattr("vision.livecheck.PRESTON_LABELS", LABELS)
+
+
 def _mock_labeled_reads(monkeypatch, wrong):
     rows = {row["file"]: row for row in _rows()}
     blobs = {}
-    from vision.livecheck import PHOTOS
+    from vision.livecheck import PRESTON
 
-    for path in PHOTOS.iterdir():
+    for path in PRESTON.iterdir():
         if path.suffix.lower() in {".jpg", ".jpeg"}:
             blobs[path.read_bytes()] = path.name
     calls = []
 
-    def fake(jpeg, layout):
-        calls.append(layout)
+    def fake(jpeg, schedule):
+        calls.append(schedule["organizer_layout"])
         name = blobs[jpeg]
         if name in wrong:
             return {"pillbox_visible": True, "compartments": [{"label": "MON-AM", "has_pills": True}], "confidence": 0.99, "reason": "no"}
@@ -156,6 +164,7 @@ def _mock_labeled_reads(monkeypatch, wrong):
 def test_live_path_scores_labels_without_printing_the_key(capsys, monkeypatch):
     _block_network(monkeypatch)
     _clear(monkeypatch)
+    _gate_synthetic(monkeypatch)
     monkeypatch.setenv("OPENAI_API_KEY", PLANTED)
     calls = _mock_labeled_reads(monkeypatch, wrong=set())
     from vision.livecheck import main
@@ -168,12 +177,14 @@ def test_live_path_scores_labels_without_printing_the_key(capsys, monkeypatch):
     assert "breathing: PASS" in captured.out
     assert PLANTED not in captured.out
     assert PLANTED not in captured.err
-    assert calls == ["7x2"] * 14
+    assert calls == ["7x1"] * 14
+    assert "synthetic: report only" in captured.out
 
 
 def test_score_fails_below_80_percent(capsys, monkeypatch):
     _block_network(monkeypatch)
     _clear(monkeypatch)
+    _gate_synthetic(monkeypatch)
     monkeypatch.setenv("OPENAI_API_KEY", PLANTED)
     names = sorted(row["file"] for row in _rows())
     _mock_labeled_reads(monkeypatch, wrong=set(names[11:]))
@@ -189,6 +200,7 @@ def test_score_fails_below_80_percent(capsys, monkeypatch):
 def test_score_passes_at_80_percent(capsys, monkeypatch):
     _block_network(monkeypatch)
     _clear(monkeypatch)
+    _gate_synthetic(monkeypatch)
     monkeypatch.setenv("OPENAI_API_KEY", PLANTED)
     names = sorted(row["file"] for row in _rows())
     _mock_labeled_reads(monkeypatch, wrong=set(names[12:]))
@@ -202,10 +214,13 @@ def test_missing_labels_say_ran_not_scored(tmp_path, capsys, monkeypatch):
     _block_network(monkeypatch)
     _clear(monkeypatch)
     monkeypatch.setenv("OPENAI_API_KEY", PLANTED)
-    monkeypatch.setattr("vision.livecheck.LABELS", tmp_path / "missing.json")
+    from vision.livecheck import PHOTOS
 
-    def fake(jpeg, layout):
-        assert jpeg and layout == "7x2"
+    monkeypatch.setattr("vision.livecheck.PRESTON", PHOTOS)
+    monkeypatch.setattr("vision.livecheck.PRESTON_LABELS", tmp_path / "missing.json")
+
+    def fake(jpeg, schedule):
+        assert jpeg and schedule["organizer_layout"] == "7x1"
         return {"pillbox_visible": True}
 
     monkeypatch.setattr("vision.pills.read_organizer", fake)
@@ -221,6 +236,7 @@ def test_missing_labels_say_ran_not_scored(tmp_path, capsys, monkeypatch):
 def test_scored_exception_hides_the_message(capsys, monkeypatch):
     _block_network(monkeypatch)
     _clear(monkeypatch)
+    _gate_synthetic(monkeypatch)
     monkeypatch.setenv("OPENAI_API_KEY", PLANTED)
 
     def fake(*_args, **_kwargs):
@@ -241,7 +257,10 @@ def test_pill_failure_prints_the_class_not_the_message(capsys, monkeypatch):
     _block_network(monkeypatch)
     _clear(monkeypatch)
     monkeypatch.setenv("OPENAI_API_KEY", PLANTED)
-    monkeypatch.setattr("vision.livecheck.LABELS", Path("/tmp/livecheck-no-labels.json"))
+    from vision.livecheck import PHOTOS
+
+    monkeypatch.setattr("vision.livecheck.PRESTON", PHOTOS)
+    monkeypatch.setattr("vision.livecheck.PRESTON_LABELS", Path("/tmp/livecheck-no-labels.json"))
 
     def fake(*_args, **_kwargs):
         raise RuntimeError(f"request echoed {PLANTED}")
@@ -352,11 +371,12 @@ def test_no_photos_fails(tmp_path, capsys, monkeypatch):
     _clear(monkeypatch)
     monkeypatch.setenv("OPENAI_API_KEY", PLANTED)
     _refuse_model(monkeypatch)
-    monkeypatch.setattr("vision.livecheck.PHOTOS", tmp_path)
+    monkeypatch.setattr("vision.livecheck.PRESTON", tmp_path)
     from vision.livecheck import main
 
     assert main() == 1
     out = capsys.readouterr().out
-    assert "pill model: FAIL (no photos)" in out
+    assert "pill model: FAIL (no photos in vision/eval/preston)" in out
+    assert "synthetic: report only" in out
     assert PLANTED not in out
     assert "breathing: PASS" in out

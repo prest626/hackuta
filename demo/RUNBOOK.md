@@ -2,7 +2,7 @@
 
 Homeward prototype. Mock patient Rosa. Not a medical device. A nurse approves every escalation. Do not place a call from this card except the live check-in below. `make demo-sim` does not dial.
 
-Sunday Nov 15 is day 3 (discharged Thu Nov 12). Do this after 8:00 AM CT so Sun-AM is already due.
+Sunday Nov 15 is day 3 (discharged Thu Nov 12). On Sunday morning, Monday through Saturday evening are already due.
 
 From the repo root. A spare-Mac login shell only has `/usr/bin/python3`, so activate the venv first. The commands below also call `.venv/bin/python` so a new Terminal still works.
 
@@ -12,9 +12,9 @@ source .venv/bin/activate
 
 ## Box
 
-7×2, Monday start, lids open, day letters toward the lens. Contrasting candies, not real medicine. Empty Mon-AM through Sat-AM. **Sat-PM still has pills** (the miss). **Sun-AM empty** (taken; only after 8:00 AM). **Sun-PM still has pills** (due 8:00 PM, not a miss). If you must run before 8:00 AM, leave Sun-AM full too.
+7×1, Monday start, lids open, day letters toward the lens. Contrasting candies, not real medicine. One single row, Sunday through Saturday. Empty Monday through Friday. **Sat-PM still has pills** (the miss). **Sun-PM still has pills** (due 8:00 PM, not a miss).
 
-Light in front of the box, not a window behind it. No glare on the plastic. Box fills most of the frame, all 14 lids visible, hold still two seconds, self-view not covering the box.
+Light in front of the box, not a window behind it. No glare on the plastic. Box fills most of the frame, all 7 lids visible, hold still two seconds, self-view not covering the box.
 
 ## Watch
 
@@ -28,7 +28,7 @@ Photo fallback, said out loud if used: hold up `vision/eval/photos/03-sat-pm.jpg
 
 Spare Mac: one API, one cloudflared, one `mac.answerd`, one `mac.capture`. `VISION_FAKE` unset. `MAC_DRY_RUN=0`.
 
-Own-box photos, once, untracked under `vision/eval/preston/`: `sat-pm-full.jpg`, `sun-am-empty.jpg`, `all-lids.jpg`. Then `.venv/bin/python -m vision.eval --dir vision/eval/preston` (expect `real photos: 3`).
+Own-box photos, once, untracked under `vision/eval/preston/`: `sat-pm-full.jpg`, `sun-pm-full.jpg`, `all-lids.jpg`. Then `.venv/bin/python -m vision.eval --dir vision/eval/preston` (expect `real photos: 3`). `make vision-test` is the demo gate for that folder once the JPEGs are there. The synthetic set is a report only.
 
 ## Audio
 

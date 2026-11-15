@@ -2,7 +2,7 @@
   "photos": [
     {"file": "all-lids.jpg", "filled": ["SAT-PM", "SUN-PM"]},
     {"file": "sat-pm-full.jpg", "visible": ["SAT-PM"], "filled": ["SAT-PM"]},
-    {"file": "sun-am-empty.jpg", "visible": ["SUN-AM"], "filled": []},
+    {"file": "sun-pm-full.jpg", "visible": ["SUN-PM"], "filled": ["SUN-PM"]},
     {"file": "tilted.jpg", "filled": ["SAT-PM", "SUN-PM"]},
     {"file": "partly-covered.jpg", "filled": ["SAT-PM", "SUN-PM"]},
     {"file": "hand-in-frame.jpg", "filled": ["SAT-PM", "SUN-PM"]}
