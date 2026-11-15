@@ -11,7 +11,7 @@ import pytest
 import chert.homeward as homeward
 
 NO_READING = "I don't have a fresh watch reading right now."
-WATCH_80 = "Your watch shows 80 right now."
+WATCH_81 = "Your watch shows 81 right now."
 HIGHER = " Your resting heart rate has been a bit higher than your usual this week."
 EMPTY = "The compartments that should be empty look empty."
 COULD_NOT_SEE = (
@@ -103,16 +103,16 @@ def test_null_median_gives_the_no_number_sentence(api):
     assert homeward.get_vitals("pat_rosa01") == NO_READING
 
 
-def test_fresh_median_80_5_says_80(api):
+def test_fresh_median_80_5_says_81(api):
     api.vitals = {"stale": False, "hr_median_60s": 80.5}
-    assert homeward.get_vitals("pat_rosa01") == WATCH_80
+    assert homeward.get_vitals("pat_rosa01") == WATCH_81
 
 
 def test_high_resting_rate_appends_the_tools_sentence(api):
     api.vitals = {"stale": False, "hr_median_60s": 80.5, "rhr_z": 1.5}
-    assert homeward.get_vitals("pat_rosa01") == WATCH_80 + HIGHER
+    assert homeward.get_vitals("pat_rosa01") == WATCH_81 + HIGHER
     api.vitals["rhr_z"] = 1.49
-    assert homeward.get_vitals("pat_rosa01") == WATCH_80
+    assert homeward.get_vitals("pat_rosa01") == WATCH_81
 
 
 def test_pill_ok_copies_jpeg_then_posts(api, tmp_path):

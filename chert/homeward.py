@@ -3,6 +3,7 @@
 Spoken lines are the strings in agent/tools.mjs.
 """
 
+import math
 import os
 import shutil
 import time
@@ -70,8 +71,8 @@ def get_vitals(patient_id: str) -> str:
     live = _request("GET", f"/v1/patients/{patient_id}/vitals/live")
     if not live or live.get("stale") or live.get("hr_median_60s") is None:
         return NO_READING
-    # 80.5 speaks as 80: chert/PLAN.md locks that sentence (Python round).
-    hr = round(live["hr_median_60s"])
+    # agent/tools.mjs Math.round is half up, so 80.5 speaks as 81.
+    hr = math.floor(live["hr_median_60s"] + 0.5)
     say = f"Your watch shows {hr} right now."
     z = live.get("rhr_z")
     if isinstance(z, (int, float)) and not isinstance(z, bool) and z >= 1.5:
