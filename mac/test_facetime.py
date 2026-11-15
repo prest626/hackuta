@@ -27,10 +27,29 @@ def test_banner_only_ring_is_ringing():
     assert facetime.parse_state("button=Accept\nbutton=Decline\n") == "ringing_in"
 
 
+NURSE_EMAIL = "nurse@example.com"
+
+
 def test_normalize_rejects_injection_and_adds_plus():
     assert facetime.normalize(FICTIONAL) == FICTIONAL
     assert facetime.normalize("15555550100") == FICTIONAL
     for bad in ("", "555", "+011", "facetime://+15555550100", "1555;rm", "+1 555", "++15555550100"):
+        with pytest.raises(ValueError):
+            facetime.normalize(bad)
+
+
+def test_normalize_accepts_apple_id_email():
+    assert facetime.normalize(NURSE_EMAIL) == NURSE_EMAIL
+    assert facetime.normalize("Nurse.Joy+demo@example.com") == "Nurse.Joy+demo@example.com"
+    for bad in (
+        "nurse @example.com",
+        "nurse@example.com;rm",
+        '"nurse@example.com"',
+        "nurse@example.com/x",
+        "facetime://nurse@example.com",
+        "nurse@example",
+        "@example.com",
+    ):
         with pytest.raises(ValueError):
             facetime.normalize(bad)
 
@@ -52,6 +71,16 @@ def test_dial_dry_run_prints_url_and_script(capsys, monkeypatch):
     assert f"open facetime://{FICTIONAL}" in out
     assert "click_call.applescript" in out
     assert out.count("osascript") == 1
+
+
+def test_dial_email_handle(capsys, monkeypatch):
+    monkeypatch.setenv("MAC_DRY_RUN", "1")
+    assert facetime.dial(NURSE_EMAIL) is True
+    out = capsys.readouterr().out
+    assert f"open facetime://{NURSE_EMAIL}" in out
+    assert facetime.dial(NURSE_EMAIL, audio_only=True) is True
+    audio = capsys.readouterr().out
+    assert f"open facetime-audio://{NURSE_EMAIL}" in audio
 
 
 def test_dial_audio_only_and_retries(monkeypatch):

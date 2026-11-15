@@ -183,9 +183,26 @@ def for_prompt(call: dict) -> dict:
     }
 
 
+def _has_family(call) -> bool:
+    patient = call.get("patient") if isinstance(call, dict) else None
+    contacts = patient.get("contacts") if isinstance(patient, dict) else None
+    if not isinstance(contacts, list):
+        return False
+    return any(isinstance(item, dict) and item.get("role") == "family" for item in contacts)
+
+
+def handoff_applies(call) -> bool:
+    """nurse_callback always. family_group_call only when the patient has a family contact."""
+    if not isinstance(call, dict) or call.get("kind") not in HANDOFF_KINDS:
+        return False
+    if call.get("kind") == "family_group_call":
+        return _has_family(call)
+    return True
+
+
 def instructions(prompt: str, call: dict, handoff: str | None = None) -> str:
     text = f"{prompt.rstrip()}\n\n{TONE}\n\n# This call\n{json.dumps(for_prompt(call))}"
-    if call.get("kind") in HANDOFF_KINDS:
+    if handoff_applies(call):
         text += "\n\n" + (SPOKEN_HANDOFF if handoff else QUIET_HANDOFF)
     else:
         text += "\n\n" + CHECKIN_ORDER
@@ -584,7 +601,7 @@ def _nurse_name(call, approval) -> str:
 
 def handoff_line(call, request) -> str | None:
     """The approved handoff sentence, or None. Pending and missing stay quiet."""
-    if not isinstance(call, dict) or call.get("kind") not in HANDOFF_KINDS:
+    if not handoff_applies(call):
         return None
     approval = None
     approval_id = call.get("approval_id")

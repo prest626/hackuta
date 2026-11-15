@@ -67,6 +67,32 @@ def test_seed_twice_leaves_three_mock_patients(db_path):
     assert "DEMO_PATIENT_PHONE" not in json.dumps(docs)
 
 
+def test_seed_without_family_keeps_nurse_email(tmp_path, monkeypatch):
+    monkeypatch.setenv("DB_PATH", str(tmp_path / "homeward.db"))
+    patient = _phone("1")
+    monkeypatch.setenv("DEMO_PATIENT_PHONE", patient)
+    monkeypatch.setenv("DEMO_NURSE_PHONE", "nurse@example.com")
+    monkeypatch.delenv("DEMO_FAMILY_PHONE", raising=False)
+    import data.seed as seed_mod
+
+    monkeypatch.setattr(seed_mod, "ENV_FILE", tmp_path / "missing.env")
+    from api import db
+
+    assert seed_mod.seed() == ["pat_rosa01", "pat_luis01", "pat_ada01"]
+    with db.conn() as c:
+        rows = c.execute("SELECT id, doc FROM patients ORDER BY id").fetchall()
+    assert [row["id"] for row in rows] == ["pat_ada01", "pat_luis01", "pat_rosa01"]
+    for row in rows:
+        doc = json.loads(row["doc"])
+        assert doc["phone_e164"] == patient
+        assert [item["role"] for item in doc["contacts"]] == ["nurse"]
+        assert doc["contacts"][0]["phone_e164"] == "nurse@example.com"
+        emailed = dict(doc)
+        emailed["phone_e164"] = "patient@example.com"
+        with pytest.raises(ValidationError):
+            seed_mod.prepare(emailed, "patient.schema.json", phones={})
+
+
 def test_refuses_non_mock(db_path):
     from data.seed import prepare
 

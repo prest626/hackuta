@@ -431,7 +431,9 @@ VISION_PROVIDER=openai        # openai | gemini
 VISION_FAKE=                  # "fixtures" in tests/e2e
 OPENAI_API_KEY=               # also in facetime-bridge/.env.local for bridge.mjs
 GOOGLE_API_KEY=               # only if VISION_PROVIDER=gemini
-# Demo phones (Preston's devices; never commit)
+# Demo handles (spare Mac .env only; never commit a number or email)
+# DEMO_PATIENT_PHONE is E.164. DEMO_NURSE_PHONE may be E.164 or an Apple ID email.
+# DEMO_FAMILY_PHONE is optional. Leave it unset for a nurse-only escalation.
 DEMO_PATIENT_PHONE=
 DEMO_NURSE_PHONE=
 DEMO_FAMILY_PHONE=

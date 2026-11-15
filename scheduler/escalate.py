@@ -38,28 +38,32 @@ def place_escalation(approval_id: str) -> dict:
             pass
         else:
             patient = _patient(c, approval.patient_id)
-            # family_group_call is the emergency-contact 1:1. Anything else stays a nurse 1:1.
-            if approval.action == "family_group_call":
-                kind = "family_group_call"
-                fallback = False
+            # family_group_call is the emergency-contact 1:1. No family contact means no call.
+            family = next((item for item in patient.contacts if item.role == "family"), None)
+            if approval.action == "family_group_call" and family is None:
+                reason = "no family contact"
             else:
-                kind = "nurse_callback"
-                fallback = approval.action != "nurse_callback"
-            day = 0
-            if approval.call_id:
-                linked = c.execute(
-                    "SELECT day_index FROM scheduled_calls WHERE id = ?",
-                    (approval.call_id,),
-                ).fetchone()
-                if linked:
-                    day = linked["day_index"]
-            call_id = db.new_id("call")
-            c.execute(
-                "INSERT INTO scheduled_calls "
-                "(id, patient_id, day_index, kind, due_at, status, attempts, direction, approval_id) "
-                "VALUES (?, ?, ?, ?, ?, 'scheduled', 0, 'outbound', ?)",
-                (call_id, patient.id, day, kind, db.now(), approval_id),
-            )
+                if approval.action == "family_group_call":
+                    kind = "family_group_call"
+                    fallback = False
+                else:
+                    kind = "nurse_callback"
+                    fallback = approval.action != "nurse_callback"
+                day = 0
+                if approval.call_id:
+                    linked = c.execute(
+                        "SELECT day_index FROM scheduled_calls WHERE id = ?",
+                        (approval.call_id,),
+                    ).fetchone()
+                    if linked:
+                        day = linked["day_index"]
+                call_id = db.new_id("call")
+                c.execute(
+                    "INSERT INTO scheduled_calls "
+                    "(id, patient_id, day_index, kind, due_at, status, attempts, direction, approval_id) "
+                    "VALUES (?, ?, ?, ?, ?, 'scheduled', 0, 'outbound', ?)",
+                    (call_id, patient.id, day, kind, db.now(), approval_id),
+                )
     if reason:
         db.log_event("escalation.refused", "scheduler", {"approval_id": approval_id, "reason": reason})
         raise EscalationRefused(reason)

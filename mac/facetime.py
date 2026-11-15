@@ -1,7 +1,7 @@
 """FaceTime dial, answer, hang-up, and call state. stdlib + osascript only.
 
 MAC_DRY_RUN=1 prints the open/osascript command and returns a fake success.
-Phone numbers are arguments only. Nothing in this module is a real number.
+Handles are arguments only: E.164, or an Apple ID email. Nothing here is a real address.
 """
 
 import os
@@ -30,6 +30,7 @@ CALL_TRIES = 5
 OSA_TIMEOUT_S = 15
 CALL_WINDOW_S = 3.0
 _E164 = re.compile(r"^\+?[1-9]\d{6,14}$")
+_EMAIL = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 
 
 def dry_run() -> bool:
@@ -38,8 +39,10 @@ def dry_run() -> bool:
 
 def normalize(number: str) -> str:
     number = (number or "").strip()
+    if _EMAIL.fullmatch(number):
+        return number
     if not _E164.fullmatch(number):
-        raise ValueError("dial expects E.164 digits with an optional leading +")
+        raise ValueError("dial expects E.164 digits with an optional leading +, or an Apple ID email")
     return number if number.startswith("+") else "+" + number
 
 
@@ -88,9 +91,9 @@ def click(script: Path, tries: int = 1) -> bool:
 
 
 def dial(number: str, audio_only: bool = False) -> bool:
-    e164 = normalize(number)
+    handle = normalize(number)
     scheme = "facetime-audio" if audio_only else "facetime"
-    run(["open", f"{scheme}://{e164}"], ok_stdout="")
+    run(["open", f"{scheme}://{handle}"], ok_stdout="")
     return click(CALL_SCRIPT, tries=CALL_TRIES)
 
 

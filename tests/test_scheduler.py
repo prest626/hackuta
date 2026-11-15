@@ -333,6 +333,57 @@ def test_family_group_call_dials_family_not_nurse(mac):
     assert fallback == 0
 
 
+def test_nurse_email_seed_dials_nurse_and_skips_family(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("DB_PATH", str(tmp_path / "homeward.db"))
+    monkeypatch.setenv("MAC_DRY_RUN", "1")
+    monkeypatch.setenv("DEMO_PATIENT_PHONE", "+15555550101")
+    monkeypatch.setenv("DEMO_NURSE_PHONE", "nurse@example.com")
+    monkeypatch.delenv("DEMO_FAMILY_PHONE", raising=False)
+    monkeypatch.delenv("AGENT_API_TOKEN", raising=False)
+    monkeypatch.delenv("DASHBOARD_TOKEN", raising=False)
+    import data.seed as seed_mod
+
+    monkeypatch.setattr(seed_mod, "ENV_FILE", tmp_path / "missing.env")
+    import mac.facetime as facetime
+
+    if not hasattr(facetime, "normalize"):
+        sys.modules.pop("mac.facetime", None)
+        import mac.facetime as facetime
+    sys.modules["mac.facetime"] = facetime
+
+    assert "pat_rosa01" in seed_mod.seed()
+    from api import db
+
+    with db.conn() as c:
+        rosa = json.loads(
+            c.execute("SELECT doc FROM patients WHERE id = 'pat_rosa01'").fetchone()["doc"]
+        )
+    assert [item["role"] for item in rosa["contacts"]] == ["nurse"]
+    assert rosa["contacts"][0]["phone_e164"] == "nurse@example.com"
+
+    from scheduler.escalate import EscalationRefused, place_escalation
+
+    doc = json.loads((EXAMPLES / "approval.json").read_text())
+    _store_approval(doc)
+    placed = place_escalation(doc["id"])
+    assert placed["kind"] == "nurse_callback"
+    assert placed["status"] == "dialing"
+    assert "open facetime://nurse@example.com" in capsys.readouterr().out
+
+    family = dict(doc)
+    family["id"] = "apr_family0001"
+    family["action"] = "family_group_call"
+    _store_approval(family)
+    with pytest.raises(EscalationRefused, match="no family contact"):
+        place_escalation(family["id"])
+    assert "facetime://" not in capsys.readouterr().out
+    with db.conn() as c:
+        n = c.execute(
+            "SELECT COUNT(*) AS n FROM scheduled_calls WHERE kind = 'family_group_call'"
+        ).fetchone()["n"]
+    assert n == 0
+
+
 def test_no_dial_on_pending_or_rejected(mac):
     from scheduler.escalate import EscalationRefused, place_escalation
 

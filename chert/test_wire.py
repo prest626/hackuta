@@ -552,12 +552,21 @@ def test_approved_handoff_sentence_and_dashboard_wrap(monkeypatch):
     }))
     assert executing.endswith("Is this Jordan?")
     family = dict(_HANDOFF_CALL, kind="family_group_call", patient={"contacts": []})
-    bare = wire.handoff_line(family, _approval_request({
+    approved = _approval_request({
         "status": "approved",
         "brief_text": "Missed evening pills.",
         "decision": None,
-    }))
-    assert bare.endswith("Is this the nurse?")
+    })
+    assert wire.handoff_line(family, approved) is None
+    quiet = wire.instructions("You are Homeward.", family)
+    assert "Say nothing about a handoff." not in quiet
+    with_family = dict(
+        _HANDOFF_CALL,
+        kind="family_group_call",
+        patient={"contacts": [{"role": "family", "name": "Maya"}]},
+    )
+    kept = wire.handoff_line(with_family, approved)
+    assert kept.endswith("Is this the nurse?")
     trimmed = wire.handoff_line(_HANDOFF_CALL, _approval_request({
         "status": "approved",
         "brief_text": "a" * 300,
