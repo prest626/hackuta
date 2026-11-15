@@ -98,3 +98,5 @@ def test_agent_wires_voice_and_keeps_say_interruptible():
     assert "allow_interruptions" not in text
     assert "spawn(session.say" not in text
     assert text.count("generate_reply") == 1
+    assert 'box["hangup"]()' in text
+    assert text.count("spawn(stop_at_cap(box))") == 1

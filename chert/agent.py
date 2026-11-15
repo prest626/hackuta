@@ -384,9 +384,7 @@ async def entrypoint(ctx):
                 wire.submit(box)
             except Exception as exc:
                 log.error("result post failed: %s", exc)
-            hangup = box.get("hangup")
-            if callable(hangup):
-                hangup()
+            box["hangup"]()
 
         def _user_state(ev):
             # A second away leaves the call to the existing finish path.
