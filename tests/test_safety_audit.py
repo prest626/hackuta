@@ -33,25 +33,28 @@ def _tracked():
     return [ROOT / line for line in out.splitlines() if line]
 
 
-def _is_syntax(clause: str, at: int, stem: str) -> bool:
-    # A regex token (/stem or |stem) or an assertion needle ("stem" not in).
-    if at > 0 and clause[at - 1] in "/|":
-        return True
-    if at > 0 and clause[at - 1] in "\"'`":
-        after = clause[at + len(stem):].lstrip("\"'` ")
-        return after.startswith("not in")
-    return False
+# Exact lines that name the stems in order to forbid them. Anything else is a claim.
+_ALLOW = frozenset({
+    "const unsafe = [/diagnos/i, /blood pressure/i, /prescrib/i, /you should take/i, /increase your dose/i, /skip a dose/i, /take two/i];",
+    "assert.doesnotmatch(hr.say, /diagnos|blood pressure|you should take/i);",
+    "assert.doesnotmatch(pill.say, /you should take|skip a dose|take two/i);",
+    "assert.doesnotmatch(result.summary_text, /diagnos|you should take|skip a dose|blood pressure/i);",
+    'assert "diagnos" not in flagged["summary_text"].lower()',
+    'assert "diagnos" not in (got.note or "").lower()',
+})
 
 
 def claim_hits(text: str) -> list[tuple[int, str]]:
     hits = []
     for n, line in enumerate(text.splitlines(), 1):
-        low = line.lower()
+        low = line.strip().lower()
+        if low in _ALLOW:
+            continue
         for clause in re.split(r"[.;!?]", low):
             for stem in UNSAFE:
                 at = clause.find(stem)
                 while at != -1:
-                    if not _is_syntax(clause, at, stem) and not any(tok in clause[:at] for tok in _NEG):
+                    if not any(tok in clause[:at] for tok in _NEG):
                         hits.append((n, stem))
                     at = clause.find(stem, at + len(stem))
     return hits
@@ -64,9 +67,11 @@ def test_claim_scanner_sees_a_dose_and_skips_a_prohibition():
     assert claim_hits("It does not call the model for a diagnosis.") == []
 
 
-def test_unrelated_words_do_not_hide_a_claim():
-    assert claim_hits("You should take two. This is unsafe.")
-    assert claim_hits("You should take two. doesNotMatch is unrelated.")
+def test_unsafe_word_does_not_hide_a_dose():
+    hits = {stem for _, stem in claim_hits("You should take two. This is unsafe.")}
+    assert hits == {"you should take", "take two"}
+    hits = {stem for _, stem in claim_hits("You should take two. doesNotMatch is unrelated.")}
+    assert "you should take" in hits
 
 
 def test_tracked_text_has_no_unsafe_claims():
