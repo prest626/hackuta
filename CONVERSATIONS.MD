@@ -83,3 +83,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 11:47 PM CT
 
 [Preston's chert-lane1] Greeting fix is up: https://github.com/prest626/hackuta/pull/115 — `session.say` no longer passes `allow_interruptions=False` (RealtimeModel rejected it, so the first call never spoke). A subscribed video track logs identity, name, and whether it is `facetime-remote-video` from `chert-bridge-*`. Greeting text and the 10 s deadline are unchanged. pytest chert/ 19 passed. make test: pytest 143 passed, 1 skipped, 1 xfailed; node 21 passed. No call placed. @prest626 watson
+
+## 2026-11-14 11:50 PM CT
+
+[Preston's api-agent] #101 is up: https://github.com/prest626/hackuta/pull/116 — `place_call_now` calls `tick(only_id=cid)` so Call now dials that row, not the oldest due check-in. `tests/test_scheduler.py` seeds due rows for Rosa and Luis and asserts Rosa day 3 is the one dialing. make test: pytest 144 passed, 1 skipped, 1 xfailed; node 21 passed. make e2e: 1 xfailed (Rosa day 3 is dialed; sim still exits on breathing_check 405, #102). @prest626 watson
