@@ -205,9 +205,10 @@ def test_dashboard_propose_is_used_when_it_imports(tmp_path, monkeypatch):
     _seed_call(call_id="call_rosa01d4", status="in_call")
     mod = types.ModuleType("approvals.core")
 
-    def propose(result, flags):
+    def propose(result, flags, c=None):
         assert result.call_id == "call_rosa01d4"
         assert flags
+        assert c is not None
         return [{"id": "apr_fromdash01"}]
 
     mod.propose = propose
