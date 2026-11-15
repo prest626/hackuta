@@ -140,7 +140,7 @@ def _no_answer_result(row, now: datetime) -> CallResult:
     )
 
 
-def tick(now: datetime | None = None) -> None:
+def tick(now: datetime | None = None, only_id: str | None = None) -> None:
     now = _now(now)
     stamp = _fmt(now)
     dial = None
@@ -182,11 +182,18 @@ def tick(now: datetime | None = None) -> None:
         elif mac().state() != "idle":
             pass
         else:
-            row = c.execute(
-                "SELECT * FROM scheduled_calls WHERE status IN ('scheduled', 'retry_wait') AND due_at <= ? "
-                "ORDER BY due_at LIMIT 1",
-                (stamp,),
-            ).fetchone()
+            if only_id is None:
+                row = c.execute(
+                    "SELECT * FROM scheduled_calls WHERE status IN ('scheduled', 'retry_wait') AND due_at <= ? "
+                    "ORDER BY due_at LIMIT 1",
+                    (stamp,),
+                ).fetchone()
+            else:
+                # An approved escalation dials its own row, not an older check-in.
+                row = c.execute(
+                    "SELECT * FROM scheduled_calls WHERE id = ? AND status IN ('scheduled', 'retry_wait')",
+                    (only_id,),
+                ).fetchone()
             if row is not None:
                 patient = Patient.model_validate(
                     json.loads(c.execute("SELECT doc FROM patients WHERE id = ?", (row["patient_id"],)).fetchone()["doc"])

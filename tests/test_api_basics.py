@@ -55,9 +55,10 @@ def test_missing_optional_routers_do_not_crash():
     from api.main import include_optional
 
     fresh = FastAPI()
-    # vision.routes exists (VISION-1). A missing name is still skipped.
+    # vision.routes and approvals.routes both exist. A missing name is still skipped.
     assert include_optional(fresh, names=("vision.routes", "approvals.routes", "no.such.routes")) == [
-        "vision.routes"
+        "vision.routes",
+        "approvals.routes",
     ]
 
 

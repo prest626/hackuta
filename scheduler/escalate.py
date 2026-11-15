@@ -60,7 +60,7 @@ def place_escalation(approval_id: str) -> dict:
     if fallback:
         # shortcut: no FaceTime "Add People" yet, upgrade = mac.facetime.add_person when BRIDGE ships it
         db.log_event("escalation.fallback_1to1", "scheduler", {"approval_id": approval_id, "action": approval.action})
-    tick()
+    tick(only_id=call_id)
     with db.conn() as c:
         current = c.execute("SELECT * FROM scheduled_calls WHERE id = ?", (call_id,)).fetchone()
         if current["status"] == "dialing":
