@@ -1,0 +1,15 @@
+[
+  {"tool": "get_vitals"},
+  {"tool": "check_pillbox"},
+  {"say": "Oh, I fell asleep early last night."},
+  {"tool": "record_answer", "args": {"slot": "pill_self_report", "value": "elsewhere", "quote": "Oh, I fell asleep early last night."}},
+  {"tool": "record_answer", "args": {"slot": "overall", "value": "worse", "quote": "A bit worse, honestly."}},
+  {"tool": "record_answer", "args": {"slot": "overall", "value": "worse", "quote": "A bit worse, honestly.", "confirmed": true}},
+  {"tool": "record_answer", "args": {"slot": "breathless", "value": "yes", "quote": "Yeah, the stairs are harder than yesterday."}},
+  {"tool": "record_answer", "args": {"slot": "breathless", "value": "yes", "quote": "Yeah, the stairs are harder than yesterday.", "confirmed": true}},
+  {"tool": "record_answer", "args": {"slot": "swelling", "value": "yes", "quote": "My ankles are puffy."}},
+  {"tool": "record_answer", "args": {"slot": "swelling", "value": "yes", "quote": "My ankles are puffy.", "confirmed": true}},
+  {"tool": "record_answer", "args": {"slot": "weight_up", "value": "no", "quote": "No, about the same."}},
+  {"tool": "breathing_check"},
+  {"tool": "finish_call", "args": {"status": "completed", "end_reason": "agent_hangup"}}
+]
