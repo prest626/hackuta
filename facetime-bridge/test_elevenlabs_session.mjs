@@ -8,6 +8,7 @@ import { getSession } from '../agent/tools.mjs';
 import { EMERGENCY_LINE } from '../agent/safety.mjs';
 import { ENGLISH, createSession, initMessage } from './elevenlabs_session.mjs';
 import { listen } from './fake_elevenlabs.mjs';
+import { fixedPcm, speakFixed } from './elevenlabs.mjs';
 
 const patient = JSON.parse(readFileSync(new URL('../contracts/examples/patient.json', import.meta.url), 'utf8'));
 const active = {
@@ -270,5 +271,73 @@ describe('elevenlabs session', { concurrency: 1 }, () => {
       ws?.close();
       await fake.close();
     }
+  });
+
+  // Real speakFixed, warm cache, TTS fetch throws. The fake socket delivers the urgent line.
+  async function playUrgent(events, check) {
+    await hook.refresh();
+    const cached = Buffer.from([4, 4, 5, 5]);
+    fixedPcm.set(EMERGENCY_LINE, cached);
+    const played = [];
+    const orig = globalThis.fetch;
+    globalThis.fetch = async (url, opts) => {
+      if (String(url).includes('text-to-speech')) throw new Error('tts down');
+      return orig(url, opts);
+    };
+    const fake = await listen(events);
+    let ws;
+    const play = (bytes) => played.push(Buffer.from(bytes));
+    try {
+      let session;
+      session = createSession({
+        agent: {
+          onToolCall: (name, args) => hook.onToolCall(name, args),
+          onTranscript: (text) => hook.onTranscript(text),
+        },
+        send: (event) => ws?.send(JSON.stringify(event)),
+        play,
+        interrupt() {},
+        speakFixed: (text) => speakFixed(text, {
+          play,
+          interrupt() {},
+          session,
+          send: (event) => ws?.send(JSON.stringify(event)),
+        }),
+        log() {},
+      });
+      ws = await openSocket(fake.url);
+      ws.on('message', (raw) => { void session.onMessage(JSON.parse(raw.toString())); });
+      ws.send(JSON.stringify(initMessage('Be brief.', 'Hi')));
+      await check({ played, cached, fake, session });
+    } finally {
+      globalThis.fetch = orig;
+      fixedPcm.delete(EMERGENCY_LINE);
+      ws?.close();
+      await fake.close();
+    }
+  }
+
+  test('cached 911 audio plays when the live TTS fetch fails', async () => {
+    await playUrgent([
+      { type: 'user_transcript', user_transcription_event: { user_transcript: 'I have chest pain' } },
+    ], async ({ played, cached }) => {
+      await waitFor(() => played.length === 1);
+      assert.deepEqual(played[0], cached);
+    });
+  });
+
+  test('no agent audio plays after the 911 line', async () => {
+    const agentAudio = Buffer.from([1, 2, 3, 4]);
+    await playUrgent([
+      { type: 'user_transcript', user_transcription_event: { user_transcript: 'I have chest pain' } },
+      { type: 'audio', audio_event: { audio_base_64: agentAudio.toString('base64'), event_id: 9 } },
+      { type: 'ping', ping_event: { event_id: 4, ping_ms: 1 } },
+    ], async ({ played, cached, fake, session }) => {
+      await waitFor(() => played.length >= 1 && fake.messages.some((message) => message.type === 'pong'));
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      assert.deepEqual(played, [cached]);
+      assert.equal(played.some((bytes) => bytes.equals(agentAudio)), false);
+      assert.equal(session.holding, true);
+    });
   });
 });

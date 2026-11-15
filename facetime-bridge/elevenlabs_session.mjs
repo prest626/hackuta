@@ -1,4 +1,6 @@
 // Protocol only: no sockets, sox, or env. elevenlabs.mjs owns the wire.
+import { EMERGENCY_LINE } from '../agent/safety.mjs';
+
 export const ENGLISH = '\n\nAlways speak English unless the caller asks for another language.';
 
 export function initMessage(instructions, firstMessage) {
@@ -14,8 +16,12 @@ export function initMessage(instructions, firstMessage) {
 }
 
 export function createSession({ agent, send, play, interrupt, speakFixed, log = console.log }) {
+  // Once the caller hits an urgent phrase, nothing after the 911 line should be heard.
+  let holding = false;
+  let urgent = false;
   const session = {
-    holding: false,
+    get holding() { return urgent || holding; },
+    set holding(value) { if (!urgent) holding = value; },
     async onMessage(event) {
       const type = event?.type;
       if (type === 'conversation_initiation_metadata') {
@@ -44,6 +50,7 @@ export function createSession({ agent, send, play, interrupt, speakFixed, log = 
         const said = event.user_transcription_event?.user_transcript || '';
         log(`[bridge] caller: ${said}`);
         const line = agent.onTranscript(said);
+        if (line === EMERGENCY_LINE) urgent = true;
         if (line) await speakFixed(line);
         return;
       }
