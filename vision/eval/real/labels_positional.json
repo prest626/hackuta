@@ -1,0 +1,24 @@
+{
+  "photos": [
+    {
+      "file": "33-7x1-white-no-day-labels-sixth-empty.jpg",
+      "visible": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM",
+        "SUN-AM"
+      ],
+      "filled": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SUN-AM"
+      ]
+    }
+  ]
+}

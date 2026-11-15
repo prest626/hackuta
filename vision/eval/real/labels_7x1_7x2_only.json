@@ -1,0 +1,253 @@
+{
+  "photos": [
+    {
+      "file": "02-7x1-smtwtfs-all-full-white.jpg",
+      "visible": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM",
+        "SUN-AM"
+      ],
+      "filled": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM",
+        "SUN-AM"
+      ]
+    },
+    {
+      "file": "03-7x1-smtwtfs-all-full-dark.jpg",
+      "visible": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM",
+        "SUN-AM"
+      ],
+      "filled": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM",
+        "SUN-AM"
+      ]
+    },
+    {
+      "file": "07-7x2-yellow-blue-am-row-partial.jpg",
+      "visible": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM"
+      ],
+      "filled": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM"
+      ]
+    },
+    {
+      "file": "08-7x1-clear-sun-wed-visible-full.jpg",
+      "visible": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "SUN-AM"
+      ],
+      "filled": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "SUN-AM"
+      ]
+    },
+    {
+      "file": "09-7x1-clear-sun-fri-visible-full.jpg",
+      "visible": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SUN-AM"
+      ],
+      "filled": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SUN-AM"
+      ]
+    },
+    {
+      "file": "12-7x1-frosted-wed-fri-open-thu-empty.jpg",
+      "visible": [
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM"
+      ],
+      "filled": [
+        "WED-AM",
+        "FRI-AM"
+      ]
+    },
+    {
+      "file": "13-7x1-blue-tue-fri-empty-sat-full.jpg",
+      "visible": [
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM"
+      ],
+      "filled": [
+        "SAT-AM"
+      ]
+    },
+    {
+      "file": "14-7x1-green-sun-open-one-pill.jpg",
+      "visible": [
+        "SUN-AM"
+      ],
+      "filled": [
+        "SUN-AM"
+      ]
+    },
+    {
+      "file": "15-7x1-clear-sun-sat-all-full-vitamins.jpg",
+      "visible": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM",
+        "SUN-AM"
+      ],
+      "filled": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM",
+        "SUN-AM"
+      ]
+    },
+    {
+      "file": "18-7x1-round-hebrew-all-full.jpg",
+      "visible": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM",
+        "SUN-AM"
+      ],
+      "filled": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM",
+        "SUN-AM"
+      ]
+    },
+    {
+      "file": "19-7x1-german-thu-sun-open-empty.jpg",
+      "visible": [
+        "THU-AM",
+        "SUN-AM"
+      ],
+      "filled": []
+    },
+    {
+      "file": "20-7x1-spanish-lmmjvsd-closed-empty.jpg",
+      "visible": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM",
+        "SUN-AM"
+      ],
+      "filled": []
+    },
+    {
+      "file": "24-7x1-german-lime-closed-empty.jpg",
+      "visible": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM",
+        "SUN-AM"
+      ],
+      "filled": []
+    },
+    {
+      "file": "26-7x2-russian-am-pm-mostly-full.jpg",
+      "visible": [
+        "MON-AM",
+        "MON-PM",
+        "TUE-AM",
+        "TUE-PM",
+        "WED-AM",
+        "WED-PM",
+        "THU-AM",
+        "THU-PM",
+        "FRI-AM",
+        "FRI-PM",
+        "SAT-AM",
+        "SAT-PM",
+        "SUN-PM"
+      ],
+      "filled": [
+        "MON-AM",
+        "MON-PM",
+        "TUE-AM",
+        "TUE-PM",
+        "WED-AM",
+        "WED-PM",
+        "THU-AM",
+        "THU-PM",
+        "FRI-AM",
+        "FRI-PM",
+        "SAT-AM",
+        "SAT-PM",
+        "SUN-PM"
+      ]
+    },
+    {
+      "file": "27-7x1-greek-orange-closed-empty.jpg",
+      "visible": [
+        "MON-AM",
+        "TUE-AM",
+        "WED-AM",
+        "THU-AM",
+        "FRI-AM",
+        "SAT-AM",
+        "SUN-AM"
+      ],
+      "filled": []
+    }
+  ]
+}
