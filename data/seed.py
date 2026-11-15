@@ -2,6 +2,7 @@
 
 import json
 import os
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
@@ -104,8 +105,32 @@ def seed() -> list[str]:
                 "ON CONFLICT(patient_id) DO UPDATE SET doc = excluded.doc",
                 (doc["patient_id"], json.dumps(doc)),
             )
+    _seed_vitals()
     db.log_event("demo.seed", "demo", {"patient_ids": ids})
     return ids
+
+
+def _seed_vitals(now: datetime | None = None) -> int:
+    """Nightly mock vitals (data/mock/vitals_history.json), anchored so days_ago=0 is last night.
+
+    Replaces earlier mock_replay rows, so re-seeding is idempotent; watch rows are left alone.
+    """
+    now = now or datetime.now(timezone.utc)
+    # 09:00 UTC is 3 AM in Chicago: the latest such moment at or before now counts as last night.
+    night = now.replace(hour=9, minute=0, second=0, microsecond=0)
+    if night > now:
+        night -= timedelta(days=1)
+    rows = [
+        ((night - timedelta(days=r["days_ago"])).strftime("%Y-%m-%dT%H:%M:%SZ"), r["patient_id"], r["metric"], r["value"])
+        for r in json.loads((MOCK / "vitals_history.json").read_text())
+    ]
+    with db.conn() as c:
+        c.execute("DELETE FROM vitals WHERE source = 'mock_replay'")
+        c.executemany(
+            "INSERT INTO vitals (t, patient_id, metric, value, source, quality) VALUES (?, ?, ?, ?, 'mock_replay', NULL)",
+            rows,
+        )
+    return len(rows)
 
 
 def main() -> None:

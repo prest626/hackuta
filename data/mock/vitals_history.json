@@ -1,0 +1,4322 @@
+[
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 59,
+  "metric": "rhr",
+  "value": 66.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 59,
+  "metric": "hrv_sdnn",
+  "value": 39.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 59,
+  "metric": "rr_sleep",
+  "value": 14.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 59,
+  "metric": "steps",
+  "value": 4861
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 58,
+  "metric": "rhr",
+  "value": 61.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 58,
+  "metric": "hrv_sdnn",
+  "value": 33.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 58,
+  "metric": "rr_sleep",
+  "value": 14.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 58,
+  "metric": "steps",
+  "value": 4857
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 57,
+  "metric": "rhr",
+  "value": 68.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 57,
+  "metric": "hrv_sdnn",
+  "value": 42.6
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 57,
+  "metric": "rr_sleep",
+  "value": 13.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 57,
+  "metric": "steps",
+  "value": 5594
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 56,
+  "metric": "rhr",
+  "value": 66.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 56,
+  "metric": "hrv_sdnn",
+  "value": 36.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 56,
+  "metric": "rr_sleep",
+  "value": 13.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 56,
+  "metric": "steps",
+  "value": 4538
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 55,
+  "metric": "rhr",
+  "value": 66.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 55,
+  "metric": "hrv_sdnn",
+  "value": 28.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 55,
+  "metric": "rr_sleep",
+  "value": 13.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 55,
+  "metric": "steps",
+  "value": 4150
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 54,
+  "metric": "rhr",
+  "value": 65.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 54,
+  "metric": "hrv_sdnn",
+  "value": 31.7
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 54,
+  "metric": "rr_sleep",
+  "value": 14.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 54,
+  "metric": "steps",
+  "value": 4815
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 53,
+  "metric": "rhr",
+  "value": 71.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 53,
+  "metric": "hrv_sdnn",
+  "value": 36.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 53,
+  "metric": "rr_sleep",
+  "value": 14.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 53,
+  "metric": "steps",
+  "value": 4327
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 52,
+  "metric": "rhr",
+  "value": 62.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 52,
+  "metric": "hrv_sdnn",
+  "value": 32.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 52,
+  "metric": "rr_sleep",
+  "value": 13.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 52,
+  "metric": "steps",
+  "value": 3527
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 51,
+  "metric": "rhr",
+  "value": 68.6
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 51,
+  "metric": "hrv_sdnn",
+  "value": 26.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 51,
+  "metric": "rr_sleep",
+  "value": 14.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 51,
+  "metric": "steps",
+  "value": 4061
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 50,
+  "metric": "rhr",
+  "value": 64.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 50,
+  "metric": "hrv_sdnn",
+  "value": 37.7
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 50,
+  "metric": "rr_sleep",
+  "value": 13.6
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 50,
+  "metric": "steps",
+  "value": 4379
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 49,
+  "metric": "rhr",
+  "value": 71.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 49,
+  "metric": "hrv_sdnn",
+  "value": 33.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 49,
+  "metric": "rr_sleep",
+  "value": 14.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 49,
+  "metric": "steps",
+  "value": 5269
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 48,
+  "metric": "rhr",
+  "value": 65.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 48,
+  "metric": "hrv_sdnn",
+  "value": 34.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 48,
+  "metric": "rr_sleep",
+  "value": 14.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 48,
+  "metric": "steps",
+  "value": 3140
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 47,
+  "metric": "rhr",
+  "value": 57.7
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 47,
+  "metric": "hrv_sdnn",
+  "value": 37.6
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 47,
+  "metric": "rr_sleep",
+  "value": 14.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 47,
+  "metric": "steps",
+  "value": 4297
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 46,
+  "metric": "rhr",
+  "value": 65.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 46,
+  "metric": "hrv_sdnn",
+  "value": 30.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 46,
+  "metric": "rr_sleep",
+  "value": 15.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 46,
+  "metric": "steps",
+  "value": 4225
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 45,
+  "metric": "rhr",
+  "value": 63.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 45,
+  "metric": "hrv_sdnn",
+  "value": 33.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 45,
+  "metric": "rr_sleep",
+  "value": 15.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 45,
+  "metric": "steps",
+  "value": 5123
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 44,
+  "metric": "rhr",
+  "value": 69.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 44,
+  "metric": "hrv_sdnn",
+  "value": 32.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 44,
+  "metric": "rr_sleep",
+  "value": 14.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 44,
+  "metric": "steps",
+  "value": 5060
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 43,
+  "metric": "rhr",
+  "value": 63.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 43,
+  "metric": "hrv_sdnn",
+  "value": 32.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 43,
+  "metric": "rr_sleep",
+  "value": 14.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 43,
+  "metric": "steps",
+  "value": 3725
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 42,
+  "metric": "rhr",
+  "value": 70.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 42,
+  "metric": "hrv_sdnn",
+  "value": 31.7
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 42,
+  "metric": "rr_sleep",
+  "value": 14.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 42,
+  "metric": "steps",
+  "value": 4422
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 41,
+  "metric": "rhr",
+  "value": 66.6
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 41,
+  "metric": "hrv_sdnn",
+  "value": 32.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 41,
+  "metric": "rr_sleep",
+  "value": 15.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 41,
+  "metric": "steps",
+  "value": 3247
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 40,
+  "metric": "rhr",
+  "value": 64.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 40,
+  "metric": "hrv_sdnn",
+  "value": 42.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 40,
+  "metric": "rr_sleep",
+  "value": 14.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 40,
+  "metric": "steps",
+  "value": 5009
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 39,
+  "metric": "rhr",
+  "value": 68.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 39,
+  "metric": "hrv_sdnn",
+  "value": 42.6
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 39,
+  "metric": "rr_sleep",
+  "value": 15.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 39,
+  "metric": "steps",
+  "value": 5424
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 38,
+  "metric": "rhr",
+  "value": 64.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 38,
+  "metric": "hrv_sdnn",
+  "value": 38.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 38,
+  "metric": "rr_sleep",
+  "value": 14.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 38,
+  "metric": "steps",
+  "value": 4319
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 37,
+  "metric": "rhr",
+  "value": 68.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 37,
+  "metric": "hrv_sdnn",
+  "value": 37.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 37,
+  "metric": "rr_sleep",
+  "value": 15.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 37,
+  "metric": "steps",
+  "value": 4070
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 36,
+  "metric": "rhr",
+  "value": 67.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 36,
+  "metric": "hrv_sdnn",
+  "value": 37.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 36,
+  "metric": "rr_sleep",
+  "value": 12.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 36,
+  "metric": "steps",
+  "value": 4565
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 35,
+  "metric": "rhr",
+  "value": 62.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 35,
+  "metric": "hrv_sdnn",
+  "value": 37.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 35,
+  "metric": "rr_sleep",
+  "value": 13.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 35,
+  "metric": "steps",
+  "value": 3887
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 34,
+  "metric": "rhr",
+  "value": 67.7
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 34,
+  "metric": "hrv_sdnn",
+  "value": 40.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 34,
+  "metric": "rr_sleep",
+  "value": 14.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 34,
+  "metric": "steps",
+  "value": 3527
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 33,
+  "metric": "rhr",
+  "value": 64.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 33,
+  "metric": "hrv_sdnn",
+  "value": 40.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 33,
+  "metric": "rr_sleep",
+  "value": 14.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 33,
+  "metric": "steps",
+  "value": 3747
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 32,
+  "metric": "rhr",
+  "value": 68.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 32,
+  "metric": "hrv_sdnn",
+  "value": 39.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 32,
+  "metric": "rr_sleep",
+  "value": 13.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 32,
+  "metric": "steps",
+  "value": 4531
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 31,
+  "metric": "rhr",
+  "value": 67.6
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 31,
+  "metric": "hrv_sdnn",
+  "value": 43.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 31,
+  "metric": "rr_sleep",
+  "value": 14.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 31,
+  "metric": "steps",
+  "value": 4809
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 30,
+  "metric": "rhr",
+  "value": 69.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 30,
+  "metric": "hrv_sdnn",
+  "value": 34.7
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 30,
+  "metric": "rr_sleep",
+  "value": 15.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 30,
+  "metric": "steps",
+  "value": 3718
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 29,
+  "metric": "rhr",
+  "value": 62.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 29,
+  "metric": "hrv_sdnn",
+  "value": 36.6
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 29,
+  "metric": "rr_sleep",
+  "value": 14.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 29,
+  "metric": "steps",
+  "value": 4278
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 28,
+  "metric": "rhr",
+  "value": 55.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 28,
+  "metric": "hrv_sdnn",
+  "value": 34.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 28,
+  "metric": "rr_sleep",
+  "value": 15.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 28,
+  "metric": "steps",
+  "value": 4805
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 27,
+  "metric": "rhr",
+  "value": 73.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 27,
+  "metric": "hrv_sdnn",
+  "value": 33.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 27,
+  "metric": "rr_sleep",
+  "value": 12.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 27,
+  "metric": "steps",
+  "value": 4069
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 26,
+  "metric": "rhr",
+  "value": 65.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 26,
+  "metric": "hrv_sdnn",
+  "value": 36.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 26,
+  "metric": "rr_sleep",
+  "value": 12.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 26,
+  "metric": "steps",
+  "value": 4803
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 25,
+  "metric": "rhr",
+  "value": 69.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 25,
+  "metric": "hrv_sdnn",
+  "value": 38.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 25,
+  "metric": "rr_sleep",
+  "value": 14.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 25,
+  "metric": "steps",
+  "value": 4338
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 24,
+  "metric": "rhr",
+  "value": 66.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 24,
+  "metric": "hrv_sdnn",
+  "value": 35.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 24,
+  "metric": "rr_sleep",
+  "value": 13.6
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 24,
+  "metric": "steps",
+  "value": 3805
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 23,
+  "metric": "rhr",
+  "value": 64.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 23,
+  "metric": "hrv_sdnn",
+  "value": 45.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 23,
+  "metric": "rr_sleep",
+  "value": 13.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 23,
+  "metric": "steps",
+  "value": 4517
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 22,
+  "metric": "rhr",
+  "value": 70.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 22,
+  "metric": "hrv_sdnn",
+  "value": 32.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 22,
+  "metric": "rr_sleep",
+  "value": 14.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 22,
+  "metric": "steps",
+  "value": 4649
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 21,
+  "metric": "rhr",
+  "value": 67.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 21,
+  "metric": "hrv_sdnn",
+  "value": 33.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 21,
+  "metric": "rr_sleep",
+  "value": 14.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 21,
+  "metric": "steps",
+  "value": 4566
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 20,
+  "metric": "rhr",
+  "value": 65.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 20,
+  "metric": "hrv_sdnn",
+  "value": 40.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 20,
+  "metric": "rr_sleep",
+  "value": 14.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 20,
+  "metric": "steps",
+  "value": 5276
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 19,
+  "metric": "rhr",
+  "value": 68.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 19,
+  "metric": "hrv_sdnn",
+  "value": 35.7
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 19,
+  "metric": "rr_sleep",
+  "value": 13.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 19,
+  "metric": "steps",
+  "value": 4100
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 18,
+  "metric": "rhr",
+  "value": 64.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 18,
+  "metric": "hrv_sdnn",
+  "value": 33.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 18,
+  "metric": "rr_sleep",
+  "value": 14.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 18,
+  "metric": "steps",
+  "value": 4201
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 17,
+  "metric": "rhr",
+  "value": 68.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 17,
+  "metric": "hrv_sdnn",
+  "value": 36.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 17,
+  "metric": "rr_sleep",
+  "value": 13.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 17,
+  "metric": "steps",
+  "value": 3412
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 16,
+  "metric": "rhr",
+  "value": 64.6
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 16,
+  "metric": "hrv_sdnn",
+  "value": 37.7
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 16,
+  "metric": "rr_sleep",
+  "value": 15.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 16,
+  "metric": "steps",
+  "value": 2954
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 15,
+  "metric": "rhr",
+  "value": 68.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 15,
+  "metric": "hrv_sdnn",
+  "value": 38.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 15,
+  "metric": "rr_sleep",
+  "value": 13.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 15,
+  "metric": "steps",
+  "value": 4416
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 14,
+  "metric": "rhr",
+  "value": 71.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 14,
+  "metric": "hrv_sdnn",
+  "value": 39.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 14,
+  "metric": "rr_sleep",
+  "value": 13.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 14,
+  "metric": "steps",
+  "value": 4145
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 13,
+  "metric": "rhr",
+  "value": 71.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 13,
+  "metric": "hrv_sdnn",
+  "value": 36.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 13,
+  "metric": "rr_sleep",
+  "value": 13.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 13,
+  "metric": "steps",
+  "value": 4472
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 12,
+  "metric": "rhr",
+  "value": 66.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 12,
+  "metric": "hrv_sdnn",
+  "value": 35.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 12,
+  "metric": "rr_sleep",
+  "value": 15.7
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 12,
+  "metric": "steps",
+  "value": 3955
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 11,
+  "metric": "rhr",
+  "value": 62.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 11,
+  "metric": "hrv_sdnn",
+  "value": 36.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 11,
+  "metric": "rr_sleep",
+  "value": 14.7
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 11,
+  "metric": "steps",
+  "value": 5009
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 10,
+  "metric": "rhr",
+  "value": 63.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 10,
+  "metric": "hrv_sdnn",
+  "value": 34.7
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 10,
+  "metric": "rr_sleep",
+  "value": 13.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 10,
+  "metric": "steps",
+  "value": 3934
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 9,
+  "metric": "rhr",
+  "value": 60.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 9,
+  "metric": "hrv_sdnn",
+  "value": 43.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 9,
+  "metric": "rr_sleep",
+  "value": 14.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 9,
+  "metric": "steps",
+  "value": 6219
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 8,
+  "metric": "rhr",
+  "value": 62.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 8,
+  "metric": "hrv_sdnn",
+  "value": 41.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 8,
+  "metric": "rr_sleep",
+  "value": 14.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 8,
+  "metric": "steps",
+  "value": 3915
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 7,
+  "metric": "rhr",
+  "value": 67.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 7,
+  "metric": "hrv_sdnn",
+  "value": 34.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 7,
+  "metric": "rr_sleep",
+  "value": 13.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 7,
+  "metric": "steps",
+  "value": 4984
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 6,
+  "metric": "rhr",
+  "value": 70.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 6,
+  "metric": "hrv_sdnn",
+  "value": 18.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 6,
+  "metric": "rr_sleep",
+  "value": 16.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 6,
+  "metric": "steps",
+  "value": 3093
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 5,
+  "metric": "rhr",
+  "value": 71.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 5,
+  "metric": "hrv_sdnn",
+  "value": 32.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 5,
+  "metric": "rr_sleep",
+  "value": 16.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 5,
+  "metric": "steps",
+  "value": 2648
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 4,
+  "metric": "rhr",
+  "value": 72.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 4,
+  "metric": "hrv_sdnn",
+  "value": 30.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 4,
+  "metric": "rr_sleep",
+  "value": 17.1
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 4,
+  "metric": "steps",
+  "value": 1701
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 3,
+  "metric": "rhr",
+  "value": 73.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 3,
+  "metric": "hrv_sdnn",
+  "value": 35.3
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 3,
+  "metric": "rr_sleep",
+  "value": 14.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 3,
+  "metric": "steps",
+  "value": 2658
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 2,
+  "metric": "rhr",
+  "value": 74.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 2,
+  "metric": "hrv_sdnn",
+  "value": 30.9
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 2,
+  "metric": "rr_sleep",
+  "value": 16.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 2,
+  "metric": "steps",
+  "value": 2591
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 1,
+  "metric": "rhr",
+  "value": 75.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 1,
+  "metric": "hrv_sdnn",
+  "value": 15.4
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 1,
+  "metric": "rr_sleep",
+  "value": 16.8
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 1,
+  "metric": "steps",
+  "value": 3004
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 0,
+  "metric": "rhr",
+  "value": 76.0
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 0,
+  "metric": "hrv_sdnn",
+  "value": 26.2
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 0,
+  "metric": "rr_sleep",
+  "value": 14.5
+ },
+ {
+  "patient_id": "pat_rosa01",
+  "days_ago": 0,
+  "metric": "steps",
+  "value": 2551
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 59,
+  "metric": "rhr",
+  "value": 57.5
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 59,
+  "metric": "hrv_sdnn",
+  "value": 38.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 59,
+  "metric": "rr_sleep",
+  "value": 12.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 59,
+  "metric": "steps",
+  "value": 3861
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 58,
+  "metric": "rhr",
+  "value": 63.5
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 58,
+  "metric": "hrv_sdnn",
+  "value": 39.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 58,
+  "metric": "rr_sleep",
+  "value": 14.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 58,
+  "metric": "steps",
+  "value": 4888
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 57,
+  "metric": "rhr",
+  "value": 67.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 57,
+  "metric": "hrv_sdnn",
+  "value": 29.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 57,
+  "metric": "rr_sleep",
+  "value": 13.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 57,
+  "metric": "steps",
+  "value": 4917
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 56,
+  "metric": "rhr",
+  "value": 56.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 56,
+  "metric": "hrv_sdnn",
+  "value": 41.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 56,
+  "metric": "rr_sleep",
+  "value": 14.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 56,
+  "metric": "steps",
+  "value": 3911
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 55,
+  "metric": "rhr",
+  "value": 63.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 55,
+  "metric": "hrv_sdnn",
+  "value": 35.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 55,
+  "metric": "rr_sleep",
+  "value": 14.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 55,
+  "metric": "steps",
+  "value": 4495
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 54,
+  "metric": "rhr",
+  "value": 60.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 54,
+  "metric": "hrv_sdnn",
+  "value": 37.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 54,
+  "metric": "rr_sleep",
+  "value": 16.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 54,
+  "metric": "steps",
+  "value": 4916
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 53,
+  "metric": "rhr",
+  "value": 59.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 53,
+  "metric": "hrv_sdnn",
+  "value": 37.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 53,
+  "metric": "rr_sleep",
+  "value": 15.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 53,
+  "metric": "steps",
+  "value": 5041
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 52,
+  "metric": "rhr",
+  "value": 62.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 52,
+  "metric": "hrv_sdnn",
+  "value": 43.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 52,
+  "metric": "rr_sleep",
+  "value": 14.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 52,
+  "metric": "steps",
+  "value": 4122
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 51,
+  "metric": "rhr",
+  "value": 58.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 51,
+  "metric": "hrv_sdnn",
+  "value": 37.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 51,
+  "metric": "rr_sleep",
+  "value": 14.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 51,
+  "metric": "steps",
+  "value": 3998
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 50,
+  "metric": "rhr",
+  "value": 63.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 50,
+  "metric": "hrv_sdnn",
+  "value": 40.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 50,
+  "metric": "rr_sleep",
+  "value": 12.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 50,
+  "metric": "steps",
+  "value": 5414
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 49,
+  "metric": "rhr",
+  "value": 71.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 49,
+  "metric": "hrv_sdnn",
+  "value": 33.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 49,
+  "metric": "rr_sleep",
+  "value": 13.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 49,
+  "metric": "steps",
+  "value": 4036
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 48,
+  "metric": "rhr",
+  "value": 61.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 48,
+  "metric": "hrv_sdnn",
+  "value": 40.5
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 48,
+  "metric": "rr_sleep",
+  "value": 14.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 48,
+  "metric": "steps",
+  "value": 4495
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 47,
+  "metric": "rhr",
+  "value": 51.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 47,
+  "metric": "hrv_sdnn",
+  "value": 40.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 47,
+  "metric": "rr_sleep",
+  "value": 14.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 47,
+  "metric": "steps",
+  "value": 3662
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 46,
+  "metric": "rhr",
+  "value": 60.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 46,
+  "metric": "hrv_sdnn",
+  "value": 36.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 46,
+  "metric": "rr_sleep",
+  "value": 14.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 46,
+  "metric": "steps",
+  "value": 4578
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 45,
+  "metric": "rhr",
+  "value": 59.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 45,
+  "metric": "hrv_sdnn",
+  "value": 40.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 45,
+  "metric": "rr_sleep",
+  "value": 13.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 45,
+  "metric": "steps",
+  "value": 5151
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 44,
+  "metric": "rhr",
+  "value": 60.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 44,
+  "metric": "hrv_sdnn",
+  "value": 36.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 44,
+  "metric": "rr_sleep",
+  "value": 13.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 44,
+  "metric": "steps",
+  "value": 5160
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 43,
+  "metric": "rhr",
+  "value": 63.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 43,
+  "metric": "hrv_sdnn",
+  "value": 40.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 43,
+  "metric": "rr_sleep",
+  "value": 12.5
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 43,
+  "metric": "steps",
+  "value": 3578
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 42,
+  "metric": "rhr",
+  "value": 64.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 42,
+  "metric": "hrv_sdnn",
+  "value": 37.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 42,
+  "metric": "rr_sleep",
+  "value": 13.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 42,
+  "metric": "steps",
+  "value": 4045
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 41,
+  "metric": "rhr",
+  "value": 60.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 41,
+  "metric": "hrv_sdnn",
+  "value": 29.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 41,
+  "metric": "rr_sleep",
+  "value": 13.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 41,
+  "metric": "steps",
+  "value": 4022
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 40,
+  "metric": "rhr",
+  "value": 62.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 40,
+  "metric": "hrv_sdnn",
+  "value": 36.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 40,
+  "metric": "rr_sleep",
+  "value": 15.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 40,
+  "metric": "steps",
+  "value": 5058
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 39,
+  "metric": "rhr",
+  "value": 60.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 39,
+  "metric": "hrv_sdnn",
+  "value": 35.5
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 39,
+  "metric": "rr_sleep",
+  "value": 12.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 39,
+  "metric": "steps",
+  "value": 5257
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 38,
+  "metric": "rhr",
+  "value": 58.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 38,
+  "metric": "hrv_sdnn",
+  "value": 36.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 38,
+  "metric": "rr_sleep",
+  "value": 13.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 38,
+  "metric": "steps",
+  "value": 4608
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 37,
+  "metric": "rhr",
+  "value": 59.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 37,
+  "metric": "hrv_sdnn",
+  "value": 33.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 37,
+  "metric": "rr_sleep",
+  "value": 13.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 37,
+  "metric": "steps",
+  "value": 4106
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 36,
+  "metric": "rhr",
+  "value": 65.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 36,
+  "metric": "hrv_sdnn",
+  "value": 36.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 36,
+  "metric": "rr_sleep",
+  "value": 12.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 36,
+  "metric": "steps",
+  "value": 4343
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 35,
+  "metric": "rhr",
+  "value": 56.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 35,
+  "metric": "hrv_sdnn",
+  "value": 33.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 35,
+  "metric": "rr_sleep",
+  "value": 14.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 35,
+  "metric": "steps",
+  "value": 4149
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 34,
+  "metric": "rhr",
+  "value": 63.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 34,
+  "metric": "hrv_sdnn",
+  "value": 33.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 34,
+  "metric": "rr_sleep",
+  "value": 13.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 34,
+  "metric": "steps",
+  "value": 3493
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 33,
+  "metric": "rhr",
+  "value": 56.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 33,
+  "metric": "hrv_sdnn",
+  "value": 37.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 33,
+  "metric": "rr_sleep",
+  "value": 13.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 33,
+  "metric": "steps",
+  "value": 4573
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 32,
+  "metric": "rhr",
+  "value": 60.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 32,
+  "metric": "hrv_sdnn",
+  "value": 29.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 32,
+  "metric": "rr_sleep",
+  "value": 14.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 32,
+  "metric": "steps",
+  "value": 5362
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 31,
+  "metric": "rhr",
+  "value": 65.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 31,
+  "metric": "hrv_sdnn",
+  "value": 33.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 31,
+  "metric": "rr_sleep",
+  "value": 14.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 31,
+  "metric": "steps",
+  "value": 3973
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 30,
+  "metric": "rhr",
+  "value": 61.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 30,
+  "metric": "hrv_sdnn",
+  "value": 33.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 30,
+  "metric": "rr_sleep",
+  "value": 14.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 30,
+  "metric": "steps",
+  "value": 2399
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 29,
+  "metric": "rhr",
+  "value": 61.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 29,
+  "metric": "hrv_sdnn",
+  "value": 39.5
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 29,
+  "metric": "rr_sleep",
+  "value": 14.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 29,
+  "metric": "steps",
+  "value": 2708
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 28,
+  "metric": "rhr",
+  "value": 59.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 28,
+  "metric": "hrv_sdnn",
+  "value": 40.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 28,
+  "metric": "rr_sleep",
+  "value": 14.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 28,
+  "metric": "steps",
+  "value": 5244
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 27,
+  "metric": "rhr",
+  "value": 57.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 27,
+  "metric": "hrv_sdnn",
+  "value": 39.5
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 27,
+  "metric": "rr_sleep",
+  "value": 14.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 27,
+  "metric": "steps",
+  "value": 4206
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 26,
+  "metric": "rhr",
+  "value": 63.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 26,
+  "metric": "hrv_sdnn",
+  "value": 35.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 26,
+  "metric": "rr_sleep",
+  "value": 14.5
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 26,
+  "metric": "steps",
+  "value": 3455
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 25,
+  "metric": "rhr",
+  "value": 55.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 25,
+  "metric": "hrv_sdnn",
+  "value": 36.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 25,
+  "metric": "rr_sleep",
+  "value": 14.5
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 25,
+  "metric": "steps",
+  "value": 4784
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 24,
+  "metric": "rhr",
+  "value": 66.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 24,
+  "metric": "hrv_sdnn",
+  "value": 39.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 24,
+  "metric": "rr_sleep",
+  "value": 13.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 24,
+  "metric": "steps",
+  "value": 4160
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 23,
+  "metric": "rhr",
+  "value": 59.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 23,
+  "metric": "hrv_sdnn",
+  "value": 33.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 23,
+  "metric": "rr_sleep",
+  "value": 11.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 23,
+  "metric": "steps",
+  "value": 4193
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 22,
+  "metric": "rhr",
+  "value": 61.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 22,
+  "metric": "hrv_sdnn",
+  "value": 38.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 22,
+  "metric": "rr_sleep",
+  "value": 14.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 22,
+  "metric": "steps",
+  "value": 3253
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 21,
+  "metric": "rhr",
+  "value": 62.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 21,
+  "metric": "hrv_sdnn",
+  "value": 36.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 21,
+  "metric": "rr_sleep",
+  "value": 14.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 21,
+  "metric": "steps",
+  "value": 3326
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 20,
+  "metric": "rhr",
+  "value": 64.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 20,
+  "metric": "hrv_sdnn",
+  "value": 32.5
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 20,
+  "metric": "rr_sleep",
+  "value": 13.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 20,
+  "metric": "steps",
+  "value": 4806
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 19,
+  "metric": "rhr",
+  "value": 62.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 19,
+  "metric": "hrv_sdnn",
+  "value": 38.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 19,
+  "metric": "rr_sleep",
+  "value": 15.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 19,
+  "metric": "steps",
+  "value": 4363
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 18,
+  "metric": "rhr",
+  "value": 67.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 18,
+  "metric": "hrv_sdnn",
+  "value": 43.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 18,
+  "metric": "rr_sleep",
+  "value": 14.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 18,
+  "metric": "steps",
+  "value": 4052
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 17,
+  "metric": "rhr",
+  "value": 61.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 17,
+  "metric": "hrv_sdnn",
+  "value": 35.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 17,
+  "metric": "rr_sleep",
+  "value": 13.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 17,
+  "metric": "steps",
+  "value": 5007
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 16,
+  "metric": "rhr",
+  "value": 65.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 16,
+  "metric": "hrv_sdnn",
+  "value": 28.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 16,
+  "metric": "rr_sleep",
+  "value": 13.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 16,
+  "metric": "steps",
+  "value": 3655
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 15,
+  "metric": "rhr",
+  "value": 62.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 15,
+  "metric": "hrv_sdnn",
+  "value": 36.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 15,
+  "metric": "rr_sleep",
+  "value": 13.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 15,
+  "metric": "steps",
+  "value": 3945
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 14,
+  "metric": "rhr",
+  "value": 56.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 14,
+  "metric": "hrv_sdnn",
+  "value": 40.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 14,
+  "metric": "rr_sleep",
+  "value": 14.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 14,
+  "metric": "steps",
+  "value": 4364
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 13,
+  "metric": "rhr",
+  "value": 62.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 13,
+  "metric": "hrv_sdnn",
+  "value": 36.0
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 13,
+  "metric": "rr_sleep",
+  "value": 12.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 13,
+  "metric": "steps",
+  "value": 4571
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 12,
+  "metric": "rhr",
+  "value": 58.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 12,
+  "metric": "hrv_sdnn",
+  "value": 36.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 12,
+  "metric": "rr_sleep",
+  "value": 15.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 12,
+  "metric": "steps",
+  "value": 4041
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 11,
+  "metric": "rhr",
+  "value": 62.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 11,
+  "metric": "hrv_sdnn",
+  "value": 36.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 11,
+  "metric": "rr_sleep",
+  "value": 14.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 11,
+  "metric": "steps",
+  "value": 3803
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 10,
+  "metric": "rhr",
+  "value": 53.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 10,
+  "metric": "hrv_sdnn",
+  "value": 38.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 10,
+  "metric": "rr_sleep",
+  "value": 13.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 10,
+  "metric": "steps",
+  "value": 4107
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 9,
+  "metric": "rhr",
+  "value": 65.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 9,
+  "metric": "hrv_sdnn",
+  "value": 34.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 9,
+  "metric": "rr_sleep",
+  "value": 14.5
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 9,
+  "metric": "steps",
+  "value": 3200
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 8,
+  "metric": "rhr",
+  "value": 55.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 8,
+  "metric": "hrv_sdnn",
+  "value": 32.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 8,
+  "metric": "rr_sleep",
+  "value": 13.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 8,
+  "metric": "steps",
+  "value": 3948
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 7,
+  "metric": "rhr",
+  "value": 61.5
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 7,
+  "metric": "hrv_sdnn",
+  "value": 34.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 7,
+  "metric": "rr_sleep",
+  "value": 12.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 7,
+  "metric": "steps",
+  "value": 5103
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 6,
+  "metric": "rhr",
+  "value": 57.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 6,
+  "metric": "hrv_sdnn",
+  "value": 37.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 6,
+  "metric": "rr_sleep",
+  "value": 14.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 6,
+  "metric": "steps",
+  "value": 3847
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 5,
+  "metric": "rhr",
+  "value": 63.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 5,
+  "metric": "hrv_sdnn",
+  "value": 37.1
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 5,
+  "metric": "rr_sleep",
+  "value": 13.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 5,
+  "metric": "steps",
+  "value": 3817
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 4,
+  "metric": "rhr",
+  "value": 59.7
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 4,
+  "metric": "hrv_sdnn",
+  "value": 31.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 4,
+  "metric": "rr_sleep",
+  "value": 12.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 4,
+  "metric": "steps",
+  "value": 3732
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 3,
+  "metric": "rhr",
+  "value": 58.6
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 3,
+  "metric": "hrv_sdnn",
+  "value": 32.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 3,
+  "metric": "rr_sleep",
+  "value": 13.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 3,
+  "metric": "steps",
+  "value": 2468
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 2,
+  "metric": "rhr",
+  "value": 64.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 2,
+  "metric": "hrv_sdnn",
+  "value": 27.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 2,
+  "metric": "rr_sleep",
+  "value": 14.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 2,
+  "metric": "steps",
+  "value": 5150
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 1,
+  "metric": "rhr",
+  "value": 62.2
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 1,
+  "metric": "hrv_sdnn",
+  "value": 34.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 1,
+  "metric": "rr_sleep",
+  "value": 13.8
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 1,
+  "metric": "steps",
+  "value": 6093
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 0,
+  "metric": "rhr",
+  "value": 66.9
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 0,
+  "metric": "hrv_sdnn",
+  "value": 35.3
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 0,
+  "metric": "rr_sleep",
+  "value": 14.4
+ },
+ {
+  "patient_id": "pat_luis01",
+  "days_ago": 0,
+  "metric": "steps",
+  "value": 3906
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 59,
+  "metric": "rhr",
+  "value": 73.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 59,
+  "metric": "hrv_sdnn",
+  "value": 25.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 59,
+  "metric": "rr_sleep",
+  "value": 15.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 59,
+  "metric": "steps",
+  "value": 3738
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 58,
+  "metric": "rhr",
+  "value": 71.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 58,
+  "metric": "hrv_sdnn",
+  "value": 32.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 58,
+  "metric": "rr_sleep",
+  "value": 13.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 58,
+  "metric": "steps",
+  "value": 4124
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 57,
+  "metric": "rhr",
+  "value": 66.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 57,
+  "metric": "hrv_sdnn",
+  "value": 34.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 57,
+  "metric": "rr_sleep",
+  "value": 14.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 57,
+  "metric": "steps",
+  "value": 3570
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 56,
+  "metric": "rhr",
+  "value": 70.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 56,
+  "metric": "hrv_sdnn",
+  "value": 27.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 56,
+  "metric": "rr_sleep",
+  "value": 13.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 56,
+  "metric": "steps",
+  "value": 4544
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 55,
+  "metric": "rhr",
+  "value": 67.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 55,
+  "metric": "hrv_sdnn",
+  "value": 28.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 55,
+  "metric": "rr_sleep",
+  "value": 13.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 55,
+  "metric": "steps",
+  "value": 4093
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 54,
+  "metric": "rhr",
+  "value": 75.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 54,
+  "metric": "hrv_sdnn",
+  "value": 42.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 54,
+  "metric": "rr_sleep",
+  "value": 14.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 54,
+  "metric": "steps",
+  "value": 4643
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 53,
+  "metric": "rhr",
+  "value": 72.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 53,
+  "metric": "hrv_sdnn",
+  "value": 29.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 53,
+  "metric": "rr_sleep",
+  "value": 14.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 53,
+  "metric": "steps",
+  "value": 3882
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 52,
+  "metric": "rhr",
+  "value": 73.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 52,
+  "metric": "hrv_sdnn",
+  "value": 34.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 52,
+  "metric": "rr_sleep",
+  "value": 15.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 52,
+  "metric": "steps",
+  "value": 4562
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 51,
+  "metric": "rhr",
+  "value": 79.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 51,
+  "metric": "hrv_sdnn",
+  "value": 31.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 51,
+  "metric": "rr_sleep",
+  "value": 14.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 51,
+  "metric": "steps",
+  "value": 4108
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 50,
+  "metric": "rhr",
+  "value": 69.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 50,
+  "metric": "hrv_sdnn",
+  "value": 37.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 50,
+  "metric": "rr_sleep",
+  "value": 14.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 50,
+  "metric": "steps",
+  "value": 3969
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 49,
+  "metric": "rhr",
+  "value": 67.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 49,
+  "metric": "hrv_sdnn",
+  "value": 35.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 49,
+  "metric": "rr_sleep",
+  "value": 14.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 49,
+  "metric": "steps",
+  "value": 3677
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 48,
+  "metric": "rhr",
+  "value": 70.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 48,
+  "metric": "hrv_sdnn",
+  "value": 29.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 48,
+  "metric": "rr_sleep",
+  "value": 14.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 48,
+  "metric": "steps",
+  "value": 4361
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 47,
+  "metric": "rhr",
+  "value": 69.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 47,
+  "metric": "hrv_sdnn",
+  "value": 34.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 47,
+  "metric": "rr_sleep",
+  "value": 13.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 47,
+  "metric": "steps",
+  "value": 5356
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 46,
+  "metric": "rhr",
+  "value": 69.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 46,
+  "metric": "hrv_sdnn",
+  "value": 39.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 46,
+  "metric": "rr_sleep",
+  "value": 14.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 46,
+  "metric": "steps",
+  "value": 4238
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 45,
+  "metric": "rhr",
+  "value": 67.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 45,
+  "metric": "hrv_sdnn",
+  "value": 37.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 45,
+  "metric": "rr_sleep",
+  "value": 13.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 45,
+  "metric": "steps",
+  "value": 4566
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 44,
+  "metric": "rhr",
+  "value": 69.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 44,
+  "metric": "hrv_sdnn",
+  "value": 34.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 44,
+  "metric": "rr_sleep",
+  "value": 13.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 44,
+  "metric": "steps",
+  "value": 4027
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 43,
+  "metric": "rhr",
+  "value": 71.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 43,
+  "metric": "hrv_sdnn",
+  "value": 33.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 43,
+  "metric": "rr_sleep",
+  "value": 12.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 43,
+  "metric": "steps",
+  "value": 4537
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 42,
+  "metric": "rhr",
+  "value": 70.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 42,
+  "metric": "hrv_sdnn",
+  "value": 38.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 42,
+  "metric": "rr_sleep",
+  "value": 14.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 42,
+  "metric": "steps",
+  "value": 4440
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 41,
+  "metric": "rhr",
+  "value": 68.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 41,
+  "metric": "hrv_sdnn",
+  "value": 32.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 41,
+  "metric": "rr_sleep",
+  "value": 14.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 41,
+  "metric": "steps",
+  "value": 5035
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 40,
+  "metric": "rhr",
+  "value": 66.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 40,
+  "metric": "hrv_sdnn",
+  "value": 27.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 40,
+  "metric": "rr_sleep",
+  "value": 14.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 40,
+  "metric": "steps",
+  "value": 3253
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 39,
+  "metric": "rhr",
+  "value": 71.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 39,
+  "metric": "hrv_sdnn",
+  "value": 36.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 39,
+  "metric": "rr_sleep",
+  "value": 14.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 39,
+  "metric": "steps",
+  "value": 4938
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 38,
+  "metric": "rhr",
+  "value": 70.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 38,
+  "metric": "hrv_sdnn",
+  "value": 34.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 38,
+  "metric": "rr_sleep",
+  "value": 13.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 38,
+  "metric": "steps",
+  "value": 5419
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 37,
+  "metric": "rhr",
+  "value": 72.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 37,
+  "metric": "hrv_sdnn",
+  "value": 36.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 37,
+  "metric": "rr_sleep",
+  "value": 13.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 37,
+  "metric": "steps",
+  "value": 3289
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 36,
+  "metric": "rhr",
+  "value": 72.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 36,
+  "metric": "hrv_sdnn",
+  "value": 41.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 36,
+  "metric": "rr_sleep",
+  "value": 15.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 36,
+  "metric": "steps",
+  "value": 3176
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 35,
+  "metric": "rhr",
+  "value": 74.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 35,
+  "metric": "hrv_sdnn",
+  "value": 29.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 35,
+  "metric": "rr_sleep",
+  "value": 14.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 35,
+  "metric": "steps",
+  "value": 4387
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 34,
+  "metric": "rhr",
+  "value": 69.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 34,
+  "metric": "hrv_sdnn",
+  "value": 31.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 34,
+  "metric": "rr_sleep",
+  "value": 12.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 34,
+  "metric": "steps",
+  "value": 4182
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 33,
+  "metric": "rhr",
+  "value": 69.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 33,
+  "metric": "hrv_sdnn",
+  "value": 40.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 33,
+  "metric": "rr_sleep",
+  "value": 13.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 33,
+  "metric": "steps",
+  "value": 3662
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 32,
+  "metric": "rhr",
+  "value": 66.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 32,
+  "metric": "hrv_sdnn",
+  "value": 32.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 32,
+  "metric": "rr_sleep",
+  "value": 13.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 32,
+  "metric": "steps",
+  "value": 5167
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 31,
+  "metric": "rhr",
+  "value": 68.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 31,
+  "metric": "hrv_sdnn",
+  "value": 34.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 31,
+  "metric": "rr_sleep",
+  "value": 14.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 31,
+  "metric": "steps",
+  "value": 4931
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 30,
+  "metric": "rhr",
+  "value": 73.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 30,
+  "metric": "hrv_sdnn",
+  "value": 32.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 30,
+  "metric": "rr_sleep",
+  "value": 13.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 30,
+  "metric": "steps",
+  "value": 4552
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 29,
+  "metric": "rhr",
+  "value": 69.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 29,
+  "metric": "hrv_sdnn",
+  "value": 34.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 29,
+  "metric": "rr_sleep",
+  "value": 13.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 29,
+  "metric": "steps",
+  "value": 4433
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 28,
+  "metric": "rhr",
+  "value": 65.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 28,
+  "metric": "hrv_sdnn",
+  "value": 30.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 28,
+  "metric": "rr_sleep",
+  "value": 14.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 28,
+  "metric": "steps",
+  "value": 3753
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 27,
+  "metric": "rhr",
+  "value": 66.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 27,
+  "metric": "hrv_sdnn",
+  "value": 33.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 27,
+  "metric": "rr_sleep",
+  "value": 13.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 27,
+  "metric": "steps",
+  "value": 3539
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 26,
+  "metric": "rhr",
+  "value": 67.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 26,
+  "metric": "hrv_sdnn",
+  "value": 31.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 26,
+  "metric": "rr_sleep",
+  "value": 12.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 26,
+  "metric": "steps",
+  "value": 5003
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 25,
+  "metric": "rhr",
+  "value": 73.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 25,
+  "metric": "hrv_sdnn",
+  "value": 38.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 25,
+  "metric": "rr_sleep",
+  "value": 14.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 25,
+  "metric": "steps",
+  "value": 5380
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 24,
+  "metric": "rhr",
+  "value": 70.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 24,
+  "metric": "hrv_sdnn",
+  "value": 36.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 24,
+  "metric": "rr_sleep",
+  "value": 13.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 24,
+  "metric": "steps",
+  "value": 3442
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 23,
+  "metric": "rhr",
+  "value": 68.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 23,
+  "metric": "hrv_sdnn",
+  "value": 33.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 23,
+  "metric": "rr_sleep",
+  "value": 14.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 23,
+  "metric": "steps",
+  "value": 4938
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 22,
+  "metric": "rhr",
+  "value": 75.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 22,
+  "metric": "hrv_sdnn",
+  "value": 38.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 22,
+  "metric": "rr_sleep",
+  "value": 12.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 22,
+  "metric": "steps",
+  "value": 3784
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 21,
+  "metric": "rhr",
+  "value": 68.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 21,
+  "metric": "hrv_sdnn",
+  "value": 33.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 21,
+  "metric": "rr_sleep",
+  "value": 14.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 21,
+  "metric": "steps",
+  "value": 5170
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 20,
+  "metric": "rhr",
+  "value": 70.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 20,
+  "metric": "hrv_sdnn",
+  "value": 28.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 20,
+  "metric": "rr_sleep",
+  "value": 15.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 20,
+  "metric": "steps",
+  "value": 3919
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 19,
+  "metric": "rhr",
+  "value": 69.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 19,
+  "metric": "hrv_sdnn",
+  "value": 37.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 19,
+  "metric": "rr_sleep",
+  "value": 13.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 19,
+  "metric": "steps",
+  "value": 3784
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 18,
+  "metric": "rhr",
+  "value": 75.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 18,
+  "metric": "hrv_sdnn",
+  "value": 36.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 18,
+  "metric": "rr_sleep",
+  "value": 14.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 18,
+  "metric": "steps",
+  "value": 4477
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 17,
+  "metric": "rhr",
+  "value": 73.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 17,
+  "metric": "hrv_sdnn",
+  "value": 30.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 17,
+  "metric": "rr_sleep",
+  "value": 15.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 17,
+  "metric": "steps",
+  "value": 2432
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 16,
+  "metric": "rhr",
+  "value": 68.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 16,
+  "metric": "hrv_sdnn",
+  "value": 35.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 16,
+  "metric": "rr_sleep",
+  "value": 13.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 16,
+  "metric": "steps",
+  "value": 4030
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 15,
+  "metric": "rhr",
+  "value": 71.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 15,
+  "metric": "hrv_sdnn",
+  "value": 26.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 15,
+  "metric": "rr_sleep",
+  "value": 13.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 15,
+  "metric": "steps",
+  "value": 4259
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 14,
+  "metric": "rhr",
+  "value": 70.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 14,
+  "metric": "hrv_sdnn",
+  "value": 32.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 14,
+  "metric": "rr_sleep",
+  "value": 14.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 14,
+  "metric": "steps",
+  "value": 3823
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 13,
+  "metric": "rhr",
+  "value": 69.9
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 13,
+  "metric": "hrv_sdnn",
+  "value": 35.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 13,
+  "metric": "rr_sleep",
+  "value": 14.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 13,
+  "metric": "steps",
+  "value": 3764
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 12,
+  "metric": "rhr",
+  "value": 75.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 12,
+  "metric": "hrv_sdnn",
+  "value": 32.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 12,
+  "metric": "rr_sleep",
+  "value": 13.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 12,
+  "metric": "steps",
+  "value": 3978
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 11,
+  "metric": "rhr",
+  "value": 71.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 11,
+  "metric": "hrv_sdnn",
+  "value": 41.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 11,
+  "metric": "rr_sleep",
+  "value": 13.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 11,
+  "metric": "steps",
+  "value": 4561
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 10,
+  "metric": "rhr",
+  "value": 68.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 10,
+  "metric": "hrv_sdnn",
+  "value": 37.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 10,
+  "metric": "rr_sleep",
+  "value": 14.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 10,
+  "metric": "steps",
+  "value": 2999
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 9,
+  "metric": "rhr",
+  "value": 73.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 9,
+  "metric": "hrv_sdnn",
+  "value": 36.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 9,
+  "metric": "rr_sleep",
+  "value": 13.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 9,
+  "metric": "steps",
+  "value": 3473
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 8,
+  "metric": "rhr",
+  "value": 65.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 8,
+  "metric": "hrv_sdnn",
+  "value": 38.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 8,
+  "metric": "rr_sleep",
+  "value": 13.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 8,
+  "metric": "steps",
+  "value": 4543
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 7,
+  "metric": "rhr",
+  "value": 72.4
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 7,
+  "metric": "hrv_sdnn",
+  "value": 40.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 7,
+  "metric": "rr_sleep",
+  "value": 13.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 7,
+  "metric": "steps",
+  "value": 4350
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 6,
+  "metric": "rhr",
+  "value": 71.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 6,
+  "metric": "hrv_sdnn",
+  "value": 29.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 6,
+  "metric": "rr_sleep",
+  "value": 13.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 6,
+  "metric": "steps",
+  "value": 4499
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 5,
+  "metric": "rhr",
+  "value": 68.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 5,
+  "metric": "hrv_sdnn",
+  "value": 35.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 5,
+  "metric": "rr_sleep",
+  "value": 13.3
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 5,
+  "metric": "steps",
+  "value": 4255
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 4,
+  "metric": "rhr",
+  "value": 69.8
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 4,
+  "metric": "hrv_sdnn",
+  "value": 38.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 4,
+  "metric": "rr_sleep",
+  "value": 13.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 4,
+  "metric": "steps",
+  "value": 3748
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 3,
+  "metric": "rhr",
+  "value": 70.7
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 3,
+  "metric": "hrv_sdnn",
+  "value": 41.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 3,
+  "metric": "rr_sleep",
+  "value": 13.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 3,
+  "metric": "steps",
+  "value": 4181
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 2,
+  "metric": "rhr",
+  "value": 71.0
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 2,
+  "metric": "hrv_sdnn",
+  "value": 31.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 2,
+  "metric": "rr_sleep",
+  "value": 13.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 2,
+  "metric": "steps",
+  "value": 4389
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 1,
+  "metric": "rhr",
+  "value": 72.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 1,
+  "metric": "hrv_sdnn",
+  "value": 36.6
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 1,
+  "metric": "rr_sleep",
+  "value": 12.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 1,
+  "metric": "steps",
+  "value": 4011
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 0,
+  "metric": "rhr",
+  "value": 73.2
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 0,
+  "metric": "hrv_sdnn",
+  "value": 34.1
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 0,
+  "metric": "rr_sleep",
+  "value": 12.5
+ },
+ {
+  "patient_id": "pat_ada01",
+  "days_ago": 0,
+  "metric": "steps",
+  "value": 3984
+ }
+]
