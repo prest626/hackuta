@@ -27,17 +27,17 @@ SKIP_BREATH = "We can skip the breathing wellness check."
 REVIEW_LINE = "I've sent this to your care team. Your nurse will review it."
 DASHBOARD_LINE = "I'll leave the details on the dashboard."
 TONE = (
-    "Tone: kind and straight to the point, like a good doctor. "
-    "One or two short sentences. Warm, never cute."
+    "Tone: warm and plain. One question per turn. "
+    "Each turn under about 15 words."
 )
 QUIET_HANDOFF = (
-    "Do not run the four-part check-in. "
+    "Do not run the check-in. "
     "Say nothing about a handoff. "
     "Do not dial, text, or propose another approval. "
     "Never promise a callback time."
 )
 SPOKEN_HANDOFF = (
-    "Do not run the four-part check-in. "
+    "Do not run the check-in. "
     "The opening was already spoken. "
     f"When the call wraps, say exactly: {DASHBOARD_LINE} "
     "Do not dial, text, or propose another approval. "
@@ -56,17 +56,27 @@ BREATH_WAIT_S = 20
 PILL_HOLD_S = 2.0
 PILL_WINDOW_S = 1.5
 HOLD_STILL = "Hold the organizer still, facing the camera, about a foot away."
-# Replaces the 3:45 breathing slot in the loaded prompt. This call stops at 2:00.
+# One 2:00 check-in: ask, then wait. The old clock times do not apply.
 CHECKIN_ORDER = (
-    "Call order for this 2:00 check-in: check_pillbox, then breathing_check right away, "
-    "then record_answer, then get_vitals, then finish_call. "
+    "Call order for this 2:00 check-in: greeting, then check_pillbox, "
+    "then breathing_check, then record_answer, then get_vitals, then finish_call. "
     f"Before check_pillbox, say: {HOLD_STILL} "
     "Call check_pillbox only after the patient confirms the organizer is up. "
+    "If unsure, ask whether it is up. "
     "breathing_check asks them to sit still for 20 seconds. "
-    "Start it immediately after the pill check so that wait ends before 2:00. "
-    "Do not leave breathing until 3:45."
+    "One question per turn."
 )
-PHRASES = ("chest pain", "can't breathe", "911")
+PHRASES = (
+    "chest pain",
+    "can't breathe",
+    "cant breathe",
+    "can not breathe",
+    "trouble breathing",
+    "heart attack",
+    "911",
+)
+_EXTRA_PHRASES = ("cant breathe", "can not breathe", "trouble breathing", "heart attack")
+_APOSTROPHES = "'\u2019\u2018\u02bc`\u00b4"
 ROOT = Path(__file__).resolve().parents[1]
 PROMPT = ROOT / "agent" / "prompts" / "system.md"
 RING = ROOT / "var" / "frames" / "ring"
@@ -182,15 +192,27 @@ def negated(hay: str, at: int) -> bool:
     return before.endswith("not ") or before.endswith("no ")
 
 
+def _plain(text: str) -> str:
+    out = str(text).lower()
+    for mark in _APOSTROPHES:
+        out = out.replace(mark, "")
+    return out
+
+
 def emergency_line(text, phrases=PHRASES):
     """The fixed 911 line, or None. A 'not'/'no' immediately before the phrase does not count."""
-    if not text or not phrases:
+    if not text:
         return None
-    hay = str(text).lower()
-    for phrase in phrases:
-        needle = str(phrase).lower().strip()
-        if not needle:
+    hay = _plain(text)
+    needles = []
+    seen = set()
+    for phrase in tuple(phrases or ()) + _EXTRA_PHRASES:
+        needle = _plain(phrase).strip()
+        if not needle or needle in seen:
             continue
+        seen.add(needle)
+        needles.append(needle)
+    for needle in needles:
         start = 0
         while start < len(hay):
             at = hay.find(needle, start)
