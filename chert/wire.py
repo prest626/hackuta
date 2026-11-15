@@ -61,6 +61,15 @@ BREATH_WAIT_S = 20
 PILL_HOLD_S = 2.0
 PILL_WINDOW_S = 1.5
 HOLD_STILL = "Hold the organizer still, facing the camera, about a foot away."
+SPEAK_NUMBERS = (
+    "After get_vitals returns, say the heart rate number aloud, and the breathing rate "
+    "when breathing_check returns one, e.g. \"Your watch shows a heart rate of 72.\" "
+    "Add no diagnosis or judgement beyond the tool's line."
+)
+ECHO_ANSWER = (
+    "Before moving on, repeat back what the patient said in one short sentence, "
+    "e.g. \"Got it, you took your morning pills.\" Never name a pill or give dosing advice."
+)
 # One 2:00 check-in: ask, then wait. The old clock times do not apply.
 CHECKIN_ORDER = (
     "Call order for this 2:00 check-in: greeting, then check_pillbox, "
@@ -76,7 +85,8 @@ CHECKIN_ORDER = (
     "actually see: which day lids show, open or closed, how many pills, and what is "
     "covered or cut off. Ask them to move it until all seven days show, then call "
     "check_pillbox. check_pillbox is the record; never claim more than you can see "
-    "and never give dosing advice."
+    "and never give dosing advice. "
+    f"{SPEAK_NUMBERS} {ECHO_ANSWER}"
 )
 PHRASES = (
     "chest pain",
