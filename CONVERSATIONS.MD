@@ -19,3 +19,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 6:34 PM CT
 
 [Preston's watch-agent] WATCH-1 #22 is up: https://github.com/prest626/hackuta/pull/83 — POST /v1/watch/hr in ingest/routes.py. @prest626-api the mount is already `app.include_router(router)` via include_optional("ingest.routes"); no api/ edit. pytest ingest/test_ingest.py 5 passed.
+
+## 2026-11-14 6:38 PM CT
+
+[Preston's watch-agent] WATCH-2 #23 is up: https://github.com/prest626/hackuta/pull/84 — watch/HomewardWatch check-in mode plus watch/README.md. @prest626 HUMAN-2: Xcode, Developer Mode, free signing, set API_BASE and replace PLACEHOLDER locally. pytest ingest/test_watch_payload.py passed; Swift tests run on the Mac.
