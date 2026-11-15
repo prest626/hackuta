@@ -11,9 +11,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 if __package__:
-    from chert import media
+    from chert import media, wire
 else:
     import media
+    import wire
 
 log = logging.getLogger("chert")
 
@@ -119,6 +120,23 @@ async def entrypoint(ctx):
 
     state = {"spoken": False, "ready_at": None}
     session_box = {"session": None}
+    box = {
+        "posted": False,
+        "emergency": False,
+        "symptoms": [],
+        "pill": None,
+        "vitals": None,
+        "breathing": None,
+        "phrases": list(wire.PHRASES),
+        "frames": ROOT / "var" / "chert-frames" / "call",
+        "patient_id": None,
+        "call_id": None,
+        "day_index": 0,
+        "kind": "checkin",
+        "direction": "outbound",
+        "patient": {},
+        "started_at": None,
+    }
     lock = asyncio.Lock()
     tasks = set()
     started = set()
@@ -137,27 +155,44 @@ async def entrypoint(ctx):
 
         task.add_done_callback(_done)
 
+    def homeward_request(method, path, body=None):
+        from chert import homeward
+        return homeward._request(method, path, body)
+
     async def ensure_session():
         if session_box["session"] is not None:
             return session_box["session"]
-        from livekit.agents import Agent, AgentSession
+        from livekit.agents import AgentSession
         from livekit.plugins import openai
 
+        call = wire.fetch_context(ctx.room.metadata, homeward_request)
+        box.update(call)
+        if call.get("vitals"):
+            box["vitals"] = call["vitals"]
+        box["frames"] = ROOT / "var" / "chert-frames" / _call_id(ctx.room.metadata, "")
+        box["started_at"] = box.get("started_at") or wire.iso_now()
         session = AgentSession(
             llm=openai.realtime.RealtimeModel(),
-            # TTS so say() speaks this sentence; the realtime model alone may paraphrase it.
+            # TTS so say() speaks the fixed lines; the realtime model alone may paraphrase them.
             tts=openai.TTS(),
         )
         await session.start(
-            agent=Agent(
-                instructions=(
-                    "You are Homeward, a prototype, not a medical device. "
-                    "Do not diagnose, prescribe, or give dosing advice. "
-                    "Speak only the sentence you are given."
-                )
-            ),
+            agent=wire.build_agent(wire.instructions(wire.load_prompt(), call), box),
             room=ctx.room,
         )
+
+        def _heard(ev):
+            if getattr(ev, "is_final", True) is False:
+                return
+            text = getattr(ev, "transcript", "") or ""
+            line = wire.emergency_line(text, box.get("phrases"))
+            if not line or box.get("emergency"):
+                return
+            box["emergency"] = True
+            log.info("emergency_script")
+            spawn(session.say(line))
+
+        session.on("user_input_transcribed", _heard)
         session_box["session"] = session
         return session
 
@@ -179,6 +214,7 @@ async def entrypoint(ctx):
 
     async def save_video(track, publication, identity):
         out = ROOT / "var" / "chert-frames" / _call_id(ctx.room.metadata, identity)
+        box["frames"] = out
         stream = rtc.VideoStream(track)
         stamps = []
         prev = None
@@ -266,6 +302,10 @@ async def entrypoint(ctx):
 
     @ctx.room.on("disconnected")
     def _disconnected(*_args):
+        try:
+            wire.submit(box, end_reason="patient_hangup")
+        except Exception as exc:
+            log.error("result post failed: %s", exc)
         if not done.done():
             done.set_result(None)
 
