@@ -30,13 +30,13 @@ def _now(now: datetime | None) -> datetime:
     return now.astimezone(timezone.utc)
 
 
-def _dial_number(patient: Patient, kind: str) -> str:
+def _dial_number(patient: Patient, kind: str) -> str | None:
     if kind == "checkin":
         return patient.phone_e164
-    role = "family" if kind == "family_group_call" else "nurse"
-    contact = next((item for item in patient.contacts if item.role == role), None)
-    if contact is None:
-        contact = next(item for item in patient.contacts if item.role == "nurse")
+    if kind == "family_group_call":
+        contact = next((item for item in patient.contacts if item.role == "family"), None)
+        return None if contact is None else contact.phone_e164
+    contact = next(item for item in patient.contacts if item.role == "nurse")
     return contact.phone_e164
 
 
@@ -198,11 +198,18 @@ def tick(now: datetime | None = None, only_id: str | None = None) -> None:
                 patient = Patient.model_validate(
                     json.loads(c.execute("SELECT doc FROM patients WHERE id = ?", (row["patient_id"],)).fetchone()["doc"])
                 )
-                c.execute(
-                    "UPDATE scheduled_calls SET status = 'dialing', attempts = attempts + 1 WHERE id = ?",
-                    (row["id"],),
-                )
-                dial = (_dial_number(patient, row["kind"]), row["id"], row["attempts"] + 1)
+                number = _dial_number(patient, row["kind"])
+                if number is None:
+                    c.execute(
+                        "UPDATE scheduled_calls SET status = 'failed' WHERE id = ?",
+                        (row["id"],),
+                    )
+                else:
+                    c.execute(
+                        "UPDATE scheduled_calls SET status = 'dialing', attempts = attempts + 1 WHERE id = ?",
+                        (row["id"],),
+                    )
+                    dial = (number, row["id"], row["attempts"] + 1)
     if hangup:
         mac().hangup()
     if missed is not None:

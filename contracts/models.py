@@ -26,10 +26,14 @@ class Model(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+# Contact handle: E.164, or an Apple ID email with no spaces, ';', quotes, or '/'.
+_HANDLE = r"^(?:\+[1-9][0-9]{7,14}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})$"
+
+
 class Contact(Model):
     role: Literal["nurse", "clinician", "family"]
     name: str
-    phone_e164: str = Field(pattern=r"^\+[1-9][0-9]{7,14}$")
+    phone_e164: str = Field(pattern=_HANDLE)
 
 
 class Consent(Model):

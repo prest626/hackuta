@@ -14,7 +14,9 @@ ROOT = Path(__file__).resolve().parents[1]
 MOCK = Path(__file__).resolve().parent / "mock"
 CONTRACTS = ROOT / "contracts"
 ENV_FILE = ROOT / ".env"
-TOKENS = ("DEMO_PATIENT_PHONE", "DEMO_NURSE_PHONE", "DEMO_FAMILY_PHONE")
+REQUIRED = ("DEMO_PATIENT_PHONE", "DEMO_NURSE_PHONE")
+OPTIONAL = "DEMO_FAMILY_PHONE"
+TOKENS = (*REQUIRED, OPTIONAL)
 
 
 def _load_env() -> None:
@@ -48,9 +50,25 @@ def _fill(node, phones: dict[str, str]):
         return [_fill(value, phones) for value in node]
     if isinstance(node, str) and node in TOKENS:
         if node not in phones:
+            if node == OPTIONAL:
+                return node
             raise ValueError(f"{node} is not set")
         return phones[node]
     return node
+
+
+def _drop_unset_family(doc: dict) -> dict:
+    contacts = doc.get("contacts")
+    if not isinstance(contacts, list):
+        return doc
+    kept = [
+        item
+        for item in contacts
+        if not (isinstance(item, dict) and item.get("phone_e164") == OPTIONAL)
+    ]
+    if len(kept) == len(contacts):
+        return doc
+    return {**doc, "contacts": kept}
 
 
 def _validate(doc: dict, schema_name: str) -> None:
@@ -62,6 +80,7 @@ def prepare(doc: dict, schema_name: str, phones: dict[str, str] | None = None) -
     filled = _fill(doc, _phones() if phones is None else phones)
     if filled.get("is_mock") is not True:
         raise ValueError("refusing non-mock document")
+    filled = _drop_unset_family(filled)
     _validate(filled, schema_name)
     return filled
 

@@ -4,7 +4,7 @@ You are `[Preston's demo-codex]` on Homeward (HackUTA 2026). Watson (`[Preston's
 
 Homeward is a hackathon prototype. It is not a medical device, gives no diagnosis or dosing advice, uses mock patient data only, and a nurse approves every escalation.
 
-Patients are Rosa, Luis, and Ada. All `is_mock: true`. Phone numbers come from `.env` (`DEMO_PATIENT_PHONE`, `DEMO_NURSE_PHONE`, `DEMO_FAMILY_PHONE`). Never commit a phone number.
+Patients are Rosa, Luis, and Ada. All `is_mock: true`. Handles come from `.env`: `DEMO_PATIENT_PHONE` (E.164) and `DEMO_NURSE_PHONE` (E.164 or an Apple ID email). `DEMO_FAMILY_PHONE` is optional. Never commit a phone number or email address.
 
 ## Board
 

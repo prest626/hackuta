@@ -23,7 +23,7 @@ cp .env.example .env
 
 The API Mac uses `uv sync --group dev`. The MacBook that runs the agent uses `uv sync --inexact --group chert`.
 
-Fill `.env` on the Mac only (`DEMO_PATIENT_PHONE`, `DEMO_NURSE_PHONE`, tokens). Leave the committed example blank.
+Fill `.env` on the Mac only (`DEMO_PATIENT_PHONE`, `DEMO_NURSE_PHONE`, tokens). `DEMO_NURSE_PHONE` may be an Apple ID email. `DEMO_FAMILY_PHONE` is optional; leave it unset when the only escalation is the nurse. Leave the committed example blank.
 
 Bridge side (Preston's tree):
 

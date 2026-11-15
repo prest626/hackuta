@@ -103,7 +103,8 @@
           },
           "phone_e164": {
             "type": "string",
-            "pattern": "^\\+[1-9][0-9]{7,14}$"
+            "pattern": "^(\\+[1-9][0-9]{7,14}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})$",
+            "description": "E.164, or an Apple ID email. The patient's own phone_e164 stays E.164."
           }
         }
       }

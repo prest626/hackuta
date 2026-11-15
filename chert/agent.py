@@ -416,7 +416,7 @@ async def entrypoint(ctx):
             if not bridge_here():
                 return
             session = await ensure_session()
-            if box.get("kind") in wire.HANDOFF_KINDS:
+            if wire.handoff_applies(box):
                 if state.get("spoken"):
                     return
                 state["spoken"] = True
