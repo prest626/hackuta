@@ -1,6 +1,7 @@
 """Homeward prompt, pill frame, 911 check, and CallResult. No LiveKit."""
 
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -68,13 +69,31 @@ def context_from(metadata, active, patient_ctx) -> dict:
     return call
 
 
+def _active_call(value):
+    if isinstance(value, dict) and value.get("call_id"):
+        return value
+    return None
+
+
+def inbound_body() -> dict:
+    """InboundIn. patient_id is DEMO_INBOUND_PATIENT when the agent has it."""
+    patient = os.environ.get("DEMO_INBOUND_PATIENT")
+    if patient:
+        return {"patient_id": patient}
+    return {}
+
+
 def fetch_context(metadata, request) -> dict:
-    active = request("GET", "/v1/calls/active")
+    """Active call, or one POST /v1/calls/inbound when the row is empty."""
+    active = _active_call(request("GET", "/v1/calls/active"))
+    if active is None:
+        created = request("POST", "/v1/calls/inbound", inbound_body())
+        active = _active_call(created)
+        if active is None:
+            active = _active_call(request("GET", "/v1/calls/active"))
     patient_ctx = None
-    if isinstance(active, dict) and active.get("patient_id"):
+    if active and active.get("patient_id"):
         patient_ctx = request("GET", f"/v1/patients/{active['patient_id']}/context")
-    if not isinstance(active, dict):
-        active = None
     if not isinstance(patient_ctx, dict):
         patient_ctx = None
     return context_from(metadata, active, patient_ctx)

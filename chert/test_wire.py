@@ -54,6 +54,84 @@ def test_metadata_call_fields_win():
     assert call["phrases"] == ["chest pain"]
 
 
+def test_inbound_once_when_active_is_empty(monkeypatch):
+    monkeypatch.setenv("DEMO_INBOUND_PATIENT", "pat_rosa01")
+    created = {
+        "call_id": "call_in1234",
+        "patient_id": "pat_rosa01",
+        "day_index": 3,
+        "kind": "checkin",
+        "direction": "inbound",
+        "state": "ringing",
+    }
+    seen = []
+
+    def request(method, path, body=None):
+        seen.append((method, path, body))
+        if path == "/v1/calls/active":
+            if any(item[0] == "POST" for item in seen):
+                return created
+            return None
+        if method == "POST" and path == "/v1/calls/inbound":
+            return created
+        return {
+            "day_index": 3,
+            "patient": {"id": "pat_rosa01", "display_name": "Rosa"},
+        }
+
+    first = wire.fetch_context("{}", request)
+    second = wire.fetch_context("{}", request)
+    posts = [item for item in seen if item[0] == "POST"]
+    assert posts == [("POST", "/v1/calls/inbound", {"patient_id": "pat_rosa01"})]
+    assert first["call_id"] == "call_in1234"
+    assert second["call_id"] == "call_in1234"
+
+
+def test_no_inbound_when_a_call_is_active():
+    seen = []
+
+    def request(method, path, body=None):
+        seen.append((method, path, body))
+        if path == "/v1/calls/active":
+            return {
+                "call_id": "call_rosa01d3",
+                "patient_id": "pat_rosa01",
+                "day_index": 3,
+                "kind": "checkin",
+                "direction": "outbound",
+            }
+        return {"day_index": 3, "patient": {"id": "pat_rosa01"}}
+
+    call = wire.fetch_context("{}", request)
+    assert call["call_id"] == "call_rosa01d3"
+    assert not any(item[0] == "POST" for item in seen)
+
+
+def test_inbound_conflict_uses_the_existing_call(monkeypatch):
+    monkeypatch.setenv("DEMO_INBOUND_PATIENT", "pat_rosa01")
+    posts = []
+
+    def request(method, path, body=None):
+        if method == "POST":
+            posts.append(body)
+            return None
+        if path == "/v1/calls/active":
+            if posts:
+                return {
+                    "call_id": "call_in9999",
+                    "patient_id": "pat_rosa01",
+                    "day_index": 1,
+                    "kind": "checkin",
+                    "direction": "inbound",
+                }
+            return None
+        return {"day_index": 1, "patient": {"id": "pat_rosa01"}}
+
+    call = wire.fetch_context("{}", request)
+    assert posts == [{"patient_id": "pat_rosa01"}]
+    assert call["call_id"] == "call_in9999"
+
+
 def test_emergency_line_matches_the_call_agent():
     assert wire.emergency_line("I have chest pain") == wire.EMERGENCY_LINE
     assert wire.emergency_line("I can't breathe") == wire.EMERGENCY_LINE
