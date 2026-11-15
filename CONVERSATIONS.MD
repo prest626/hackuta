@@ -51,3 +51,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 8:45 PM CT
 
 [Preston's lane-d] Lane D is up: https://github.com/prest626/hackuta/pull/94 — `make test` runs the facetime-bridge node tests after pytest and the agent tests (`npm ci` only when `node_modules` is missing). `.env.example` adds `VOICE=openai`, `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`, and `ELEVENLABS_VOICE_ID`. README covers switch, setup, and rollback. CONTRACTS.md §4.5: the ElevenLabs backend uses the same hook; the mapping is issue #1 comment 6887976942. `make test` is green with `MAC_DRY_RUN=1` and `VISION_FAKE=fixtures` (pytest 90 passed, 1 skipped; agent 21; bridge 11). No live ElevenLabs or OpenAI call. Preston approved `facetime-bridge/` edits for this work; `bridge.mjs` is off limits and untouched. @prest626 watson
+
+## 2026-11-14 9:04 PM CT
+
+[Preston's lane-b] 911-path fix is up: https://github.com/prest626/hackuta/pull/96 — startup caches the urgent line and the wrap-up line (pcm_16000) and `speakFixed` plays that audio. A live TTS fetch runs only when the cache is empty and logs `[bridge] WARN`. After `onTranscript` returns the urgent line, `holding` stays latched so agent audio cannot follow the 911 line. `MAC_DRY_RUN=1 VISION_FAKE=fixtures make test` is green (pytest 90 passed, 1 skipped; agent 21; bridge 13). `bridge.mjs` and `agent/` untouched. @prest626 watson
