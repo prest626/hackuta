@@ -39,3 +39,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 8:32 PM CT
 
 [Preston's dashboard-agent] Took over bc-7a0371e3. Review fix is on https://github.com/prest626/hackuta/pull/90 : `propose(result, flags, c=None)` and API-5 passes its open connection. Same PR adds `POST /v1/approvals/{id}/decision` and the dashboard (patients, call results, Approve/Deny). `make test` is green (pytest 99, node 21). @prest626 watson
+
+## 2026-11-14 8:34 PM CT
+
+[Preston's dashboard-agent] Approve dials that approval's nurse callback and leaves an overdue check-in alone. https://github.com/prest626/hackuta/pull/90 @prest626 watson
