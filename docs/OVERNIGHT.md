@@ -12,13 +12,13 @@ One Rosa day-3 call. Sunday Nov 15 is day 3 (discharged Thu Nov 12). Do this aft
 
 **Real pillbox setup** (before any call). 7×2, Monday start, lids open, day letters toward the lens. Contrasting candies, not real medicine. Empty Mon-AM through Sat-AM. **Sat-PM still has pills** (the miss). **Sun-AM empty** (taken; only after 8:00 AM). **Sun-PM still has pills** (due 8:00 PM, not a miss). If he must run before 8:00 AM, leave Sun-AM full too. Light in front of the box, not a window behind it. No glare on the plastic. Box fills most of the frame, all 14 lids visible, hold still two seconds, self-view not covering the box.
 
-**Offline photos, once the box is filled.** Three JPEGs, untracked: `vision/eval/real/sat-pm-full.jpg`, `sun-am-empty.jpg`, `all-lids.jpg`. `vision/eval/real/labels.json` uses the `vision/eval/labels.json` shape (`file`, `filled`, optional `visible`). Then:
+**Offline photos, once his own box is filled.** Three JPEGs, untracked, under `vision/eval/preston/` (not `vision/eval/real/`, which is the committed CC set): `sat-pm-full.jpg`, `sun-am-empty.jpg`, `all-lids.jpg`. `labels.json` there uses the `vision/eval/labels.json` shape (`file`, `filled`, optional `visible`). Then:
 
 ```bash
-python -m vision.eval --dir vision/eval/real
+python -m vision.eval --dir vision/eval/preston
 ```
 
-Expect `real photos: 3` and exit 0. If a key is already in the environment the same command also prints `per-compartment accuracy:`. Under 9/10, still do the one live call and say the number. No second call to chase it. Zero photos prints `real photos: 0 (skipped)` and exits 0. That skip is what `make test` runs.
+Expect `real photos: 3` and exit 0. If a key is already in the environment the same command also prints `per-compartment accuracy:`. Under 9/10, still do the one live call and say the number. No second call to chase it. Zero photos prints `real photos: 0 (skipped)` and exits 0. That skip is what `make test` runs. The CC set in `vision/eval/real/` is a separate report (lane A); it is not this gate.
 
 **Watch.** New charger on as soon as it arrives. Wrist, check-in workout, for the call. P-1 has already run `SPARE_MAC=<host> make watch-url` (do not post the tunnel host). If the watch is still dead, start the replay command above and leave it running.
 
@@ -71,9 +71,17 @@ Paths: `vision/eval/**`, `vision/fixtures/read_green.json`, `vision/pills.py` (o
 1. `read_green.json`: every AM/PM compartment `has_pills: false`, confidence ≥ 0.7. `VISION_FAKE=green` loads it. Default `fixtures` stays the Sat-PM canned read.
 2. Synthetic 7×2 JPEGs from the existing Pillow `draw()` in `vision/eval/__init__.py`: at least 10 sharp photos (all empty, all full, Sat-PM only, Sun-AM only, partial) plus one blur and one occlusion. Labels stay in `vision/eval/labels.json` shape. Blur and occlusion rows set `"expect": "unknown"`.
 3. A pixel reader in `vision/eval/` (same cell geometry as `draw()`, no network). `python -m vision.eval --reader pixels` prints `per-compartment accuracy: A/B on non-unknown` with A/B ≥ 0.9 and exits 0. `pytest vision/test_eval.py` asserts that and still asserts the canned reader line.
-4. `python -m vision.eval --dir vision/eval/real` loads that folder's `labels.json` when present. Missing folder or zero JPEGs prints `real photos: 0 (skipped)` and exits 0. Ship `vision/eval/real/.gitkeep` and `labels.example.json` only. Web photos watson adds later use the same flag and `vision/eval/web/`.
+4. Commit the labeled CC set from `/cursor/stores/bot/pill-data/` (this VM and the lane A agent can both read it). 33 JPEGs, licenses CC0, CC BY, and CC BY-SA. `labels.json` covers 32 of them in the `vision/eval/labels.json` shape (`file`, `filled`, optional `visible`); photo 33 is only in `labels_positional.json`. `labels_7x1_7x2_only.json` is the 15-photo 7×1/7×2 subset, the fair comparison against the 7×2 mock schedule. Copy into `vision/eval/real/`: the JPEGs, those three label files, and `SOURCES.md`. Attribution in `SOURCES.md` is required, and BY-SA stays share-alike. Do not copy `build.py` or `DATASETS.md`. Downscale with Pillow (already installed) so the long side is at most 1024 px and `vision/eval/real/` stays at most about 6 MB. No new dependency.
+5. One eval run over that set, as a measured report, not a `make test` gate. The synthetic pixel reader stays the 9/10 gate. Run both of these with the model only if a key is already in the environment; otherwise run them and write `reader: VISION_FAKE fixtures (not a model score)` next to the numbers. Either way they exit 0 at any ratio:
 
-Done check: `MAC_DRY_RUN=1 VISION_FAKE=fixtures pytest vision/test_eval.py vision/test_pills.py data/test_seed.py -q` exits 0, and the pixel line shows a ratio ≥ 0.9.
+```bash
+python -m vision.eval --dir vision/eval/real --labels vision/eval/real/labels_7x1_7x2_only.json
+python -m vision.eval --dir vision/eval/real --labels vision/eval/real/labels.json
+```
+
+Put both `per-compartment accuracy:` lines and both `unknown rate:` lines in the PR body. `pytest` and `make test` must not invoke this run and must not fail on the ratio. Preston's own morning photos stay untracked in `vision/eval/preston/`.
+
+Done check: `MAC_DRY_RUN=1 VISION_FAKE=fixtures pytest vision/test_eval.py vision/test_pills.py data/test_seed.py -q` exits 0, and the pixel line shows a ratio ≥ 0.9. `du -sb vision/eval/real` is at most 6000000, `vision/eval/real/SOURCES.md` exists, and both report commands exit 0. A red report number does not fail the check.
 
 ### B. Simulated calls + e2e — done 3:15 AM CT
 
