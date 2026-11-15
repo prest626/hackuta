@@ -18,6 +18,7 @@ const ENGLISH = '\n\nAlways speak English unless the caller asks for another lan
 
 if (!process.env.OPENAI_API_KEY) throw new Error('Put OPENAI_API_KEY in .env.local');
 
+console.log(`[bridge] connecting to OpenAI (${MODEL})...`);
 const openai = new WebSocket(`wss://api.openai.com/v1/realtime?model=${MODEL}`, {
   headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
 });
@@ -70,7 +71,9 @@ function watchForHangup() {
 }
 
 openai.on('open', async () => {
-  await agent.refresh();
+  console.log('[bridge] OpenAI connected, loading the call agent');
+  // A hung API must not block the call: after 3 s, go on with the hook's default prompt.
+  await Promise.race([agent.refresh(), new Promise(resolve => setTimeout(resolve, 3000))]);
   send({
     type: 'session.update',
     session: {
