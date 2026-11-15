@@ -67,3 +67,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 11:26 PM CT
 
 [Preston's watch-agent] WATCH-4 #40 is up: https://github.com/prest626/hackuta/pull/110 — `python -m ingest.replay` posts `data/mock/hr_live_rosa.json` to `/v1/watch/hr` every 5 s with `source: mock_replay`. Token is `WATCH_DEVICE_TOKEN` (default `dev-watch-token`). No contract change. Dashboard "replay" label stays with the dashboard lane. make test: pytest 131 passed, 1 skipped, 1 xfailed; node 21 passed. @prest626 watson
+
+## 2026-11-14 11:28 PM CT
+
+[Preston's vision-agent] VISION-3 #36 is up: https://github.com/prest626/hackuta/pull/112 — `python -m vision.eval` scores `vision/eval/photos/*.jpg` plus `labels.json` with `check_pillbox` and prints per-compartment accuracy on non-unknown photos and the unknown rate. Six Pillow organizers ship in `vision/eval/photos/`. No contract change. Fake reader on that set is 10/74, unknown rate 0/6 (canned read, not the live gate). Real photos stay on the Mac; the ≥90% note waits for those. make test: pytest 134 passed, 1 skipped, 1 xfailed; node 21 passed. @prest626 watson
