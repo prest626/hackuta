@@ -3,6 +3,8 @@
 -- Prints "clicked" or "missing".
 
 on clickLabel(el, labelName)
+	-- button / UI elements / click are System Events terms; outside this tell they do not compile.
+	tell application "System Events"
 	try
 		if exists (button labelName of el) then
 			click button labelName of el
@@ -25,6 +27,7 @@ on clickLabel(el, labelName)
 			end try
 		end repeat
 	end try
+	end tell
 	return false
 end clickLabel
 

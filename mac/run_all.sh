@@ -27,6 +27,11 @@ else
 fi
 
 if [ -f api/main.py ]; then
+  # A stale API on :8000 makes the new one fail to bind while the old one keeps answering.
+  if command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:8000 -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "port 8000 is already in use (an old API?). Stop it with: kill \$(lsof -t -iTCP:8000 -sTCP:LISTEN)"
+    exit 1
+  fi
   if [ -x .venv/bin/uvicorn ]; then
     UVICORN=".venv/bin/uvicorn"
   else

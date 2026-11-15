@@ -224,3 +224,14 @@ def test_dry_run_request_does_not_open_the_network(monkeypatch, capsys):
     status, raw = answerd._request("POST", "/v1/calls/active/state", {"state": "in_call"})
     assert (status, raw) == (204, "")
     assert "POST http://127.0.0.1:8000/v1/calls/active/state" in capsys.readouterr().out
+
+
+def test_scripts_compile_on_macos():
+    # osacompile exists only on macOS; cloud lanes skip this.
+    import shutil, subprocess
+    import pytest
+    if not shutil.which("osacompile"):
+        pytest.skip("osacompile is macOS-only")
+    for script in sorted(SCRIPTS.glob("*.applescript")):
+        proc = subprocess.run(["osacompile", "-o", "/dev/null", str(script)], capture_output=True, text=True)
+        assert proc.returncode == 0, f"{script.name}: {proc.stderr.strip()}"
