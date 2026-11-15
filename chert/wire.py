@@ -212,7 +212,7 @@ def read_pillbox(jpeg, ring, call_id: str, attempt: int = 0):
     if jpeg is None:
         return homeward.COULD_NOT_SEE, {"state": "unknown", "image_quality": "no_frame"}
     homeward._copy_jpeg(Path(jpeg), Path(ring))
-    pill = homeward._request("POST", "/v1/vision/pillcheck", {"call_id": call_id})
+    pill = homeward._request("POST", "/v1/vision/pillcheck", homeward._pill_body(jpeg, call_id))
     if not isinstance(pill, dict):
         return homeward.COULD_NOT_SEE, {"state": "unknown"}
     return homeward._pill_line(pill, attempt), pill

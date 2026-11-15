@@ -270,6 +270,39 @@ def test_route_rejects_a_bad_agent_token(client, monkeypatch):
     assert ok.status_code == 200
 
 
+def test_route_uses_posted_jpeg_when_the_ring_is_empty(client, tmp_path, monkeypatch):
+    import base64
+    from mac import capture
+
+    _seed()
+    monkeypatch.setattr(capture, "RING", tmp_path / "empty-ring")
+    monkeypatch.setattr(capture, "capture_once", lambda: (_ for _ in ()).throw(AssertionError("posted frame")))
+    frame = tmp_path / "posted.jpg"
+    _jpeg(frame, checker=True)
+    raw = frame.read_bytes()
+    res = client.post(
+        "/v1/vision/pillcheck",
+        json={"call_id": "call_rosa01d3", "jpeg_b64": base64.b64encode(raw).decode("ascii")},
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert body["state"] != "unknown"
+    assert Path(body["proof_ref"]).read_bytes() == raw
+
+
+def test_route_rejects_jpeg_over_5mb(client, monkeypatch):
+    from mac import capture
+    from vision.routes import MAX_JPEG
+
+    _seed()
+    monkeypatch.setattr(capture, "capture_once", lambda: (_ for _ in ()).throw(AssertionError("no grab")))
+    res = client.post(
+        "/v1/vision/pillcheck",
+        json={"call_id": "call_rosa01d3", "jpeg_b64": "A" * ((MAX_JPEG + 2) // 3 * 4 + 1)},
+    )
+    assert res.status_code == 413
+
+
 def test_route_no_frame_unknown(client, tmp_path, monkeypatch):
     from mac import capture
 

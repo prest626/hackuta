@@ -4,6 +4,7 @@ The watch sentence and the pill lines match agent/tools.mjs.
 A mock replay says it is not a live watch reading.
 """
 
+import base64
 import math
 import os
 import shutil
@@ -187,10 +188,16 @@ def _pill_line(pill: dict, attempt: int) -> str:
     return ""
 
 
+def _pill_body(jpeg: str | Path, call_id: str) -> dict:
+    """The frame travels with the request. The API's ring is on another machine."""
+    raw = Path(jpeg).read_bytes()
+    return {"call_id": call_id, "jpeg_b64": base64.b64encode(raw).decode("ascii")}
+
+
 def check_pillbox(jpeg: str | Path, ring: str | Path, call_id: str, attempt: int = 0) -> str:
-    """Copy one JPEG into ring, then POST /v1/vision/pillcheck. Speak the tools.mjs line."""
+    """Copy one JPEG into ring, then POST /v1/vision/pillcheck with that frame."""
     _copy_jpeg(Path(jpeg), Path(ring))
-    pill = _request("POST", "/v1/vision/pillcheck", {"call_id": call_id})
+    pill = _request("POST", "/v1/vision/pillcheck", _pill_body(jpeg, call_id))
     if not pill:
         return COULD_NOT_SEE
     return _pill_line(pill, attempt)

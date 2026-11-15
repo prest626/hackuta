@@ -1,5 +1,6 @@
 """Offline Homeward client. A fake server; no FaceTime call."""
 
+import base64
 import json
 import threading
 import time
@@ -189,7 +190,10 @@ def test_pill_ok_copies_jpeg_then_posts(api, tmp_path):
     assert files[0].read_bytes() == JPEG
     method, path, _auth, body = api.seen[-1]
     assert (method, path) == ("POST", "/v1/vision/pillcheck")
-    assert body == {"call_id": "call_rosa01d3"}
+    assert body == {
+        "call_id": "call_rosa01d3",
+        "jpeg_b64": base64.b64encode(JPEG).decode("ascii"),
+    }
 
 
 def test_pill_lines_match_tools(api, tmp_path):
