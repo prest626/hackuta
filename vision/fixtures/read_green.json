@@ -1,0 +1,21 @@
+{
+  "pillbox_visible": true,
+  "compartments": [
+    {"label": "MON-AM", "has_pills": false},
+    {"label": "MON-PM", "has_pills": false},
+    {"label": "TUE-AM", "has_pills": false},
+    {"label": "TUE-PM", "has_pills": false},
+    {"label": "WED-AM", "has_pills": false},
+    {"label": "WED-PM", "has_pills": false},
+    {"label": "THU-AM", "has_pills": false},
+    {"label": "THU-PM", "has_pills": false},
+    {"label": "FRI-AM", "has_pills": false},
+    {"label": "FRI-PM", "has_pills": false},
+    {"label": "SAT-AM", "has_pills": false},
+    {"label": "SAT-PM", "has_pills": false},
+    {"label": "SUN-AM", "has_pills": false},
+    {"label": "SUN-PM", "has_pills": false}
+  ],
+  "confidence": 0.92,
+  "reason": "Every morning and evening compartment looks empty."
+}

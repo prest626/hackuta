@@ -35,6 +35,7 @@ OPENAI_MODEL = "gpt-4o-mini"
 GEMINI_MODEL = "gemini-2.5-flash"
 CONFIDENCE_MIN = 0.7
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "read.json"
+GREEN = Path(__file__).resolve().parent / "fixtures" / "read_green.json"
 _DAYS = ("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
 _LABEL = re.compile(r"^(SUN|MON|TUE|WED|THU|FRI|SAT)-(AM|NOON|PM|BED)$")
 
@@ -146,10 +147,12 @@ def _gemini(jpeg: bytes, layout: str) -> dict:
 
 
 def read_organizer(jpeg: bytes, layout: str) -> dict:
-    """One structured read. VISION_FAKE=fixtures skips the network."""
-    if os.environ.get("VISION_FAKE") == "fixtures":
-        data = json.loads(FIXTURE.read_text())
-        data["model"] = "fixture"
+    """One structured read. VISION_FAKE=fixtures or green skips the network."""
+    fake = os.environ.get("VISION_FAKE")
+    if fake == "fixtures" or fake == "green":
+        path = GREEN if fake == "green" else FIXTURE
+        data = json.loads(path.read_text())
+        data["model"] = "green" if fake == "green" else "fixture"
         return data
     jpeg = _shrink(jpeg)
     if os.environ.get("VISION_PROVIDER") == "gemini":
