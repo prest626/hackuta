@@ -97,3 +97,33 @@ img.proof {
   outline: 2px solid #1c1917;
   outline-offset: 2px;
 }
+
+#call-now-form {
+  margin-bottom: 0.8rem;
+}
+
+.chip {
+  display: inline-block;
+  margin: 0.4rem 0 0;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #e7e5e4;
+  font-size: 0.85rem;
+}
+
+.chip[data-state="dialing"],
+.chip[data-state="ringing"] {
+  background: #fdecc8;
+}
+
+.chip[data-state="in_call"] {
+  background: #d9f0d3;
+}
+
+#call-now-note {
+  margin: 0.3rem 0 0;
+}
+
+#call-now-note:empty {
+  display: none;
+}

@@ -8,7 +8,6 @@
 </head>
 <body>
   <p class="banner">Homeward prototype · mock patients · not a medical device.</p>
-  <p id="active"></p>
   <main>
     <section>
       <h1>Patients</h1>
@@ -16,6 +15,19 @@
     </section>
     <section>
       <h1>Call</h1>
+      <form id="call-now-form">
+        <label>Day
+          <select id="call-day" name="day_index">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+        <button type="submit" id="call-now">Call now · day 1</button>
+        <p id="call-chip" class="chip" role="status">ended</p>
+        <p id="call-now-note"></p>
+      </form>
       <div id="detail">Select a patient.</div>
     </section>
     <section>

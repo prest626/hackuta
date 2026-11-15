@@ -18,9 +18,21 @@ export function sparkline(points) {
   return `<svg viewBox="0 0 ${w} ${h}" role="img"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2"/></svg>`;
 }
 
+export function callChip(active) {
+  if (active && active.state === "dialing") return "dialing";
+  if (active && active.state === "ringing") return "ringing";
+  if (active && active.state === "in_call") return "in call";
+  return "ended";
+}
+
+function callNowLabel(day) {
+  return `Call now · day ${day}`;
+}
+
 const POLL_MS = 2000;
 let selected = null;
 let painting = false;
+let callDayFor = null;
 
 function headers(json) {
   const h = {};
@@ -151,11 +163,57 @@ async function paintPatients(patients) {
   });
   const current = blocks.find((item) => item.patient.id === selected) || blocks[0];
   if (!current) {
+    selected = null;
+    callDayFor = null;
     document.querySelector("#detail").textContent = "No mock patients yet.";
     return;
   }
   selected = current.patient.id;
+  syncCallDay(current.patient);
   await detail(current.patient, current.timeline);
+}
+
+function syncCallDay(patient) {
+  if (callDayFor === patient.id) return;
+  callDayFor = patient.id;
+  const select = document.querySelector("#call-day");
+  if (!select) return;
+  const day = patient.day_index >= 1 && patient.day_index <= 4 ? patient.day_index : 1;
+  select.value = String(day);
+  document.querySelector("#call-now").textContent = callNowLabel(day);
+}
+
+function showChip(active) {
+  const chip = document.querySelector("#call-chip");
+  if (!chip) return;
+  chip.textContent = callChip(active);
+  chip.dataset.state = active && active.state ? active.state : "ended";
+  const btn = document.querySelector("#call-now");
+  if (btn) btn.disabled = !selected || chip.textContent !== "ended";
+}
+
+async function callNow(event) {
+  event.preventDefault();
+  if (!selected) return;
+  const btn = document.querySelector("#call-now");
+  const note = document.querySelector("#call-now-note");
+  const day = Number(document.querySelector("#call-day").value);
+  btn.disabled = true;
+  note.textContent = "";
+  try {
+    const res = await fetch("/v1/outbound/calls/now", {
+      method: "POST",
+      headers: headers(true),
+      body: JSON.stringify({ patient_id: selected, day_index: day }),
+    });
+    if (!res.ok) {
+      note.textContent = res.status === 409 ? "A call is already active." : "The call could not be started.";
+    }
+    showChip(await get("/v1/calls/active"));
+  } catch {
+    note.textContent = "The call could not be started.";
+    btn.disabled = !selected;
+  }
 }
 
 function actionField(row) {
@@ -251,7 +309,7 @@ async function paint() {
     });
     await paintPatients(patients || []);
     await paintQueue(names);
-    document.querySelector("#active").textContent = active ? `Live call: ${active.state}` : "No live call";
+    showChip(active);
   } catch (err) {
     document.querySelector("#patients").textContent = "The list could not be loaded.";
   } finally {
@@ -263,6 +321,12 @@ if (typeof document !== "undefined") {
   const nameInput = document.querySelector("#nurse-name");
   nameInput.value = localStorage.getItem("nurse_name") || "";
   nameInput.addEventListener("input", () => localStorage.setItem("nurse_name", nameInput.value));
+  const daySelect = document.querySelector("#call-day");
+  daySelect.addEventListener("change", () => {
+    document.querySelector("#call-now").textContent = callNowLabel(daySelect.value);
+  });
+  document.querySelector("#call-now-form").addEventListener("submit", callNow);
+  document.querySelector("#call-now").disabled = true;
   paint();
   setInterval(paint, POLL_MS);
 }

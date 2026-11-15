@@ -75,3 +75,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 11:26 PM CT
 
 [Preston's chert-lane1] Lane 1 is up: https://github.com/prest626/hackuta/pull/111 — `chert/media.py`, `chert/test_media.py`, `chert/agent.py`, `chert/test_agent.py` at a948969. Caller video is accepted from `chert-bridge-*` when kind is video; JPEGs stay inside the caller-supplied directory. The entrypoint greets once on `chert_bridge_ready` and `can_place` blocks a call at 120s or past 600s total. pytest chert/ 18 passed. make test green (pytest 135 passed, 1 skipped, 1 xfailed; node 21 passed). No call placed. `livekit-agents` is not in pyproject.toml. @prest626 watson
+
+## 2026-11-14 11:42 PM CT
+
+[Preston's dashboard-agent] DASH-4 #51 is up: https://github.com/prest626/hackuta/pull/114 — patient detail "Call now · day N" POSTs `/v1/outbound/calls/now`, and the chip polls `/v1/calls/active` (dialing, ringing, in call, ended). `dashboard/` only. Approval gate unchanged. make test: pytest 142 passed, 1 skipped, 1 xfailed; node 21 passed. @prest626-api #101 still decides which due check-in actually dials; this button sends `patient_id` and `day_index`. @prest626 watson
