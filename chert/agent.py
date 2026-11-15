@@ -12,14 +12,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 if __package__:
-    from chert import media, wire
+    from chert import media, voice, wire
 else:
     import media
+    import voice
     import wire
 
 log = logging.getLogger("chert")
+NUDGE = "Are you still there?"
+_fallback_logged = set()
 
-GREETING = "Hi, I'm Homeward, an automated assistant for your care team. This is a prototype, and not a medical device."
+GREETING = "Hi, I'm Homeward, an automated assistant for your care team. This is a prototype, and not a medical device. Hold the organizer still, facing the camera, about a foot away, and say when it's up."
 ROOT = Path(__file__).resolve().parents[1]
 CALL_CAP = 120
 # shortcut: 5s for the goodbye, upgrade = await playout when RealtimeModel allows it
@@ -118,6 +121,67 @@ def _jpeg(frame) -> bytes:
     buf = io.BytesIO()
     image.save(buf, format="JPEG", quality=80)
     return buf.getvalue()
+
+
+def _log_fallback(what: str) -> None:
+    if what in _fallback_logged:
+        return
+    _fallback_logged.add(what)
+    log.info("livekit kwargs unsupported (%s); using defaults", what)
+
+
+def _turn_detection(spec: dict):
+    """SemanticVad, else TurnDetection, else the plain spec. Whichever this install has."""
+    fields = {
+        "type": spec["type"],
+        "eagerness": spec["eagerness"],
+        "create_response": spec["create_response"],
+        "interrupt_response": spec["interrupt_response"],
+    }
+    found = []
+    try:
+        from openai.types.realtime.realtime_audio_input_turn_detection import SemanticVad
+        found.append(SemanticVad)
+    except Exception:
+        pass
+    try:
+        from openai.types.beta.realtime.session import TurnDetection
+        found.append(TurnDetection)
+    except Exception:
+        pass
+    for cls in found:
+        try:
+            return cls(**fields)
+        except TypeError:
+            continue
+    return dict(spec)
+
+
+def _realtime_model(openai_mod):
+    spec = voice.realtime_kwargs()
+    kwargs = {
+        "voice": spec["voice"],
+        "input_audio_noise_reduction": spec["input_audio_noise_reduction"],
+        "turn_detection": _turn_detection(spec["turn_detection"]),
+    }
+    try:
+        return openai_mod.realtime.RealtimeModel(**kwargs)
+    except TypeError:
+        _log_fallback("RealtimeModel")
+        return openai_mod.realtime.RealtimeModel()
+
+
+def _agent_session(agent_session, llm, tts):
+    try:
+        return agent_session(llm=llm, tts=tts, max_tool_steps=6)
+    except TypeError:
+        _log_fallback("AgentSession")
+        return agent_session(llm=llm, tts=tts)
+
+
+async def _wait(value):
+    if inspect.isawaitable(value):
+        await value
 
 
 def _unmute_pair(args):
@@ -280,10 +344,11 @@ async def entrypoint(ctx):
             box["vitals"] = call["vitals"]
         box["frames"] = ROOT / "var" / "chert-frames" / _call_id(ctx.room.metadata, "")
         box["started_at"] = box.get("started_at") or wire.iso_now()
-        session = AgentSession(
-            llm=openai.realtime.RealtimeModel(),
-            # TTS so say() speaks the fixed lines; the realtime model alone may paraphrase them.
-            tts=openai.TTS(),
+        session = _agent_session(
+            AgentSession,
+            _realtime_model(openai),
+            # TTS so say() speaks the fixed lines in ash, the same voice as the realtime model.
+            openai.TTS(voice="ash"),
         )
         box["speak"] = session.say
         box["interrupt"] = getattr(session, "interrupt", None)
@@ -305,14 +370,33 @@ async def entrypoint(ctx):
             if getattr(ev, "is_final", True) is False:
                 return
             text = getattr(ev, "transcript", "") or ""
-            line = wire.emergency_line(text, box.get("phrases"))
-            if not line or box.get("emergency"):
+            if not wire.emergency_line(text, box.get("phrases")) or box.get("emergency"):
                 return
             box["emergency"] = True
             log.info("emergency_script")
-            spawn(session.say(line))
+            # say() returns a SpeechHandle. A task around it raises TypeError.
+            try:
+                session.interrupt()
+            except Exception:
+                log.info("interrupt skipped")
+            session.say(wire.EMERGENCY_LINE)
+            try:
+                wire.submit(box)
+            except Exception as exc:
+                log.error("result post failed: %s", exc)
+            hangup = box.get("hangup")
+            if callable(hangup):
+                hangup()
+
+        def _user_state(ev):
+            # A second away leaves the call to the existing finish path.
+            if getattr(ev, "new_state", None) != "away" or box.get("nudged") or box.get("emergency"):
+                return
+            box["nudged"] = True
+            session.say(NUDGE)
 
         session.on("user_input_transcribed", _heard)
+        session.on("user_state_changed", _user_state)
         try:
             from chert import face
             mode = face.selected_mode()
@@ -343,10 +427,13 @@ async def entrypoint(ctx):
                     log.info("handoff")
                     await session.say(line)
                 return
-            sentence = greet_once(ctx.room.metadata, state, time.time())
-            if sentence:
-                log.info("greet")
-                await session.say(sentence)
+            if not bridge_ready(ctx.room.metadata):
+                return
+            if not voice.greeting_due(state, time.time()):
+                return
+            log.info("greet")
+            await _wait(session.say(GREETING))
+            await _wait(session.generate_reply(instructions=voice.kickoff_instructions()))
 
     async def save_video(track, publication, identity):
         out = ROOT / "var" / "chert-frames" / _call_id(ctx.room.metadata, identity)

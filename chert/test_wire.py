@@ -561,7 +561,7 @@ def test_approved_handoff_sentence_and_dashboard_wrap(monkeypatch):
     assert "a" * 278 not in trimmed
     prompt = wire.instructions("You are Homeward.", _HANDOFF_CALL, line)
     assert "I'll leave the details on the dashboard." in prompt
-    assert "Do not run the four-part check-in." in prompt
+    assert "Do not run the check-in." in prompt
     monkeypatch.setattr(homeward, "_request", lambda *_args, **_kwargs: {})
     box = dict(_HANDOFF_CALL)
     box.update({"posted": False, "symptoms": [], "handoff": line, "started_at": "2026-11-15T00:00:00Z"})
