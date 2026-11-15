@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Homeward</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <p class="banner">Homeward prototype · mock patients · not a medical device.</p>
+  <p id="active"></p>
+  <main>
+    <section>
+      <h1>Patients</h1>
+      <div id="patients"></div>
+    </section>
+    <section>
+      <h1>Call</h1>
+      <div id="detail">Select a patient.</div>
+    </section>
+    <section>
+      <h1>Pending escalations</h1>
+      <label>Nurse name <input id="nurse-name" name="nurse_name" autocomplete="name"></label>
+      <div id="queue"></div>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -218,6 +218,30 @@ def test_escalation_refuses_unapproved(mac):
     assert mac.calls == []
 
 
+def test_escalation_dials_itself_not_an_overdue_checkin(mac):
+    from api import db
+    from scheduler.escalate import place_escalation
+
+    patient = _seed(_patient())
+    with db.conn() as c:
+        c.execute(
+            "INSERT INTO scheduled_calls "
+            "(id, patient_id, day_index, kind, due_at, status, attempts, direction) "
+            "VALUES ('call_rosa01d1', ?, 1, 'checkin', '2020-01-01T00:00:00Z', 'scheduled', 0, 'outbound')",
+            (patient.id,),
+        )
+    doc = json.loads((EXAMPLES / "approval.json").read_text())
+    _store_approval(doc)
+    placed = place_escalation(doc["id"])
+    assert placed["kind"] == "nurse_callback"
+    assert placed["approval_id"] == doc["id"]
+    assert placed["status"] == "dialing"
+    assert mac.calls == [("dial", "+15550100002")]
+    with db.conn() as c:
+        checkin = c.execute("SELECT status FROM scheduled_calls WHERE id = 'call_rosa01d1'").fetchone()
+    assert checkin["status"] == "scheduled"
+
+
 def test_escalation_dials_nurse(mac):
     from api import db
     from scheduler.escalate import place_escalation
