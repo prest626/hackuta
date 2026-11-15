@@ -8,6 +8,18 @@ import { TOOLS, api, bind, dispatch, endCall, getSession, reset as resetTools } 
 const SYSTEM = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'prompts/system.md'), 'utf8');
 const FALLBACK = "Hi, it's Homeward from your care team.";
 
+// Bridge reads the transcript return as a string. sim.mjs awaits settled() before it exits.
+let untilEnded = Promise.resolve();
+
+export function settled() {
+  return untilEnded;
+}
+
+function finishBeforeEnd(work) {
+  const run = Promise.resolve(work);
+  untilEnded = untilEnded.then(() => run, () => run).then(() => {}, () => {});
+}
+
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -143,7 +155,7 @@ const hook = {
     const line = urgentLine(text, session.context?.patient?.red_flags?.urgent_911 || []);
     if (line) {
       session.emergency = true;
-      void dispatch('finish_call', { status: 'emergency_script', end_reason: 'agent_hangup' });
+      finishBeforeEnd(dispatch('finish_call', { status: 'emergency_script', end_reason: 'agent_hangup' }));
       return line;
     }
     if (session.mode === 'escalation' && String(text || '').trim() && !session.finished) {

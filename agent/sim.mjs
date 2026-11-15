@@ -16,7 +16,15 @@ if (!files[0]) {
 }
 if (api) process.env.HOMEWARD_API = api;
 
-const { default: hook } = await import('./index.mjs');
+const { default: hook, settled } = await import('./index.mjs');
+const POST_WAIT_MS = 3000;
+
+async function waitForPost() {
+  await Promise.race([
+    settled(),
+    new Promise((resolve) => setTimeout(resolve, POST_WAIT_MS)),
+  ]);
+}
 const script = JSON.parse(readFileSync(files[0], 'utf8'));
 if (!Array.isArray(script)) {
   console.error('script must be a JSON array of {say} and {tool, args?} steps');
@@ -53,8 +61,10 @@ try {
   }
 } catch (err) {
   console.error(err.message || err);
+  await waitForPost();
   process.exit(1);
 }
 
 console.log(lines.join('\n'));
+await waitForPost();
 process.exit(failed ? 1 : 0);
