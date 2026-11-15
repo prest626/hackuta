@@ -1,8 +1,6 @@
 """One pending nurse-callback proposal per YELLOW or RED call. Facts only, no model."""
 
-import inspect
 import json
-import sqlite3
 from datetime import datetime, timedelta, timezone
 
 from api import db
@@ -87,25 +85,6 @@ def build_approval(result, flags, *, approval_id: str, created_at: str) -> Appro
     )
 
 
-def _usable(conn: sqlite3.Connection) -> bool:
-    try:
-        conn.execute("SELECT 1")
-    except sqlite3.ProgrammingError:
-        return False
-    return True
-
-
-def _caller_conn() -> sqlite3.Connection | None:
-    # shortcut: API-5 calls propose inside its open write, upgrade = pass that connection in
-    frame = inspect.currentframe()
-    while frame is not None:
-        found = frame.f_locals.get("c")
-        if isinstance(found, sqlite3.Connection) and _usable(found):
-            return found
-        frame = frame.f_back
-    return None
-
-
 def _when(value: str) -> datetime:
     text = value[:-1] + "+00:00" if value.endswith("Z") else value
     return datetime.fromisoformat(text).astimezone(timezone.utc)
@@ -132,18 +111,18 @@ def _insert(c, approval: Approval) -> None:
     )
 
 
-def propose(result, flags) -> list[Approval]:
+def propose(result, flags, c=None) -> list[Approval]:
+    """Write on c when the caller already has a transaction; otherwise open one."""
     approval = build_approval(result, flags, approval_id=db.new_id("apr"), created_at=db.now())
-    caller = _caller_conn()
 
-    def write(c) -> list[Approval]:
-        expire_pending(c)
+    def write(conn) -> list[Approval]:
+        expire_pending(conn)
         if approval is None:
             return []
-        _insert(c, approval)
+        _insert(conn, approval)
         return [approval]
 
-    if caller is not None:
-        return write(caller)
-    with db.conn() as c:
+    if c is not None:
         return write(c)
+    with db.conn() as conn:
+        return write(conn)
