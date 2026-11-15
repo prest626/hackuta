@@ -76,6 +76,28 @@ def test_chert_call_id_is_raw_metadata():
     assert agent.chert_call_id(json.dumps({"call_id": "call_rosa01d3"})) == ""
 
 
+def test_session_start_arms_the_cap_timer():
+    text = Path(agent.__file__).read_text()
+    assert "spawn(stop_at_cap(box))" in text
+    assert "arm_hangup(box, lambda: spawn(hang_until_end(ctx, box)))" in text
+    assert "allow_interruptions" not in text
+
+
+def test_hang_until_end_ends_the_chert_call_then_deletes_the_room(monkeypatch):
+    calls = []
+    monkeypatch.setattr(wire, "end_chert_call", lambda cid: calls.append(("end", cid)) or True)
+
+    class Ctx:
+        class room:
+            metadata = json.dumps({"chert_call": "abc-123", "call_id": "call_rosa01d3"})
+
+        def delete_room(self):
+            calls.append("delete")
+
+    asyncio.run(agent.hang_until_end(Ctx(), {"goodbye_done": True}))
+    assert calls == [("end", "abc-123"), "delete"]
+
+
 def test_hangup_arms_once():
     started = []
     box = {}
@@ -110,7 +132,7 @@ def test_stop_at_cap_interrupts_says_goodbye_then_hangs_up(monkeypatch):
     async def interrupt():
         order.append("interrupt")
 
-    async def speak(line):
+    def speak(line):
         order.append(("say", line))
 
     box = _cap_box()
@@ -120,7 +142,7 @@ def test_stop_at_cap_interrupts_says_goodbye_then_hangs_up(monkeypatch):
     box["hangup"] = lambda: order.append("hangup")
     line = asyncio.run(agent.stop_at_cap(box, sleep=sleep))
     goodbye = "We're out of time today. Your nurse will review this. Take care, Rosa."
-    assert slept == [agent.CALL_CAP]
+    assert slept == [agent.CALL_CAP, agent.GOODBYE_WAIT]
     assert line == goodbye
     assert order == ["interrupt", ("say", goodbye), "hangup"]
     assert posts == ["hard_stop"]
@@ -135,7 +157,7 @@ def test_cap_and_hangup_post_one_result(monkeypatch):
     async def sleep(_seconds):
         return None
 
-    async def speak(_line):
+    def speak(_line):
         return None
 
     box = _cap_box()
@@ -187,7 +209,7 @@ def test_cap_sleeps_when_say_returns_no_handle(monkeypatch):
     box["speak"] = lambda _line: None
     box["hangup"] = lambda: None
     asyncio.run(agent.stop_at_cap(box, sleep=sleep))
-    assert slept == [agent.CALL_CAP, agent.CAP_PLAYOUT]
+    assert slept == [agent.CALL_CAP, agent.GOODBYE_WAIT]
 
 
 def test_cap_still_hangs_up_when_say_and_interrupt_fail(monkeypatch):

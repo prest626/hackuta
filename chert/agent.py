@@ -22,10 +22,8 @@ log = logging.getLogger("chert")
 GREETING = "Hi, I'm Homeward, an automated assistant for your care team. This is a prototype, and not a medical device."
 ROOT = Path(__file__).resolve().parents[1]
 CALL_CAP = 120
-# shortcut: 6s covers a short goodbye, upgrade = await the speech handle
-HANGUP_WAIT = 6
-# shortcut: 5s when say() returns no speech handle, upgrade = always await playout
-CAP_PLAYOUT = 5
+# shortcut: 5s for the goodbye, upgrade = await playout when RealtimeModel allows it
+GOODBYE_WAIT = 5
 BUDGET = 600
 GREET_WINDOW = 10
 
@@ -158,7 +156,7 @@ async def _await_or_skip(value):
 
 
 async def play_cap_goodbye(box, sleep=asyncio.sleep) -> str:
-    """Interrupt, say the 2:00 line, and wait until it finishes."""
+    """session.interrupt(), a normal say, then about 5 seconds."""
     line = cap_goodbye(box)
     interrupt = box.get("interrupt")
     if callable(interrupt):
@@ -167,23 +165,40 @@ async def play_cap_goodbye(box, sleep=asyncio.sleep) -> str:
         except Exception as exc:
             log.info("cap interrupt failed: %s", type(exc).__name__)
     speak = box.get("speak")
-    said = None
     if callable(speak):
-        # RealtimeModel rejects an interruptions flag and then never speaks.
-        # Interrupt above, then await playout, so this line is not cut off.
         try:
             said = speak(line)
         except Exception as exc:
             log.info("cap say failed: %s", type(exc).__name__)
             said = None
-        if inspect.isawaitable(said):
-            try:
-                await said
-                return line
-            except Exception as exc:
-                log.info("cap playout failed: %s", type(exc).__name__)
-    await sleep(CAP_PLAYOUT)
+        if asyncio.iscoroutine(said):
+            asyncio.create_task(said)
+    await sleep(GOODBYE_WAIT)
     return line
+
+
+async def hang_until_end(ctx, box):
+    """Wait out the review line, end the Chert call, then delete the room."""
+    if not box.get("goodbye_done"):
+        try:
+            await asyncio.sleep(GOODBYE_WAIT)
+        except Exception as exc:
+            log.info("hangup wait failed: %s", type(exc).__name__)
+    try:
+        cid = chert_call_id(ctx.room.metadata)
+    except Exception as exc:
+        log.info("chert call id failed: %s", type(exc).__name__)
+        cid = ""
+    try:
+        await asyncio.to_thread(wire.end_chert_call, cid)
+    except Exception as exc:
+        log.info("end call failed: %s", type(exc).__name__)
+    try:
+        done = ctx.delete_room()
+        if inspect.isawaitable(done):
+            await done
+    except Exception as exc:
+        log.info("delete room failed: %s", type(exc).__name__)
 
 
 async def stop_at_cap(box, sleep=asyncio.sleep):
@@ -271,35 +286,11 @@ async def entrypoint(ctx):
             tts=openai.TTS(),
         )
         box["speak"] = session.say
-        interrupt = getattr(session, "interrupt", None)
-        if callable(interrupt):
-            box["interrupt"] = interrupt
+        box["interrupt"] = getattr(session, "interrupt", None)
         box["handoff"] = wire.handoff_line(call, homeward_request)
-
-        async def hang_up():
-            # The cap already awaited its goodbye. finish_call and the 911 path have not.
-            if not box.get("goodbye_done"):
-                try:
-                    await asyncio.sleep(HANGUP_WAIT)
-                except Exception as exc:
-                    log.info("hangup wait failed: %s", type(exc).__name__)
-            try:
-                cid = chert_call_id(ctx.room.metadata)
-            except Exception as exc:
-                log.info("chert call id failed: %s", type(exc).__name__)
-                cid = ""
-            try:
-                await asyncio.to_thread(wire.end_chert_call, cid)
-            except Exception as exc:
-                log.info("end call failed: %s", type(exc).__name__)
-            try:
-                await ctx.delete_room()
-            except Exception as exc:
-                log.info("delete room failed: %s", type(exc).__name__)
-
-        if not box.get("cap_armed"):
-            box["cap_armed"] = True
-            arm_hangup(box, lambda: spawn(hang_up()))
+        arm_hangup(box, lambda: spawn(hang_until_end(ctx, box)))
+        if not box.get("capped"):
+            box["capped"] = True
             spawn(stop_at_cap(box))
 
         await session.start(

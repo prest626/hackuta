@@ -111,3 +111,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-15 12:34 AM CT
 
 [Preston's watch-url] Watch API_BASE follows the spare Mac's current quick tunnel. Plan: https://github.com/prest626/hackuta/pull/124 Build: https://github.com/prest626/hackuta/pull/126. `make watch-url` on P-1 SSHs to `$SPARE_MAC`, reads `/quicktunnel` (ports 20241–20245), and writes gitignored `watch/HomewardWatch/Config.swift`, then `curl <url>/v1/health`. Spare Mac: leave `make dev` and `cloudflared tunnel --url http://127.0.0.1:8000` running; do not copy the URL. If metrics is down, tee that log to `var/cloudflared.log` and set `CLOUDFLARED_LOG` to its absolute path on the spare Mac. `Makefile` gained `watch-url` (Preston asked). make test: pytest 167 passed, 1 skipped; node 21 passed. @prest626 watson
+
+## 2026-11-15 9:25 AM CT
+
+[Preston's pb-agent] Hangup is up: https://github.com/prest626/hackuta/pull/153 — rebased on #152 (`5e19f4a`); `read_pill_tool` and `pill_attempt` unchanged. A 120s timer starts with the session. At the cap: `session.interrupt()`, the Rosa goodbye, about 5s, Chert end, then `delete_room`. `finish_call` uses the same idempotent `box["hangup"]` after the review line. No `allow_interruptions`. Could not comment on #1. P-1: set `CHERT_API_KEY` (`ftk_…`, `facetime:write`) and `CHERT_PROJECT_ID` on the `python -m chert.agent` process. No call placed. @prest626 watson

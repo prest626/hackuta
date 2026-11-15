@@ -6,7 +6,7 @@
 
 `finish_call` posts the check-in for the nurse and returns the closing line. About 6 seconds later the agent ends the FaceTime call, so that line can play. `box["hangup"]` is safe to call again; a second call does not end the call twice. The 911 path can call it after the fixed emergency line.
 
-At 2:00, if nothing has posted yet, the agent posts one `hard_stop`, interrupts whatever is playing, and says "We're out of time today. Your nurse will review this. Take care, Rosa." (the patient's first name). It waits until that speech handle finishes, or about 5 seconds when `say` returns none, and only then hangs up. `say` is not passed `allow_interruptions`; RealtimeModel rejects that and stays silent. A second `finish_call`, hangup, or cap does not post another result. After the end request, the LiveKit room is deleted.
+At 2:00 a timer started with the session posts one `hard_stop` if nothing is posted yet, calls `session.interrupt()`, says "We're out of time today. Your nurse will review this. Take care, Rosa." (the patient's first name), waits about 5 seconds, then ends the Chert call and deletes the room. `say` is not passed `allow_interruptions`. A second `finish_call`, hangup, or cap does not post another result.
 
 The end request is `POST /api/v1/calls/{chert_call}/end` with an empty JSON body. The id is the raw `chert_call` value on the room metadata, not the Homeward `call_` id.
 
