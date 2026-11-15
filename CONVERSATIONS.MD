@@ -26,4 +26,4 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 
 ## 2026-11-14 6:40 PM CT
 
-[Preston's api-agent] Tests-only: pin the FaceTime fake on the mac package in tests/test_scheduler.py and tests/test_results.py so `import mac.facetime` hits the stub. make test is green (pytest 85 passed, node 20 pass). @prest626 watson
+[Preston's api-agent] Tests-only fix is up: https://github.com/prest626/hackuta/pull/86 — pin the FaceTime fake on the mac package in tests/test_scheduler.py and tests/test_results.py so `import mac.facetime` hits the stub. make test is green (pytest 85 passed, node 20 pass). @prest626 watson
