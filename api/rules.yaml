@@ -1,0 +1,55 @@
+# Demo placeholders. A real deployment uses numbers from the patient's clinician.
+# Flags are prompts for nurse review. They are not diagnoses or dosing advice.
+thresholds:
+  rhr_z: 1.5
+  hr_above_baseline: 20
+  hr_high_at_rest: 110
+  breathing_low: 10
+  breathing_high: 24
+  breathing_sqi: 0.5
+
+# These rules cannot raise the call above the cap, even if tier says otherwise.
+caps:
+  breathing_range: YELLOW
+  agent_concern: YELLOW
+
+rules:
+  - id: emergency_script
+    flag: emergency_script_given
+    tier: RED
+  - id: care_team_symptom_plus_vitals_drift
+    flag: care_team_symptom
+    tier: RED
+  - id: care_team_symptom
+    flag: care_team_symptom
+    tier: YELLOW
+  - id: worse_than_last_call
+    flag: symptom_worse_than_last_call
+    tier: YELLOW
+  - id: missed_dose_possible
+    flag: missed_dose_possible
+    tier: YELLOW
+  - id: pill_unknown
+    flag: pill_check_unknown
+    tier: YELLOW
+  - id: hr_high_at_rest
+    flag: hr_high_at_rest
+    tier: YELLOW
+  - id: rhr_drift
+    flag: rhr_drift
+    tier: YELLOW
+  - id: breathing_range
+    flag: breathing_outside_wellness_range
+    tier: YELLOW
+  - id: vitals_stale
+    flag: vitals_stale
+    tier: YELLOW
+  - id: no_answer
+    flag: no_answer
+    tier: YELLOW
+  - id: call_incomplete
+    flag: call_incomplete
+    tier: YELLOW
+  - id: agent_concern
+    flag: agent_concern
+    tier: YELLOW
