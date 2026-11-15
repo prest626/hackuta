@@ -198,6 +198,13 @@ async def entrypoint(ctx):
             spawn(session.say(line))
 
         session.on("user_input_transcribed", _heard)
+        try:
+            from chert import face
+            mode = face.selected_mode()
+            if mode in ("fallback", "simli"):
+                await face.start(ctx.room, session, mode)
+        except Exception as exc:
+            log.info("face skipped: %s", type(exc).__name__)
         session_box["session"] = session
         return session
 
