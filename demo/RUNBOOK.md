@@ -4,6 +4,12 @@ Homeward prototype. Mock patient Rosa. Not a medical device. A nurse approves ev
 
 Sunday Nov 15 is day 3 (discharged Thu Nov 12). Do this after 8:00 AM CT so Sun-AM is already due.
 
+From the repo root. A spare-Mac login shell only has `/usr/bin/python3`, so activate the venv first. The commands below also call `.venv/bin/python` so a new Terminal still works.
+
+```bash
+source .venv/bin/activate
+```
+
 ## Box
 
 7×2, Monday start, lids open, day letters toward the lens. Contrasting candies, not real medicine. Empty Mon-AM through Sat-AM. **Sat-PM still has pills** (the miss). **Sun-AM empty** (taken; only after 8:00 AM). **Sun-PM still has pills** (due 8:00 PM, not a miss). If you must run before 8:00 AM, leave Sun-AM full too.
@@ -15,20 +21,29 @@ Light in front of the box, not a window behind it. No glare on the plastic. Box 
 Charged Apple Watch on the wrist, check-in workout, for the call. If the watch is dead, start this and leave it running (it prints `source=mock_replay`):
 
 ```bash
-python -m ingest.replay data/mock/hr_live_rosa.json
+.venv/bin/python -m ingest.replay data/mock/hr_live_rosa.json
 ```
 
 Photo fallback, said out loud if used: hold up `vision/eval/photos/03-sat-pm.jpg`.
 
 Spare Mac: one API, one cloudflared, one `mac.answerd`, one `mac.capture`. `VISION_FAKE` unset. `MAC_DRY_RUN=0`.
 
-Own-box photos, once, untracked under `vision/eval/preston/`: `sat-pm-full.jpg`, `sun-am-empty.jpg`, `all-lids.jpg`. Then `python -m vision.eval --dir vision/eval/preston` (expect `real photos: 3`).
+Own-box photos, once, untracked under `vision/eval/preston/`: `sat-pm-full.jpg`, `sun-am-empty.jpg`, `all-lids.jpg`. Then `.venv/bin/python -m vision.eval --dir vision/eval/preston` (expect `real photos: 3`).
+
+## Audio
+
+FaceTime > Video > Microphone = BlackHole 2ch. System output = BlackHole 16ch. The Mac speakers go silent. `mac.doctor` only checks that BlackHole is installed, not that it is selected.
+
+```bash
+SwitchAudioSource -t output -s "BlackHole 16ch"
+```
 
 ## Steps
 
 | # | You | Command or action | You should see |
 |---|---|---|---|
 | 0 | Reset | `bash demo/reset.sh` | reseed, cleared today, Rosa day 3 due (`call_rosa01d3`) |
+| 0.5 | Voice | In a regular Terminal (it has the mic permission): `cd facetime-bridge && npm run loop` | Wait until the log prints `Ready`. Leave that window open |
 | 1 | Preflight | `make demo-check` | `PASS health`, `PASS port-8000 (in use by API, expected)`, `PASS doctor`, `PASS dashboard`, `PASS vitals fresh` or `PASS vitals replay`, `PASS tunnel`. No phone number and no tunnel host |
 | 2 | Dial | Dashboard **Call now · day 3**, or `curl -s -X POST localhost:8000/v1/outbound/calls/now -H 'content-type: application/json' -d '{"patient_id":"pat_rosa01","day_index":3}'` | Patient phone rings. A dry-run log would show `facetime://` and no real number is posted |
 | 3 | Greet | Answer. Wait through silence | "Hi Rosa, it's Homeward from your care team, day 3 at home." |

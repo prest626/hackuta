@@ -15,7 +15,7 @@ Photo fallback, said out loud if used: hold up `vision/eval/photos/03-sat-pm.jpg
 Charged, on the wrist, check-in workout, for the call. If the watch is dead, leave this running. It prints `source=mock_replay`:
 
 ```bash
-python -m ingest.replay data/mock/hr_live_rosa.json
+.venv/bin/python -m ingest.replay data/mock/hr_live_rosa.json
 ```
 
 `VISION_FAKE` unset. `MAC_DRY_RUN=0`.

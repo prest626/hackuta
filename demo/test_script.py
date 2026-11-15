@@ -69,6 +69,14 @@ def test_wake_up_card_and_live_words():
         "care_team_symptom",
         "nurse_callback scheduled",
         "real photos: 3",
+        "source .venv/bin/activate",
+        ".venv/bin/python -m vision.eval --dir vision/eval/preston",
+        "cd facetime-bridge && npm run loop",
+        "| 0.5 |",
+        "BlackHole 2ch",
+        "BlackHole 16ch",
+        'SwitchAudioSource -t output -s "BlackHole 16ch"',
+        "Mac speakers go silent",
     ):
         assert phrase in RUNBOOK, phrase
     assert not (ROOT / "demo" / "scripts" / "rosa_day3.json").exists()
