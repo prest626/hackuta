@@ -56,18 +56,21 @@ HUMAN-3's issue text says to run from the freeze tag. The tag is 11:00 AM so a b
 
 ## Cut list
 
+Only BRIDGE-4 #28 is cut. VISION-4 #37 is blocked on video, not cut.
+
 If a wave is still red at :50 and the next wave is blocked, drop the first unfinished item below, then the next. Safety issues stay: CALL-3, API-4, APPR-1, API-8, APPR-2, LEAD-4, and CODING_STYLE.md Part 3. p0 issues stay.
 
 | Order | Key | Priority | Drop it when |
 |---|---|---|---|
-| 1 | BRIDGE-4 | p2 | OBS virtual camera. Cards on the dashboard are enough. |
-| 2 | VISION-4 | p1 | Breathing check. The demo skips it. |
-| 3 | VISION-3 | p1 | Offline eval. Synthetic photos can wait until after judging. |
-| 4 | VISION-2 | p1 | Caller crop. VISION-1 may use the full frame. |
-| 5 | WATCH-3 | p1 | Health Auto Export. Mock history already has baselines. |
-| 6 | VISION-5 | p1 | Annotated cards. The dashboard can show the raw frame. |
-| 7 | DASH-4 | p1 | Call now button. `curl -X POST localhost:8000/v1/outbound/calls/now` still works. |
-| 8 | WATCH-4 | p1 | Mock replay. Drop last. It is the demo if the watch will not install. |
+| 1 | BRIDGE-4 #28 | p2 | Cut. OBS virtual camera. Cards on the dashboard are enough. |
+| 2 | VISION-3 | p1 | Offline eval. Synthetic photos can wait until after judging. |
+| 3 | VISION-2 | p1 | Caller crop. VISION-1 may use the full frame. |
+| 4 | WATCH-3 | p1 | Health Auto Export. Mock history already has baselines. |
+| 5 | VISION-5 | p1 | Annotated cards. The dashboard can show the raw frame. |
+| 6 | DASH-4 | p1 | Call now button. `curl -X POST localhost:8000/v1/outbound/calls/now` still works. |
+| 7 | WATCH-4 | p1 | Mock replay. Drop last. It is the demo if the watch will not install. |
+
+VISION-4 #37 stays off this list. It is blocked on video, not cut.
 
 A dropped issue stays open. The lane posts `BLOCKED` with the word `cut` and the key. Watson writes the gap. Nobody else takes the files.
 

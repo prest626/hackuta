@@ -86,6 +86,32 @@ def test_example_result_is_red_with_one_pending_approval(tmp_path, monkeypatch):
         assert client.post("/v1/calls/call_rosa01d3/result", json=result).status_code == 401
 
 
+def test_unavailable_breathing_is_stored_as_skipped(tmp_path, monkeypatch):
+    monkeypatch.setenv("DB_PATH", str(tmp_path / "homeward.db"))
+    _seed_call()
+    result = json.loads((EXAMPLES / "call_result.json").read_text())
+    result["breathing"] = {
+        "ok": True,
+        "data": {"available": False, "reason": "not_available_yet"},
+        "say": "I can't check your breathing on this call yet.",
+    }
+    with _client(tmp_path, monkeypatch) as client:
+        res = client.post("/v1/calls/call_rosa01d3/result", json=result, headers=_auth())
+        assert res.status_code == 200, res.text
+        from api import db
+
+        with db.conn() as c:
+            stored = json.loads(
+                c.execute("SELECT doc FROM call_results WHERE call_id = 'call_rosa01d3'").fetchone()["doc"]
+            )
+        assert stored["breathing"]["mode"] == "skipped"
+        assert "ok" not in stored["breathing"] and "data" not in stored["breathing"]
+        strict = json.loads((EXAMPLES / "call_result.json").read_text())
+        strict["breathing"] = {"mode": "paced_measured", "rate_per_min": 14, "sqi": 0.8, "extra": True}
+        denied = client.post("/v1/calls/call_rosa01d3/result", json=strict, headers=_auth())
+        assert denied.status_code == 422
+
+
 def test_no_answer_marks_the_row_and_proposes(tmp_path, monkeypatch):
     monkeypatch.setenv("DB_PATH", str(tmp_path / "homeward.db"))
     _seed_call(call_id="call_rosa01d2", status="dialing")

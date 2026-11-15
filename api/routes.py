@@ -5,17 +5,18 @@ import os
 import re
 from datetime import date, datetime, timezone
 from pathlib import Path
+from typing import Annotated
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, BeforeValidator
 
 from api import db
 from api.main import require_agent, require_reader
 from api.rules import evaluate
 from api.vitals import history, live_vitals
-from contracts.models import CallResult, Flag, MedSchedule, Patient
+from contracts.models import Breathing, CallResult, Flag, MedSchedule, Patient
 
 router = APIRouter()
 ACTIVE = ("dialing", "ringing", "in_call")
@@ -320,8 +321,21 @@ def _mac_hangup() -> None:
     ft.hangup()
 
 
+def _skipped_if_unavailable(value):
+    # The call tool posts the vision stub as breathing. Real Breathing objects have no data key.
+    if isinstance(value, dict):
+        data = value.get("data")
+        if isinstance(data, dict) and data.get("available") is False:
+            return {"mode": "skipped"}
+    return value
+
+
+class ResultIn(CallResult):
+    breathing: Annotated[Breathing, BeforeValidator(_skipped_if_unavailable)]
+
+
 @router.post("/v1/calls/{call_id}/result")
-def post_result(call_id: str, result: CallResult, _=Depends(require_agent)):
+def post_result(call_id: str, result: ResultIn, _=Depends(require_agent)):
     if result.call_id != call_id:
         raise HTTPException(status_code=422, detail="call_id does not match")
     return store_result(result)
