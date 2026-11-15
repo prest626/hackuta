@@ -19,3 +19,43 @@ jobs:
           node-version: "22"
       - run: MAC_DRY_RUN=1 VISION_FAKE=fixtures make test
       - run: MAC_DRY_RUN=1 VISION_FAKE=fixtures make e2e
+
+  # macOS /bin/bash is 3.2. Linux CI is bash 5 and misses `auth[@]: unbound variable`.
+  mac-shell:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: demo scripts under bash 3.2
+        shell: /bin/bash --noprofile --norc -e {0}
+        env:
+          DEMO_CHECK_BASE: http://127.0.0.1:9
+          DEMO_CHECK_DOCTOR_TEXT: ""
+        run: |
+          /bin/bash --version | head -n 1
+          /bin/bash -n demo/*.sh
+          if ! command -v python >/dev/null 2>&1; then
+            py=$(command -v python3 || true)
+            if [ -n "${py:-}" ]; then
+              mkdir -p "$RUNNER_TEMP/pybin"
+              ln -s "$py" "$RUNNER_TEMP/pybin/python"
+              export PATH="$RUNNER_TEMP/pybin:$PATH"
+            fi
+          fi
+          unset DASHBOARD_TOKEN AGENT_API_TOKEN
+          stdout="$RUNNER_TEMP/check.out"
+          stderr="$RUNNER_TEMP/check.err"
+          set +e
+          /bin/bash demo/check.sh >"$stdout" 2>"$stderr"
+          code=$?
+          set -e
+          cat "$stdout"
+          cat "$stderr" >&2
+          if grep -q 'unbound variable' "$stderr"; then
+            echo "stderr contains unbound variable" >&2
+            exit 1
+          fi
+          if [ "$code" -eq 0 ]; then
+            echo "check.sh exited 0" >&2
+            exit 1
+          fi
+          grep -q '^FAIL ' "$stdout"
