@@ -58,7 +58,7 @@ def test_dial_audio_only_and_retries(monkeypatch):
     monkeypatch.setenv("MAC_DRY_RUN", "0")
     calls = []
 
-    def fake_run(argv, capture_output=True, text=True):
+    def fake_run(argv, capture_output=True, text=True, timeout=None):
         calls.append(list(argv))
         if argv[0] == "open":
             return subprocess.CompletedProcess(argv, 0, "", "")
@@ -77,7 +77,7 @@ def test_dial_stops_when_call_is_clicked(monkeypatch):
     monkeypatch.setenv("MAC_DRY_RUN", "0")
     n = {"clicks": 0}
 
-    def fake_run(argv, capture_output=True, text=True):
+    def fake_run(argv, capture_output=True, text=True, timeout=None):
         if argv[0] == "osascript":
             n["clicks"] += 1
             stdout = "missing\n" if n["clicks"] < 3 else "clicked\n"
@@ -93,13 +93,13 @@ def test_dial_stops_when_call_is_clicked(monkeypatch):
 def test_state_parses_script_stdout_and_blocks_dial_on_error(monkeypatch):
     monkeypatch.setenv("MAC_DRY_RUN", "0")
 
-    def ok(argv, capture_output=True, text=True):
+    def ok(argv, capture_output=True, text=True, timeout=None):
         return subprocess.CompletedProcess(argv, 0, "button=End\n", "")
 
     monkeypatch.setattr(facetime.subprocess, "run", ok)
     assert facetime.state() == "in_call"
 
-    def bad(argv, capture_output=True, text=True):
+    def bad(argv, capture_output=True, text=True, timeout=None):
         return subprocess.CompletedProcess(argv, 1, "", "osascript error")
 
     monkeypatch.setattr(facetime.subprocess, "run", bad)
@@ -110,7 +110,7 @@ def test_hangup_clicks_end_or_quits(monkeypatch):
     monkeypatch.setenv("MAC_DRY_RUN", "0")
     calls = []
 
-    def clicked(argv, capture_output=True, text=True):
+    def clicked(argv, capture_output=True, text=True, timeout=None):
         calls.append(list(argv))
         return subprocess.CompletedProcess(argv, 0, "clicked\n", "")
 
@@ -121,7 +121,7 @@ def test_hangup_clicks_end_or_quits(monkeypatch):
 
     calls.clear()
 
-    def missing(argv, capture_output=True, text=True):
+    def missing(argv, capture_output=True, text=True, timeout=None):
         calls.append(list(argv))
         stdout = "missing\n" if "click_end" in argv[-1] else ""
         return subprocess.CompletedProcess(argv, 0, stdout, "")
