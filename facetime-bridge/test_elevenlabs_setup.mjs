@@ -116,7 +116,7 @@ describe('elevenlabs setup', () => {
     assert.equal(agent.platform_settings.auth.enable_auth, true);
     assert.equal(agent.conversation_config.asr.user_input_audio_format, 'pcm_16000');
     assert.equal(agent.conversation_config.tts.agent_output_audio_format, 'pcm_16000');
-    assert.equal(agent.conversation_config.tts.model_id, 'eleven_flash_v2_5');
+    assert.equal(agent.conversation_config.tts.model_id, 'eleven_flash_v2');
     assert.equal(agent.conversation_config.tts.voice_id, 'EXAVITQu4vr4xnSDxMaL');
     assert.equal(agent.conversation_config.agent.prompt.llm, 'gpt-4.1-mini');
     assert.equal(agent.conversation_config.agent.prompt.temperature, 0);
