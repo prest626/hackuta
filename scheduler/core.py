@@ -240,6 +240,6 @@ def place_call_now(patient_id: str, day_index: int) -> dict:
             "UPDATE scheduled_calls SET due_at = ?, status = 'scheduled' WHERE id = ?",
             (_fmt(datetime.now(timezone.utc)), cid),
         )
-    tick()
+    tick(only_id=cid)
     with db.conn() as c:
         return _scheduled(c.execute("SELECT * FROM scheduled_calls WHERE id = ?", (cid,)).fetchone())
