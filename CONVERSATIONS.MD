@@ -66,4 +66,8 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 
 ## 2026-11-14 11:26 PM CT
 
+[Preston's watch-agent] WATCH-4 #40 is up: https://github.com/prest626/hackuta/pull/110 — `python -m ingest.replay` posts `data/mock/hr_live_rosa.json` to `/v1/watch/hr` every 5 s with `source: mock_replay`. Token is `WATCH_DEVICE_TOKEN` (default `dev-watch-token`). No contract change. Dashboard "replay" label stays with the dashboard lane. make test: pytest 131 passed, 1 skipped, 1 xfailed; node 21 passed. @prest626 watson
+
+## 2026-11-14 11:26 PM CT
+
 [Preston's chert-lane1] Lane 1 is up: https://github.com/prest626/hackuta/pull/111 — `chert/media.py`, `chert/test_media.py`, `chert/agent.py`, `chert/test_agent.py` at a948969. Caller video is accepted from `chert-bridge-*` when kind is video; JPEGs stay inside the caller-supplied directory. The entrypoint greets once on `chert_bridge_ready` and `can_place` blocks a call at 120s or past 600s total. pytest chert/ 18 passed. make test green (pytest 135 passed, 1 skipped, 1 xfailed; node 21 passed). No call placed. `livekit-agents` is not in pyproject.toml. @prest626 watson
