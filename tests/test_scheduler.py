@@ -42,6 +42,8 @@ def mac(monkeypatch, tmp_path):
     monkeypatch.delenv("DASHBOARD_TOKEN", raising=False)
     fake = FakeMac()
     sys.modules["mac.facetime"] = fake
+    import mac as mac_pkg
+    monkeypatch.setattr(mac_pkg, "facetime", fake, raising=False)
     yield fake
     sys.modules.pop("mac.facetime", None)
 
