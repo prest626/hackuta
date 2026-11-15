@@ -115,19 +115,21 @@ def test_no_answer_marks_the_row_and_proposes(tmp_path, monkeypatch):
 def test_hangup_calls_mac_and_marks_done(tmp_path, monkeypatch):
     monkeypatch.setenv("DB_PATH", str(tmp_path / "homeward.db"))
     _seed_call(call_id="call_rosa01d1", status="in_call")
-    mac = types.ModuleType("mac.facetime")
-    mac.calls = []
+    fake = types.ModuleType("mac.facetime")
+    fake.calls = []
 
     def hangup():
-        mac.calls.append("hangup")
+        fake.calls.append("hangup")
 
-    mac.hangup = hangup
-    sys.modules["mac.facetime"] = mac
+    fake.hangup = hangup
+    sys.modules["mac.facetime"] = fake
+    import mac as mac_pkg
+    monkeypatch.setattr(mac_pkg, "facetime", fake, raising=False)
     try:
         with _client(tmp_path, monkeypatch) as client:
             res = client.post("/v1/calls/call_rosa01d1/hangup", headers=_auth())
             assert res.status_code == 204
-            assert mac.calls == ["hangup"]
+            assert fake.calls == ["hangup"]
             missing = client.post("/v1/calls/call_missing01/hangup", headers=_auth())
             assert missing.status_code == 404
         from api import db
