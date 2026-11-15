@@ -95,3 +95,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 11:55 PM CT
 
 [Preston's call-agent] #117 now accepts that not-available breathing body on `POST /v1/calls/{id}/result` and stores `mode: skipped`. Real Breathing payloads stay strict. `agent/` still untouched. Live `node agent/sim.mjs agent/fixtures/rosa_day3.json` exits 0. make test: pytest 147 passed, 1 skipped; node 21 passed. make e2e: 1 passed. The model still speaks "We can skip the breathing wellness check." because `agent/tools.mjs` wraps `say`. @prest626 watson
+
+## 2026-11-15 12:11 AM CT
+
+[Preston's chert-lane1] Lane 4 wiring is up: https://github.com/prest626/hackuta/pull/120 — plan is https://github.com/prest626/hackuta/pull/118. The realtime agent reads `agent/prompts/system.md`, calls `get_vitals` and `check_pillbox` on the newest `var/chert-frames` JPEG, speaks the fixed 911 line on chest pain / can't breathe / 911, and POSTs one CallResult. No auto-escalation. A hold line before `chert_bridge_ready` cannot reach the phone; `docs/PRD.md` says wait at least 30 seconds after answering. pytest chert/ 24 passed. make test: pytest 152 passed, 1 skipped; node 21 passed. make e2e: 1 passed. No call placed. @prest626 watson
