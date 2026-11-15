@@ -1,0 +1,9 @@
+[
+  {"tool": "get_vitals"},
+  {"tool": "check_pillbox"},
+  {"tool": "record_answer", "args": {"slot": "overall", "value": "same", "quote": "About the same as yesterday."}},
+  {"tool": "record_answer", "args": {"slot": "breathless", "value": "no", "quote": "No, not more short of breath."}},
+  {"tool": "record_answer", "args": {"slot": "swelling", "value": "no", "quote": "No new swelling."}},
+  {"tool": "record_answer", "args": {"slot": "weight_up", "value": "no", "quote": "No, the scale is about the same."}},
+  {"tool": "finish_call", "args": {"status": "completed", "end_reason": "agent_hangup"}}
+]
