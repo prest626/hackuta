@@ -1,6 +1,8 @@
 import asyncio
+import importlib
 import inspect
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -13,6 +15,23 @@ import chert.wire as wire
 def test_import_does_not_pull_livekit():
     assert not any(name == "livekit" or name.startswith("livekit.") for name in sys.modules)
     assert inspect.iscoroutinefunction(agent.entrypoint)
+
+
+def test_call_cap_reads_homeward_call_cap(monkeypatch):
+    original = os.environ.get("HOMEWARD_CALL_CAP")
+    try:
+        monkeypatch.setenv("HOMEWARD_CALL_CAP", "180")
+        assert importlib.reload(agent).CALL_CAP == 180
+        monkeypatch.setenv("HOMEWARD_CALL_CAP", "nope")
+        assert importlib.reload(agent).CALL_CAP == 120
+        monkeypatch.delenv("HOMEWARD_CALL_CAP")
+        assert importlib.reload(agent).CALL_CAP == 120
+    finally:
+        if original is None:
+            os.environ.pop("HOMEWARD_CALL_CAP", None)
+        else:
+            os.environ["HOMEWARD_CALL_CAP"] = original
+        importlib.reload(agent)
 
 
 def test_greeting_does_not_pass_allow_interruptions():
