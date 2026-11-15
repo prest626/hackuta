@@ -2,11 +2,19 @@ Execution: [docs/ROADMAP.md](docs/ROADMAP.md) (hour by hour, CT) and [agents/STA
 
 # Homeward
 
+**A FaceTime check-in that looks, listens and asks, then waits for a nurse.**
+
 Homeward is a hackathon prototype. It is not a medical device, gives no diagnosis or treatment advice, uses only mock patient data, and every escalation is approved by a human care team.
 
-Homeward is the hospital calling you. For the first four days after you go home, it FaceTimes you, looks at your pill box, asks how you're breathing, reads your Apple Watch, and puts a nurse in charge of what happens next.
+Homeward calls a mock patient on FaceTime in the first days after a hospital stay. The demo patient is Rosa on day 3. The call looks at a pill organizer, listens through a short symptom check, and can run a breathing wellness check on the video. Deterministic rules mark the result GREEN, YELLOW, or RED. A named nurse approves every escalation. Heart rate in the demo is a labeled mock replay unless a watch workout is actually streaming.
 
-The patient's iPhone FaceTimes a spare Mac. That Mac runs FaceTime, Preston's `facetime-bridge/bridge.mjs` (BlackHole audio to OpenAI Realtime), the call agent, vision, the API, the scheduler, and the nurse dashboard. The watch posts heart rate to the API. Nothing is escalated until a named nurse approves it.
+## Architecture
+
+Two paths share one API.
+
+The judge path is Chert into LiveKit. [Chert](https://trychert.com/uta) bridges FaceTime into a LiveKit room. Chert has no tool calling, no transfer, and no avatar of its own. The agent is `python -m chert.agent`. Tools live in that agent because Chert has none. Only one participant publishes audio. `CHERT_FACE` defaults off. `fallback` draws a face on that same participant, with no extra audio, and the frame says "Prototype · not a medical device". `simli` is a guarded path that skips while the agent is publishing audio. This demo does not claim Simli works.
+
+The spare-Mac path is the fallback. The patient's iPhone FaceTimes a spare Mac. That Mac runs FaceTime, Preston's `facetime-bridge/bridge.mjs` (BlackHole audio to OpenAI Realtime), the call agent, vision, the API, the scheduler, and the nurse dashboard. The watch posts heart rate to the API. Nothing is escalated until a named nurse approves it.
 
 ```text
 iPhone FaceTime  <-->  FaceTime on the spare Mac
@@ -21,7 +29,29 @@ iPhone FaceTime  <-->  FaceTime on the spare Mac
                                    dashboard/ approves --> scheduler dials
 ```
 
-## Setup
+```mermaid
+flowchart LR
+  phone[iPhone FaceTime] --> chert[Chert]
+  chert --> room[LiveKit room]
+  room --> agent["python -m chert.agent"]
+  agent --> api["api/ rules, scheduler, SQLite"]
+  api --> dash[Nurse dashboard]
+  dash --> callback["Approved 1:1 to the nurse or Maya"]
+```
+
+After a named nurse approves, the callback is a separate 1:1 to the nurse or to Maya, the mock emergency contact. It does not add a person to the check-in that is already up.
+
+## Phase 2
+
+The Chert agent is `python -m chert.agent`. It greets with "Hi, I'm Homeward, an automated assistant for your care team." Tools live in that agent because Chert has none. Breathing runs off the audio loop, over a 20 second window of frames the call already saved. `CHERT_FACE` defaults off. `make vision-test` scores `vision/eval/photos` against `vision/eval/labels.json` and passes at 80% or better. It also prints an information-only breathing line from real call frames when those frames are on disk. That line does not decide the result. `make vision-test` is not part of `make test`.
+
+Pill-read accuracy on real photos of our own is not yet measured. The 80% line is the pass bar on the labeled set, not a score from a live run.
+
+- Plan: [docs/PHASE2.md](docs/PHASE2.md)
+- Judge script: [demo/DEMO_SCRIPT.md](demo/DEMO_SCRIPT.md)
+- Devpost draft: [docs/DEVPOST.md](docs/DEVPOST.md)
+
+## Run
 
 Needs Python 3.12, [uv](https://docs.astral.sh/uv/), and Node 20+.
 
@@ -29,12 +59,25 @@ Needs Python 3.12, [uv](https://docs.astral.sh/uv/), and Node 20+.
 uv sync
 cp .env.example .env
 MAC_DRY_RUN=1 VISION_FAKE=fixtures make test
+make e2e
+make demo-check
+make vision-test
 make dev
 ```
+
+`make e2e` is the simulated Rosa day-3 call. It uses mock data and does not dial.
+
+`make demo-check` runs the preflight in `demo/check.sh`. It does not print a phone number or a tunnel host.
+
+`make vision-test` is the live vision check and is not part of `make test`. CI does not run it. With a vision key it scores each photo in `vision/eval/photos` against `vision/eval/labels.json`. PASS is 80% or better. It always checks a synthetic 10-a-minute breathing clip, and when `var/chert-frames` has a call it prints one information-only line from those real frames. If it prints `vision key: MISSING`, the demo uses the photo fallback and does not place a second call. `VISION_FAKE=fixtures make vision-test` prints `FALLBACK` and is not a live score.
 
 `make dev` serves `GET /v1/health` at `http://127.0.0.1:8000/v1/health`. `MAC_DRY_RUN=1` prints Mac commands instead of running them. `VISION_FAKE=fixtures` uses canned vision reads. Real keys stay in `.env` on the spare Mac and are never committed.
 
 `facetime-bridge/` is Preston's. Do not edit it from a lane PR.
+
+## Safety
+
+This is a prototype, not a medical device. Mock data only. A nurse approves every escalation. Breathing is a wellness check. The rules set the tier, and the model cannot lower it.
 
 ## Board
 
