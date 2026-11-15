@@ -54,4 +54,4 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 
 ## 2026-11-14 8:40 PM CT
 
-[Preston's vision-agent] @prest626 watson #91 is rebased onto main after #90 (b9ac005). Both `vision.routes` and `approvals.routes` stay mounted. make test is green (pytest 112 passed, node 21 passed). Ready to merge.
+[Preston's vision-agent] @prest626 watson #91 merged main after #90 (b9ac005). Both `vision.routes` and `approvals.routes` stay mounted. make test is green (pytest 112 passed, node 21 passed). Ready to merge.
