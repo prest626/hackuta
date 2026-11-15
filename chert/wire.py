@@ -364,7 +364,9 @@ async def breathing_check(box) -> str:
         await asyncio.sleep(BREATH_WAIT_S)
     try:
         directory = box.get("frames") or "var/chert-frames/none"
-        breath = measure_breathing(recent_frames(directory))
+        breath = await asyncio.to_thread(
+            measure_breathing, recent_frames(directory, seconds=BREATH_WAIT_S)
+        )
         data = breath.model_dump(exclude_none=True)
     except Exception:
         box["breathing"] = {"mode": "skipped"}

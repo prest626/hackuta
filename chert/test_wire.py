@@ -260,6 +260,48 @@ def test_measured_breathing_is_stored_and_spoken(tmp_path, monkeypatch):
     }
 
 
+def test_breathing_measure_leaves_the_loop_free(tmp_path, monkeypatch):
+    newest = 1_700_000_000_000
+    keep = newest - int(wire.BREATH_WAIT_S * 1000)
+    drop = keep - 1
+    for stamp in (newest, keep, drop):
+        (tmp_path / f"{stamp}.jpg").write_bytes(b"\xff\xd8\xff\xd9")
+    seen = {}
+
+    async def run():
+        marks = {"ticks": 0, "measuring": False}
+
+        async def ticker():
+            while True:
+                if marks["measuring"]:
+                    marks["ticks"] += 1
+                await asyncio.sleep(0.01)
+
+        def slow(frames):
+            import time
+
+            seen["frames"] = frames
+            marks["measuring"] = True
+            try:
+                time.sleep(0.08)
+            finally:
+                marks["measuring"] = False
+            return Breathing(mode="abstained")
+
+        monkeypatch.setattr(wire, "measure_breathing", slow)
+        task = asyncio.create_task(ticker())
+        box = {"frames": tmp_path, "speak": lambda _line: None, "wait": lambda: None}
+        line = await wire.breathing_check(box)
+        task.cancel()
+        assert line == "We can skip the breathing wellness check."
+        assert marks["ticks"] >= 2
+
+    asyncio.run(run())
+    stamps = [stamp for stamp, _path in seen["frames"]]
+    assert keep / 1000.0 in stamps
+    assert drop / 1000.0 not in stamps
+
+
 def test_breathing_exception_stores_skipped(tmp_path, monkeypatch):
     def boom(_frames):
         raise RuntimeError("no frames")

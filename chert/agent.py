@@ -18,7 +18,7 @@ else:
 
 log = logging.getLogger("chert")
 
-GREETING = "Hi, it's Homeward from your care team. This is a prototype, and not a medical device."
+GREETING = "Hi, I'm Homeward, an automated assistant for your care team. This is a prototype, and not a medical device."
 ROOT = Path(__file__).resolve().parents[1]
 CALL_CAP = 120
 BUDGET = 600

@@ -26,7 +26,8 @@ def test_greet_fires_once_on_fake_metadata():
     state = {"spoken": False, "ready_at": None}
     said = agent.greet_once(meta, state, clock["now"])
     assert said == agent.GREETING
-    assert "Homeward" in said and "prototype" in said and "not a medical device" in said
+    assert "Homeward" in said and "automated" in said and "prototype" in said
+    assert "not a medical device" in said
     clock["now"] = flag + 1
     assert agent.greet_once(meta, state, clock["now"]) is None
     quiet = {"spoken": False, "ready_at": None}
