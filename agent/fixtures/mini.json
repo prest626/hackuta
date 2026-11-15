@@ -1,0 +1,5 @@
+[
+  {"tool": "get_vitals"},
+  {"say": "I'm doing about the same."},
+  {"tool": "finish_call", "args": {"status": "partial", "end_reason": "agent_hangup"}}
+]
