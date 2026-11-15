@@ -79,8 +79,12 @@ const faceTimeState = () => new Promise(resolve => execFile(`${REPO}.venv/bin/py
 // The call is over once the API has no active call: exit so `npm run loop` starts a clean session.
 // If the caller hangs up without finish_call, FaceTime goes idle while the API still says in_call:
 // two idle reads in a row (one could be a glitch) tell the API via agent.onCallEnd (#88).
+// "idle" also means "no call controls recognised", so it only counts after FaceTime has positively
+// shown in_call during this call. If it never does, hang-up is left to finish_call and the API.
 function watchForHangup() {
   let idleReads = 0;
+  let sawInCall = false;
+  let warned = false;
   let checking = false;
   const timer = setInterval(async () => {
     if (checking) return;
@@ -88,7 +92,13 @@ function watchForHangup() {
     try {
       let active = await api('GET', '/v1/calls/active');
       if (active?.state === 'in_call') {
-        idleReads = (await faceTimeState()) === 'idle' ? idleReads + 1 : 0;
+        const state = await faceTimeState();
+        if (state === 'in_call') sawInCall = true;
+        idleReads = sawInCall && state === 'idle' ? idleReads + 1 : 0;
+        if (!sawInCall && !warned) {
+          warned = true;
+          console.log(`[bridge] FaceTime reads "${state}" during the call, not in_call: hang-up detection is off for this call`);
+        }
         if (idleReads >= 2) {
           console.log('[bridge] FaceTime is idle: caller hung up');
           await agent.onCallEnd();
