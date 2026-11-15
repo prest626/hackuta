@@ -300,7 +300,7 @@ def _propose(c, result: CallResult, flags: list[Flag], tier: str):
         from approvals.core import propose
     except ImportError:
         return _fallback_propose(c, result, flags, tier)
-    return propose(result, flags)
+    return propose(result, flags, c)
 
 
 def _ids(items) -> list[str]:

@@ -69,7 +69,7 @@ def tick() -> bool:
         payload = {"patient_id": patient} if patient else {}
         _request("POST", "/v1/calls/inbound", payload)
     if not answer():
-        print("mac.error answer Accept button missing")
+        print("mac.error answer Answer/Accept control could not be activated", flush=True)
         return False
     _request("POST", "/v1/calls/active/state", {"state": "in_call"})
     return True

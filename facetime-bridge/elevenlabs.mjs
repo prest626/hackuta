@@ -60,6 +60,7 @@ const LEAD_MS = 120;
 let speaker;
 if (booting) {
   speaker = spawn('sox', ['-q', '--buffer', '16384', ...PCM, '-', '-t', 'coreaudio', AGENT_DEVICE], { stdio: ['pipe', 'ignore', 'inherit'] });
+  process.on('exit', () => speaker.kill());
   speaker.stdin.on('error', () => {});
   speaker.on('exit', code => { console.error(`[bridge] could not play to "${AGENT_DEVICE}" (sox exit ${code})`); process.exit(1); });
 }
@@ -155,7 +156,7 @@ async function openConversation(firstMessage) {
       process.exit(1);
     }
   }
-  ws = new WebSocket(url);
+  ws = new WebSocket(url, { handshakeTimeout: 15000 });
   ws.on('open', () => {
     send(initMessage(agent.instructions, firstMessage));
     startMic();

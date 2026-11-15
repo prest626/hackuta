@@ -27,6 +27,7 @@ on buttonsIn(el)
 			try
 				repeat with a in actions of k
 					if (name of a as text) contains "Accept" then set out to out & "button=Accept" & linefeed
+					if (name of a as text) contains "Answer" then set out to out & "button=Answer" & linefeed
 				end repeat
 			end try
 		end repeat

@@ -1,0 +1,99 @@
+:root {
+  color: #1c1917;
+  background: #f6f3ee;
+  font: 16px/1.4 system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+.banner {
+  margin: 0;
+  padding: 0.6rem 1rem;
+  background: #1c1917;
+  color: #f6f3ee;
+  font-weight: 650;
+}
+
+main {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+@media (min-width: 900px) {
+  main {
+    grid-template-columns: 1.1fr 1fr 1.1fr;
+    align-items: start;
+  }
+}
+
+h1 {
+  font-size: 1.1rem;
+  margin: 0 0 0.6rem;
+}
+
+button, input, select {
+  font: inherit;
+}
+
+button {
+  padding: 0.35rem 0.7rem;
+}
+
+.row, .card {
+  background: #fff;
+  border: 1px solid #d6d3d1;
+  border-radius: 6px;
+  padding: 0.7rem;
+  margin-bottom: 0.6rem;
+}
+
+.row {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.row[aria-current="true"] {
+  border-color: #1c1917;
+}
+
+.strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.cell {
+  border-radius: 4px;
+  padding: 0.2rem;
+  text-align: center;
+  background: #e7e5e4;
+  font-size: 0.8rem;
+}
+
+.cell.GREEN { background: #d9f0d3; }
+.cell.YELLOW { background: #fdecc8; }
+.cell.RED { background: #f8d0cb; }
+
+label {
+  display: block;
+  margin: 0.4rem 0;
+}
+
+.quote {
+  margin: 0.2rem 0;
+}
+
+img.proof {
+  max-width: 100%;
+  height: auto;
+}
+
+:focus-visible {
+  outline: 2px solid #1c1917;
+  outline-offset: 2px;
+}

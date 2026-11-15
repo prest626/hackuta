@@ -52,7 +52,7 @@ const hook = {
 
   async refresh() {
     try {
-      const active = await api('GET', '/v1/calls/active');
+      const active = await api('GET', '/v1/calls/active', undefined, { timeoutMs: 3000 });
       if (!active) {
         bind(null, null);
         hook.greeting = FALLBACK;
@@ -60,14 +60,15 @@ const hook = {
         return;
       }
       bind(active, null);
-      const context = await api('GET', `/v1/patients/${active.patient_id}/context`);
+      const context = await api('GET', `/v1/patients/${active.patient_id}/context`, undefined, { timeoutMs: 3000 });
       bind(active, context);
       const name = context?.patient?.display_name;
       hook.greeting = name
         ? `Hi ${name}, it's Homeward from your care team, day ${active.day_index} at home.`
         : FALLBACK;
       hook.instructions = `${SYSTEM}\n\n# This call\n${JSON.stringify(forPrompt(active, context))}`;
-    } catch {
+    } catch (error) {
+      console.warn(`[agent] Call context unavailable (${error.name}); using the basic greeting.`);
       hook.greeting = FALLBACK;
       hook.instructions = SYSTEM;
     }

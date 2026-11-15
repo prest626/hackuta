@@ -57,7 +57,7 @@ def parse_state(text: str) -> str:
             buttons.add(line.split("=", 1)[1].strip())
         elif line.startswith("window="):
             windows.append(line.split("=", 1)[1].strip())
-    if BUTTONS["accept"] in buttons or any("incoming" in w.lower() for w in windows):
+    if buttons.intersection({BUTTONS["accept"], "Answer"}) or any("incoming" in w.lower() for w in windows):
         return "ringing_in"
     if BUTTONS["end"] in buttons:
         return "in_call"
@@ -70,6 +70,8 @@ def click(script: Path, tries: int = 1) -> bool:
     argv = ["osascript", str(script)]
     for i in range(tries):
         proc = run(argv)
+        if proc.stderr and script == ACCEPT_SCRIPT:
+            print(f"mac.answer diagnostics {proc.stderr.strip()}", flush=True)
         if "clicked" in (proc.stdout or ""):
             return True
         if not dry_run() and proc.returncode != 0:

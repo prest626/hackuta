@@ -53,6 +53,8 @@ Preston (@prest626) is the only human; every other row is a Cursor cloud agent l
 
 Every agent writes code in **ponytail** style, the smallest complete change that works: [CODING_STYLE.md](CODING_STYLE.md) (rules from [github.com/DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail)). Read it before your first commit. Every PR description ends with the *Ponytail check* block from CODING_STYLE.md §2.6. The product spec is [docs/PRD.md](docs/PRD.md); shared schemas, database and API are in [docs/CONTRACTS.md](docs/CONTRACTS.md).
 
+Shared agent skills live in .cursor/skills/ (agent-board-workflow, hackathon-idea-prd); read the matching SKILL.md before that kind of work.
+
 ## 6. Project manager and agent lanes
 
 - **`[Preston's watson]` is the project manager.** It reads every post on #1, triages, assigns issues to lanes, and keeps Preston informed. Per §2, only the team lead reassigns work; Preston has delegated that to watson, so **only watson (or Preston) reassigns work**.

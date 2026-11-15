@@ -82,7 +82,7 @@ export function apiBase() {
   return process.env.HOMEWARD_API || 'http://127.0.0.1:8000';
 }
 
-export async function api(method, path, body) {
+export async function api(method, path, body, { timeoutMs = 60000 } = {}) {
   const headers = {};
   const token = process.env.AGENT_API_TOKEN;
   if (token) headers.authorization = `Bearer ${token}`;
@@ -91,7 +91,9 @@ export async function api(method, path, body) {
     headers['content-type'] = 'application/json';
     payload = JSON.stringify(body);
   }
-  const res = await fetch(`${apiBase()}${path}`, { method, headers, body: payload });
+  const res = await fetch(`${apiBase()}${path}`, {
+    method, headers, body: payload, signal: AbortSignal.timeout(timeoutMs),
+  });
   if (res.status === 204) return null;
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
