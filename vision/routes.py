@@ -1,0 +1,116 @@
+"""POST /v1/vision/pillcheck. Mounted by api.main include_optional."""
+
+import os
+import re
+from datetime import datetime
+from pathlib import Path
+from typing import Annotated
+from zoneinfo import ZoneInfo
+
+from fastapi import APIRouter, Header, HTTPException
+from pydantic import BaseModel
+
+from api import db
+from contracts.models import MedSchedule, Patient, PillCheck
+from mac import capture
+from vision.pills import check_pillbox, expected_empty
+
+router = APIRouter()
+_CALL_ID = re.compile(r"^call_[a-z0-9]{4,40}$")
+
+
+class PillIn(BaseModel):
+    call_id: str
+
+
+def local_now(tz: str) -> datetime:
+    try:
+        zone = ZoneInfo(tz)
+    except Exception:
+        zone = ZoneInfo("UTC")
+    return datetime.now(zone)
+
+
+def proof_dir() -> Path:
+    # Same default as api.routes.proof_dir. The proof route serves this filename only.
+    return Path(os.environ.get("PROOF_DIR", "var/proof"))
+
+
+def sharpness(path: Path) -> float:
+    import cv2
+
+    img = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        return 0.0
+    return float(cv2.Laplacian(img, cv2.CV_64F).var())
+
+
+def best_jpeg() -> bytes | None:
+    """Sharpest of the last 3 ring frames. One mac.capture grab when the ring is empty."""
+    files = sorted(capture.RING.glob("*.jpg"), key=lambda path: path.name)[-3:]
+    if not files:
+        grabbed = capture.capture_once()
+        if grabbed is None:
+            return None
+        files = [grabbed]
+    winner = max(files, key=lambda path: (sharpness(path), path.name))
+    return winner.read_bytes()
+
+
+def _save_proof(call_id: str, jpeg: bytes) -> str:
+    # shortcut: stored frame is uncropped and undrawn, upgrade = VISION-2 crop + VISION-5 cards
+    dest = proof_dir() / f"{call_id}_pill.jpg"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(jpeg)
+    return str(dest)
+
+
+@router.post("/v1/vision/pillcheck", response_model=PillCheck, response_model_exclude_none=True)
+def pillcheck(body: PillIn, authorization: Annotated[str | None, Header()] = None) -> PillCheck:
+    from api.main import require_agent  # inside the call: a module-level import is skipped while api.main loads
+
+    require_agent(authorization)
+    if _CALL_ID.fullmatch(body.call_id) is None:
+        raise HTTPException(status_code=404, detail="call not found")
+    with db.conn() as c:
+        row = c.execute("SELECT patient_id FROM scheduled_calls WHERE id = ?", (body.call_id,)).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="call not found")
+        patient_row = c.execute(
+            "SELECT doc, is_mock FROM patients WHERE id = ?", (row["patient_id"],)
+        ).fetchone()
+        if patient_row is None or patient_row["is_mock"] != 1:
+            raise HTTPException(status_code=404, detail="patient not found")
+        try:
+            patient = Patient.model_validate_json(patient_row["doc"])
+        except ValueError:
+            raise HTTPException(status_code=404, detail="patient not found") from None
+        sched = c.execute("SELECT doc FROM med_schedules WHERE patient_id = ?", (patient.id,)).fetchone()
+        if sched is None:
+            raise HTTPException(status_code=404, detail="med schedule not found")
+        try:
+            schedule = MedSchedule.model_validate_json(sched["doc"])
+        except ValueError:
+            raise HTTPException(status_code=404, detail="med schedule not found") from None
+
+    now = local_now(patient.tz)
+    if not patient.consent.video_analysis:
+        pill = PillCheck(state="skipped", expected_empty=expected_empty(schedule, now))
+    else:
+        jpeg = best_jpeg()
+        if jpeg is None:
+            pill = PillCheck(
+                state="unknown",
+                expected_empty=expected_empty(schedule, now),
+                image_quality="no_frame",
+            )
+        else:
+            pill = check_pillbox(jpeg, schedule, now)
+            if patient.consent.proof_frames:
+                pill = pill.model_copy(update={"proof_ref": _save_proof(body.call_id, jpeg)})
+    db.log_event(
+        "vision.pill_check",
+        "agent",
+        {"call_id": body.call_id, "patient_id": patient.id, "state": pill.state},
+    )
+    return pill
