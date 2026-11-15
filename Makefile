@@ -25,3 +25,8 @@ demo-check:
 # P-1's Mac. SPARE_MAC is the spare Mac SSH host. See watch/README.md.
 watch-url:
 	env python3 watch/set_api_base.py
+
+.PHONY: demo-sim
+
+demo-sim:
+	env MAC_DRY_RUN=1 VISION_FAKE=fixtures bash demo/sim.sh
