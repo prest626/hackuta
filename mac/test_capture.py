@@ -164,6 +164,36 @@ def test_capture_once_stops_when_screencapture_fails(dirs, monkeypatch):
     assert capture.latest() is None
 
 
+def test_missing_window_logs_once_not_in_a_loop(dirs, monkeypatch, capsys):
+    monkeypatch.setenv("MAC_DRY_RUN", "1")
+    capture._ft_open = None
+    real_bounds = capture.window_bounds
+    monkeypatch.setattr(capture, "window_bounds", lambda: None)
+    assert capture.capture_once() is None
+    assert capture.capture_once() is None
+    out = capsys.readouterr().out
+    assert out.count("[capture] FaceTime not open, idle") == 1
+    assert "screencapture" not in out
+    assert "NotificationCenter" not in capture.BOUNDS_SCRIPT.read_text()
+
+    monkeypatch.setattr(capture, "window_bounds", lambda: (0, 0, 1280, 720))
+    assert capture.capture_once() is not None
+    assert capsys.readouterr().out.count("[capture] FaceTime window back") == 1
+    assert capture.capture_once() is not None
+    assert "[capture] FaceTime window back" not in capsys.readouterr().out
+    capture._ft_open = None
+
+    # The real bounds script: a missing FaceTime process is idle, not an error.
+    monkeypatch.setattr(capture, "window_bounds", real_bounds)
+    monkeypatch.setattr(capture, "dry_run", lambda: False)
+
+    def missing(argv, capture_output=True, text=True):
+        return subprocess.CompletedProcess(argv, 1, "", 'Can\'t get process "FaceTime" (-1728)')
+
+    monkeypatch.setattr(capture.subprocess, "run", missing)
+    assert capture.window_bounds() is None
+
+
 def test_bad_bounds_are_not_a_frame(dirs, monkeypatch):
     monkeypatch.setenv("MAC_DRY_RUN", "0")
 

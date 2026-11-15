@@ -28,6 +28,8 @@ DEFAULT_FPS = 1.5
 SLOW_FPS = 4.0
 # shortcut: avfoundation screen index 1 and no microphone, upgrade = the display index Preston confirms
 FFMPEG_INPUT = "1:none"
+# None until we have seen a window; False while FaceTime is missing.
+_ft_open = None
 
 
 def dry_run() -> bool:
@@ -53,7 +55,19 @@ def parse_bounds(text: str) -> tuple[int, int, int, int]:
     return x, y, w, h
 
 
-def window_bounds() -> tuple[int, int, int, int]:
+def _note_facetime(present: bool) -> None:
+    global _ft_open
+    if present:
+        if _ft_open is False:
+            print("[capture] FaceTime window back")
+        _ft_open = True
+        return
+    if _ft_open is not False:
+        print("[capture] FaceTime not open, idle")
+    _ft_open = False
+
+
+def window_bounds() -> tuple[int, int, int, int] | None:
     argv = ["osascript", str(BOUNDS_SCRIPT)]
     if dry_run():
         print(shlex.join(argv))
@@ -61,6 +75,9 @@ def window_bounds() -> tuple[int, int, int, int]:
     proc = subprocess.run(argv, capture_output=True, text=True)
     if proc.returncode != 0:
         detail = (proc.stderr or "osascript failed").strip()
+        # -1728 is "can't get process/window": FaceTime is not open. Not the banner.
+        if "-1728" in detail:
+            return None
         raise RuntimeError(detail)
     return parse_bounds(proc.stdout)
 
@@ -127,12 +144,16 @@ def _grab(bounds: tuple[int, int, int, int], dest: Path) -> bool:
 
 
 def capture_once() -> Path | None:
-    _ensure()
     try:
         bounds = window_bounds()
     except (RuntimeError, ValueError) as exc:
         print(f"mac.error bounds {exc}")
         return None
+    if bounds is None:
+        _note_facetime(False)
+        return None
+    _note_facetime(True)
+    _ensure()
     dest = _unique(RING)
     if not _grab(bounds, dest):
         return None
@@ -195,6 +216,10 @@ def burst(seconds: float = 20, fps: float = 5) -> list[tuple[float, str]]:
         except (RuntimeError, ValueError) as exc:
             print(f"mac.error bounds {exc}")
             break
+        if bounds is None:
+            _note_facetime(False)
+            break
+        _note_facetime(True)
         dest = _unique(BURST_DIR)
         if not _grab(bounds, dest):
             break
@@ -222,7 +247,11 @@ def run_loop(once: bool = False) -> None:
     count = 0
     start = time.monotonic()
     while True:
-        capture_once()
+        if capture_once() is None and _ft_open is False:
+            if once:
+                return
+            time.sleep(interval)
+            continue
         count += 1
         elapsed = max(time.monotonic() - start, 1e-6)
         print(f"capture loop fps={count / elapsed:.2f} frames={count} via=screencapture")

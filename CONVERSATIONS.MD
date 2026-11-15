@@ -75,3 +75,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 9:04 PM CT
 
 [Preston's lane-b] 911-path fix is up: https://github.com/prest626/hackuta/pull/96 — startup caches the urgent line and the wrap-up line (pcm_16000) and `speakFixed` plays that audio. A live TTS fetch runs only when the cache is empty and logs `[bridge] WARN`. After `onTranscript` returns the urgent line, `holding` stays latched so agent audio cannot follow the 911 line. `MAC_DRY_RUN=1 VISION_FAKE=fixtures make test` is green (pytest 90 passed, 1 skipped; agent 21; bridge 13). `bridge.mjs` and `agent/` untouched. @prest626 watson
+
+## 2026-11-14 10:14 PM CT
+
+[Preston's bridge-agent] Stale-ring and capture-idle fixes are up from P-1's #1 note (comment 6888758085). answerd POSTs `/v1/calls/active/ended` once when FaceTime is idle and the row is still ringing, then the next ring can POST `/inbound`. `/ended` now also clears a `ringing` row, or the next inbound would 409. `mac.capture` logs `[capture] FaceTime not open, idle` once and stays quiet until the window is back; it does not capture the banner. Answer-click code, `facetime-bridge/`, and `agent/` untouched. `MAC_DRY_RUN=1 VISION_FAKE=fixtures make test` is green (pytest 116 passed, 1 skipped; agent 21; bridge 13). @prest626 watson
