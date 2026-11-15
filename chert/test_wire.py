@@ -225,7 +225,7 @@ def test_second_unknown_advances_the_attempt(tmp_path, monkeypatch):
     third = asyncio.run(wire.read_pill_tool(box))
     assert attempts == [0, 1, 2]
     assert first == "Tilt it away from the light."
-    assert second == "Tilt it away from the light."
+    assert second == homeward.COULD_NOT_SEE
     assert third == homeward.COULD_NOT_SEE
 
 
@@ -357,10 +357,13 @@ def test_sit_still_is_spoken_before_the_wait(tmp_path, monkeypatch):
     box = {"frames": tmp_path, "speak": speak, "wait": wait}
     line = asyncio.run(wire.breathing_check(box))
     assert order == [
-        "Please sit still, with your chest and shoulders in the frame, for about 20 seconds.",
+        wire.SIT_STILL,
         "wait",
+        wire.BREATH_HALFWAY,
+        "wait",
+        wire.BREATH_DONE,
     ]
-    assert line == "We can skip the breathing wellness check."
+    assert line == wire.ABSTAIN_LINE
     assert box["breathing"]["mode"] == "abstained"
     assert not any(name == "livekit" or name.startswith("livekit.") for name in sys.modules)
 
@@ -369,7 +372,9 @@ def test_measured_breathing_is_stored_and_spoken(tmp_path, monkeypatch):
     monkeypatch.setattr(
         wire,
         "measure_breathing",
-        lambda frames: Breathing(mode="paced_measured", rate_per_min=12.4, note="Wellness check only."),
+        lambda frames: Breathing(
+            mode="paced_measured", rate_per_min=12.4, sqi=0.8, note="Wellness check only."
+        ),
     )
     box = {
         "frames": tmp_path,
@@ -390,6 +395,7 @@ def test_measured_breathing_is_stored_and_spoken(tmp_path, monkeypatch):
     assert body["breathing"] == {
         "mode": "paced_measured",
         "rate_per_min": 12.4,
+        "sqi": 0.8,
         "note": "Wellness check only.",
     }
 
@@ -427,7 +433,7 @@ def test_breathing_measure_leaves_the_loop_free(tmp_path, monkeypatch):
         box = {"frames": tmp_path, "speak": lambda _line: None, "wait": lambda: None}
         line = await wire.breathing_check(box)
         task.cancel()
-        assert line == "We can skip the breathing wellness check."
+        assert line == wire.ABSTAIN_LINE
         assert marks["ticks"] >= 2
 
     asyncio.run(run())
@@ -676,3 +682,133 @@ def test_finish_call_invokes_hangup_once(monkeypatch):
     assert box["posted"] is True
     assert box["result"]["end_reason"] == "agent_hangup"
     assert not any(name == "livekit" or name.startswith("livekit.") for name in sys.modules)
+
+
+def test_wrapped_finish_call_hangs_up(monkeypatch):
+    monkeypatch.setattr(homeward, "_request", lambda *_args, **_kwargs: {})
+    calls = []
+    box = {
+        "call_id": "call_rosa01d3",
+        "patient_id": "pat_rosa01",
+        "day_index": 3,
+        "kind": "checkin",
+        "posted": False,
+        "symptoms": [],
+        "started_at": "2026-11-15T00:00:00Z",
+        "hangup": lambda: calls.append("up"),
+    }
+    line = asyncio.run(wire.bind_tools(box)["finish_call"]())
+    assert line == wire.REVIEW_LINE
+    assert calls == ["up"]
+
+
+def test_say_stays_interruptible():
+    assert "allow_interruptions" not in Path(wire.__file__).read_text()
+
+
+def test_each_tool_exception_is_a_calm_line(monkeypatch, caplog):
+    import logging
+
+    box = {
+        "symptoms": [],
+        "frames": "",
+        "call_id": "call_rosa01d3",
+        "patient_id": "pat_rosa01",
+        "speak": lambda _line: None,
+    }
+
+    def boom(*_args, **_kwargs):
+        raise RuntimeError("secret boom")
+
+    monkeypatch.setattr(wire, "read_pill_tool", boom)
+    monkeypatch.setattr(wire, "breathing_check", boom)
+    monkeypatch.setattr(wire, "remember_answer", boom)
+    monkeypatch.setattr(wire, "read_vitals", boom)
+    monkeypatch.setattr(wire, "submit", boom)
+    tools = wire.bind_tools(box)
+    with caplog.at_level(logging.INFO, logger="chert.wire"):
+        pill = asyncio.run(tools["check_pillbox"]())
+        breath = asyncio.run(tools["breathing_check"]())
+        answer = asyncio.run(tools["record_answer"]("overall", "same", "fine"))
+        vitals = asyncio.run(tools["get_vitals"]())
+        done = asyncio.run(tools["finish_call"]())
+    assert pill == homeward.COULD_NOT_SEE
+    assert breath == wire.SKIP_BREATH
+    assert answer == wire.ANSWER_OK
+    assert vitals == homeward.NO_READING
+    assert done == wire.REVIEW_LINE
+    spoken = pill + breath + answer + vitals + done
+    assert "secret" not in spoken
+    assert "secret" not in caplog.text
+    assert caplog.text.count("RuntimeError") >= 5
+
+
+def test_filler_then_one_retry_and_no_third_post(tmp_path, monkeypatch):
+    monkeypatch.setattr(wire, "PILL_HOLD_S", 0)
+    (tmp_path / "1000.jpg").write_bytes(b"\xff\xd8\xff\xd9")
+    order = []
+
+    def speak(line):
+        order.append(("say", line))
+
+    def request(method, path, body=None):
+        order.append(("post", path))
+        return {"state": "unknown"}
+
+    monkeypatch.setattr(homeward, "_copy_jpeg", lambda *_args, **_kwargs: tmp_path / "x.jpg")
+    monkeypatch.setattr(homeward, "_request", request)
+    box = {"frames": tmp_path, "call_id": "call_rosa01d3", "speak": speak}
+    tool = wire.bind_tools(box)["check_pillbox"]
+    first = asyncio.run(tool())
+    second = asyncio.run(tool())
+    third = asyncio.run(tool())
+    assert first == homeward.HOLD_AGAIN
+    assert second == homeward.COULD_NOT_SEE
+    assert third == homeward.COULD_NOT_SEE
+    assert order == [
+        ("say", wire.HOLD_STEADY),
+        ("post", "/v1/vision/pillcheck"),
+        ("say", wire.HOLD_STEADY),
+        ("post", "/v1/vision/pillcheck"),
+    ]
+
+
+def test_breathing_lines_are_spoken_in_order(tmp_path, monkeypatch):
+    said = []
+    slept = []
+
+    async def sleep(seconds):
+        slept.append(seconds)
+
+    monkeypatch.setattr(wire.asyncio, "sleep", sleep)
+    monkeypatch.setattr(wire, "measure_breathing", lambda frames: Breathing(mode="abstained"))
+
+    def speak(line):
+        said.append(line)
+
+    line = asyncio.run(wire.breathing_check({"frames": tmp_path, "speak": speak}))
+    assert said == [wire.SIT_STILL, wire.BREATH_HALFWAY, wire.BREATH_DONE]
+    assert slept == [10, 10]
+    assert line == wire.ABSTAIN_LINE
+
+
+def test_unclean_breath_abstains_and_a_clean_rate_is_spoken(tmp_path, monkeypatch):
+    readings = [
+        Breathing(mode="paced_measured", rate_per_min=7.5, sqi=0.6),
+        Breathing(mode="paced_measured", rate_per_min=14, sqi=0.8),
+    ]
+
+    def measure(_frames):
+        return readings.pop(0)
+
+    monkeypatch.setattr(wire, "measure_breathing", measure)
+    box = {"frames": tmp_path, "speak": lambda _line: None, "wait": lambda: None}
+    dirty = asyncio.run(wire.breathing_check(box))
+    assert dirty == wire.ABSTAIN_LINE
+    assert "7" not in dirty and "8" not in dirty
+    assert box["breathing"]["mode"] == "abstained"
+    assert box["breathing"]["sqi"] == 0.6
+    clean_box = {"frames": tmp_path, "speak": lambda _line: None, "wait": lambda: None}
+    clean = asyncio.run(wire.breathing_check(clean_box))
+    assert clean == "About 14 a minute. That's just a wellness check."
+    assert clean_box["breathing"]["mode"] == "paced_measured"

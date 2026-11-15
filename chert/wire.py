@@ -22,8 +22,13 @@ else:
     import homeward
 
 EMERGENCY_LINE = "This could be serious. Please hang up and call 911 now."
-SIT_STILL = "Please sit still, with your chest and shoulders in the frame, for about 20 seconds."
+SIT_STILL = "Sit still and breathe normally, about 20 seconds. I'll tell you when we're done."
+BREATH_HALFWAY = "About ten more seconds."
+BREATH_DONE = "All done, thanks."
+ABSTAIN_LINE = "I couldn't get a clean read, and that's fine."
+HOLD_STEADY = "Hold it steady... give me a few seconds."
 SKIP_BREATH = "We can skip the breathing wellness check."
+ANSWER_OK = "Thanks. I will pass that to your nurse."
 REVIEW_LINE = "I've sent this to your care team. Your nurse will review it."
 DASHBOARD_LINE = "I'll leave the details on the dashboard."
 TONE = (
@@ -280,7 +285,7 @@ def read_vitals(patient_id: str):
 
 
 def read_pillbox(jpeg, ring, call_id: str, attempt: int = 0):
-    """Same copy, POST, and spoken line as homeward.check_pillbox, plus the JSON."""
+    """Copy one JPEG into the ring, POST that frame, and return the line plus the JSON."""
     if jpeg is None:
         return homeward.COULD_NOT_SEE, {"state": "unknown", "image_quality": "no_frame"}
     homeward._copy_jpeg(Path(jpeg), Path(ring))
@@ -302,9 +307,9 @@ def remember_answer(symptoms: list, slot, value, quote, confirmed=False) -> str:
     for index, old in enumerate(symptoms):
         if old.get("slot") == item["slot"]:
             symptoms[index] = item
-            return "Thanks. I will pass that to your nurse."
+            return ANSWER_OK
     symptoms.append(item)
-    return "Thanks. I will pass that to your nurse."
+    return ANSWER_OK
 
 
 def iso_now() -> str:
@@ -468,20 +473,63 @@ def measure_breathing(frames):
     return measure(frames)
 
 
-async def breathing_check(box) -> str:
-    """Speak, wait, then measure the JPEGs already saved for this call."""
+def safe(fn, fallback_line):
+    """Catch a tool exception, log its type, and return a fixed line."""
+
+    async def wrapped(*args, **kwargs):
+        try:
+            result = fn(*args, **kwargs)
+            if inspect.isawaitable(result):
+                result = await result
+            return result
+        except Exception as exc:
+            log.info("%s", type(exc).__name__)
+            return fallback_line
+
+    return wrapped
+
+
+async def _speak(box, line: str) -> None:
     speak = box.get("speak")
-    if callable(speak):
-        said = speak(SIT_STILL)
-        if inspect.isawaitable(said):
-            await said
+    if not callable(speak):
+        return
+    said = speak(line)
+    if inspect.isawaitable(said):
+        await said
+
+
+async def _pause(box, seconds: float) -> None:
     waiter = box.get("wait")
     if callable(waiter):
         done = waiter()
         if inspect.isawaitable(done):
             await done
-    else:
-        await asyncio.sleep(BREATH_WAIT_S)
+        return
+    await asyncio.sleep(seconds)
+
+
+def _spoken_rate(data: dict):
+    rate = data.get("rate_per_min")
+    sqi = data.get("sqi")
+    if data.get("mode") != "paced_measured":
+        return None
+    if isinstance(rate, bool) or not isinstance(rate, (int, float)):
+        return None
+    if isinstance(sqi, bool) or not isinstance(sqi, (int, float)):
+        return None
+    if 10 <= rate <= 24 and sqi >= 0.7:
+        return rate
+    return None
+
+
+async def breathing_check(box) -> str:
+    """Speak, wait, then measure the JPEGs already saved for this call."""
+    half = BREATH_WAIT_S / 2
+    await _speak(box, SIT_STILL)
+    await _pause(box, half)
+    await _speak(box, BREATH_HALFWAY)
+    await _pause(box, half)
+    await _speak(box, BREATH_DONE)
     try:
         directory = box.get("frames") or "var/chert-frames/none"
         breath = await asyncio.to_thread(
@@ -494,15 +542,14 @@ async def breathing_check(box) -> str:
     if not isinstance(data, dict):
         box["breathing"] = {"mode": "skipped"}
         return SKIP_BREATH
-    box["breathing"] = data
-    rate = data.get("rate_per_min")
-    if (
-        data.get("mode") == "paced_measured"
-        and isinstance(rate, (int, float))
-        and not isinstance(rate, bool)
-    ):
+    rate = _spoken_rate(data)
+    if rate is not None:
+        box["breathing"] = data
         return f"About {math.floor(rate + 0.5)} a minute. That's just a wellness check."
-    return SKIP_BREATH
+    data = dict(data)
+    data["mode"] = "abstained"
+    box["breathing"] = data
+    return ABSTAIN_LINE
 
 
 def _brief(value) -> str:
@@ -561,42 +608,71 @@ def handoff_line(call, request) -> str | None:
     return f"{head} Is this {nurse}?"
 
 
+def bind_tools(box: dict) -> dict:
+    """The five tools, each behind safe(). finish_call still runs box["hangup"]."""
+
+    async def check_pillbox() -> str:
+        if int(box.get("pill_attempt") or 0) >= 2:
+            return homeward.COULD_NOT_SEE
+        await _speak(box, HOLD_STEADY)
+        return await read_pill_tool(box)
+
+    async def run_breathing() -> str:
+        return await breathing_check(box)
+
+    async def record_answer(slot: str, value: str, quote: str, confirmed: bool = False) -> str:
+        return remember_answer(box["symptoms"], slot, value, quote, confirmed)
+
+    async def get_vitals() -> str:
+        if not box.get("patient_id"):
+            return homeward.NO_READING
+        line, live = read_vitals(box["patient_id"])
+        if live:
+            box["vitals"] = live
+        return line
+
+    async def run_finish(end_reason: str = "agent_hangup") -> str:
+        return finish_call(box, end_reason)
+
+    return {
+        "check_pillbox": safe(check_pillbox, homeward.COULD_NOT_SEE),
+        "breathing_check": safe(run_breathing, SKIP_BREATH),
+        "record_answer": safe(record_answer, ANSWER_OK),
+        "get_vitals": safe(get_vitals, homeward.NO_READING),
+        "finish_call": safe(run_finish, REVIEW_LINE),
+    }
+
+
 def build_agent(instructions: str, box: dict):
     """Realtime agent. LiveKit is imported here so tests never load it."""
     from livekit.agents import Agent, function_tool
 
-    run_breathing = breathing_check
-    file_and_hangup = finish_call
+    tools = bind_tools(box)
 
     class Homeward(Agent):
         @function_tool()
         async def check_pillbox(self) -> str:
             """Say "Hold the organizer still, facing the camera, about a foot away." Call this only after the patient confirms the organizer is up. Never identify a pill or advise a dose."""
-            return await read_pill_tool(box)
+            return await tools["check_pillbox"]()
 
         @function_tool()
         async def breathing_check(self) -> str:
             """Call this immediately after check_pillbox, before symptoms and vitals. It is a wellness check."""
-            return await run_breathing(box)
+            return await tools["breathing_check"]()
 
         @function_tool()
         async def record_answer(self, slot: str, value: str, quote: str, confirmed: bool = False) -> str:
             """Store one symptom answer with the caller's exact words. Do not diagnose."""
-            return remember_answer(box["symptoms"], slot, value, quote, confirmed)
+            return await tools["record_answer"](slot, value, quote, confirmed)
 
         @function_tool()
         async def get_vitals(self) -> str:
             """Read the live watch heart rate after breathing. Say a number only when it is fresh."""
-            if not box.get("patient_id"):
-                return homeward.NO_READING
-            line, live = read_vitals(box["patient_id"])
-            if live:
-                box["vitals"] = live
-            return line
+            return await tools["get_vitals"]()
 
         @function_tool()
         async def finish_call(self, end_reason: str = "agent_hangup") -> str:
             """Post this check-in for the nurse to review. end_reason is agent_hangup, hard_stop, patient_hangup, no_answer, bridge_error, or error. Do not call anyone."""
-            return file_and_hangup(box, end_reason)
+            return await tools["finish_call"](end_reason)
 
     return Homeward(instructions=instructions)

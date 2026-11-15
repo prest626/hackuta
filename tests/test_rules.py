@@ -171,12 +171,21 @@ def test_breathing_caps_at_yellow_and_abstains_on_low_sqi():
     assert _tier_of(flags, "breathing_outside_wellness_range") == "YELLOW"
 
     tier, flags = evaluate(
-        _call(breathing={"mode": "paced_measured", "rate_per_min": 8, "sqi": 0.5}),
+        _call(breathing={"mode": "paced_measured", "rate_per_min": 8, "sqi": 0.7}),
         None,
         _patient(),
         None,
     )
     assert "breathing_outside_wellness_range" in _codes(flags)
+
+    tier, flags = evaluate(
+        _call(breathing={"mode": "paced_measured", "rate_per_min": 7.5, "sqi": 0.6}),
+        None,
+        _patient(),
+        None,
+    )
+    assert "breathing_outside_wellness_range" not in _codes(flags)
+    assert tier == "GREEN"
 
     tier, flags = evaluate(
         _call(breathing={"mode": "paced_measured", "rate_per_min": 40, "sqi": 0.4}),

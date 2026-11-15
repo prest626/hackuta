@@ -6,7 +6,7 @@ thresholds:
   hr_high_at_rest: 110
   breathing_low: 10
   breathing_high: 24
-  breathing_sqi: 0.5
+  breathing_sqi: 0.7
 
 # These rules cannot raise the call above the cap, even if tier says otherwise.
 caps:
