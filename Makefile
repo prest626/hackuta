@@ -10,7 +10,7 @@ dev:
 	uvicorn api.main:app --host 127.0.0.1 --port 8000
 
 test:
-	pytest -q && cd agent && npm test
+	pytest -q && cd agent && npm test && cd ../facetime-bridge && (test -d node_modules || npm ci --silent) && npm test
 
 e2e:
 	pytest -q tests/test_e2e.py
