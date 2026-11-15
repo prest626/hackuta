@@ -46,6 +46,20 @@ The Mac's own speakers go silent while output is on BlackHole; the caller hears 
 
 `.env.local` may also set `CALLER_DEVICE` (default `BlackHole 16ch`), `AGENT_DEVICE` (default `BlackHole 2ch`), `OPENAI_REALTIME_MODEL` (default `gpt-realtime`), `HOMEWARD_API` (default `http://127.0.0.1:8000`) and `AGENT_API_TOKEN` (if the API requires one). The prompt, tools, greeting and 911 line come from `agent/` (call lane), not this folder.
 
+## ElevenLabs voice
+
+`npm start` and `npm run loop` run `start.mjs`. It loads `elevenlabs.mjs` when `.env.local` has `VOICE=elevenlabs`, and `bridge.mjs` otherwise. The default is OpenAI. Run only one bridge at a time; both use the same BlackHole devices.
+
+1. Put `ELEVENLABS_API_KEY` in `facetime-bridge/.env.local` only. Never commit it, print it, or post it.
+2. Create or update the agent. The command is idempotent and prints `ELEVENLABS_AGENT_ID=agent_…` for `.env.local`. `ELEVENLABS_VOICE_ID` is optional.
+   ```
+   node --env-file=.env.local elevenlabs_setup.mjs
+   ```
+   `--print` writes the config and does not use the network. `--no-interruptions` drops interruption events. `--check-realtime` only reports whether the Realtime model is available.
+3. Add `VOICE=elevenlabs` to `.env.local`, then start the loop as in the setup steps above.
+
+To roll back, delete the `VOICE=elevenlabs` line and restart the loop. That selects OpenAI again. No git change.
+
 ## Troubleshooting
 
 | Symptom | Check |

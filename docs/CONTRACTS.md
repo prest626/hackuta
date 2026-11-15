@@ -316,6 +316,8 @@ Bridge side (Preston): `session.update` with `instructions` + `tools`; on `respo
 
 Tools (CALL-2): `get_vitals()`, `check_pillbox()`, `breathing_check()`, `record_answer({slot, value, quote, confirmed?})`, `finish_call({status, end_reason})`. Each returns `{ok, say?, data?}`; `say` is a hint the model may paraphrase except when `fixed: true` (911 line, dosing refusals).
 
+The ElevenLabs backend (`VOICE=elevenlabs`) uses this same hook (`refresh`, `onCallStart`, `onToolCall`, `onTranscript`, `onCallEnd`, `instructions`, `tools`, `greeting`). `facetime-bridge/start.mjs` loads `elevenlabs.mjs` when that is set and `bridge.mjs` otherwise; `bridge.mjs` is unchanged. The OpenAI Realtime to ElevenLabs mapping is in the plan on issue #1, comment 6887976942.
+
 ### 4.6 Ingest (lane: watch)
 
 | Method | Path | Caller | Body → returns |
