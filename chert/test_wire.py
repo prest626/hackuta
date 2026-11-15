@@ -28,6 +28,8 @@ def test_prompt_includes_call_context():
     assert wire.CHECKIN_ORDER in text
     assert wire.HOLD_STILL in text
     assert "confirms the organizer is up" in text
+    assert wire.SPEAK_NUMBERS in text
+    assert wire.ECHO_ANSWER in text
 
 
 def test_breathing_comes_right_after_the_pill_check():

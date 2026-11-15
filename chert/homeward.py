@@ -5,6 +5,7 @@ A mock replay says it is not a live watch reading.
 """
 
 import base64
+import logging
 import math
 import os
 import shutil
@@ -14,6 +15,8 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 import httpx
+
+log = logging.getLogger("chert.homeward")
 
 # Under 8s so a hung API cannot eat the call. On error, speak the existing line.
 TIMEOUT_S = 5.0
@@ -59,32 +62,28 @@ def _headers() -> dict[str, str]:
 
 
 def _request(method: str, path: str, body: dict | None = None) -> dict | None:
-    kwargs: dict = {"headers": _headers(), "timeout": TIMEOUT_S}
-    if body is not None:
-        kwargs["json"] = body
-    try:
-        res = httpx.request(method, f"{base_url()}{path}", **kwargs)
-        res.raise_for_status()
-        data = res.json()
-    except (httpx.HTTPError, ValueError):
-        return None
+    data = _request_json(method, path, body)
     return data if isinstance(data, dict) else None
 
 
 def _request_json(method: str, path: str, body: dict | None = None):
-    """Same request as _request, but a JSON list is kept. _request stays dict-only."""
+    """One logged line per request: path without query, HTTP status or error type, seconds."""
     kwargs: dict = {"headers": _headers(), "timeout": TIMEOUT_S}
     if body is not None:
         kwargs["json"] = body
+    outcome = "?"
+    start = time.monotonic()
     try:
         res = httpx.request(method, f"{base_url()}{path}", **kwargs)
+        outcome = res.status_code
         res.raise_for_status()
         data = res.json()
-    except (httpx.HTTPError, ValueError):
-        return None
-    if isinstance(data, dict) or isinstance(data, list):
-        return data
-    return None
+    except (httpx.HTTPError, ValueError) as exc:
+        if outcome == "?":
+            outcome = type(exc).__name__
+        data = None
+    log.info("api %s %s -> %s %.1fs", method, path.split("?")[0], outcome, time.monotonic() - start)
+    return data if isinstance(data, (dict, list)) else None
 
 
 def _parse_t(value) -> datetime | None:
