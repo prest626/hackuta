@@ -245,3 +245,38 @@ The DIY bridge is not removed. `facetime-bridge/bridge.mjs` stays Preston's.
 ## Not in this plan
 
 No app code, no dependency edit, no change to `contracts/`, no comment on issue #1 from this agent, no reading of `.env.local`. Lane 3's route work is #37, not a new design.
+
+## Lane 4: Homeward wiring
+
+Call 5 showed the voice path works. `chert/agent.py` still speaks only the fixed greeting on a bare realtime model, and `chert/homeward.py` is not called. A Chert call therefore has no Homeward prompt, no tools, no call context, no result write-back, and no 911 check. This lane adds that wiring. It does not place a call. Files stay under `chert/` except one demo-script line named below. Do not edit `agent/`, `facetime-bridge/`, `pyproject.toml`, or any env file.
+
+### Prompt and context
+
+Read `agent/prompts/system.md` at runtime and pass that text as the agent instructions. Do not copy it into `chert/` and do not edit the file. Append a `# This call` JSON block with `patient_id`, `day_index`, and `call_id`, the same fields `agent/index.mjs` puts on the prompt.
+
+Fill those fields from `GET /v1/calls/active`, then `GET /v1/patients/{id}/context`. If the room metadata already has `patient_id`, `day_index`, and `call_id`, those values win. The Chert id in `chert_call` is only the frame directory name. The posted `call_id` is the Homeward id (`call_…`), because `POST /v1/calls/{id}/result` checks it against `scheduled_calls`.
+
+### Tools
+
+Register `homeward.get_vitals` and `homeward.check_pillbox` as function tools on the realtime agent. LiveKit stays imported inside the entrypoint so `pytest` never imports it.
+
+- `get_vitals` speaks the line `homeward.get_vitals` already returns and keeps the live JSON for the result snapshot.
+- `check_pillbox` takes the newest JPEG under `var/chert-frames/<chert call id>/`, copies it through `homeward.check_pillbox` into `var/frames/ring/`, and speaks that function's line. No frame means the existing could-not-see line. Never name a pill or give a dose.
+
+`record_answer` stores one symptom (`slot`, `value`, `quote`, `confirmed`) in memory so the loaded prompt's symptom step has somewhere to put the words. It does not call the model for a diagnosis.
+
+### 911, outside the model
+
+Keep the prompt's rule: no diagnosis, and a check outside the prompt speaks the emergency line. On a final caller transcript, a small matcher (the same "not"/"no" skip as `agent/safety.mjs`) looks for `chest pain`, `can't breathe`, and `911`. A hit speaks exactly `This could be serious. Please hang up and call 911 now.` once, and the result sets `emergency_script_given` true and `status` `emergency_script`. That is the flag. Do not dial, text, or propose an escalation. The existing result route may create an approval; a nurse still has to approve it.
+
+### Result
+
+On disconnect, or when the model calls `finish_call`, POST one body to `/v1/calls/{id}/result`. It must validate as `contracts.models.CallResult`. `breathing` is `{mode: skipped}` unless a measurement was stored. Missing pill check is `{state: skipped}`. Missing vitals are a stale snapshot with no number. Do not call `/hangup` (that clicks FaceTime on the spare Mac).
+
+### The silence before bridge_ready
+
+Calls 3 and 4 were hung up during the 21–23 seconds between answering and `chert_bridge_ready`. A hold line in this process cannot fill that gap. The phone hears only audio the Chert bridge forwards, and the bridge does not forward until `chert_bridge_ready`. Speech published earlier stays in the LiveKit room. Do not add "connecting now, please hold." The demo script in `docs/PRD.md` gets one line: wait at least 30 seconds after answering.
+
+### Tests
+
+Offline only, fakes, no LiveKit network: the prompt file is read and the context block contains patient, day index, and call id; chest pain and "can't breathe" and 911 speak the fixed line, "my chest feels fine" does not; the newest JPEG is the one the pill tool would send; a built result validates, with skipped breathing and the emergency flag; `allow_interruptions` stays absent. `pytest chert/`, `make test` (`MAC_DRY_RUN=1`, `VISION_FAKE=fixtures`), and `make e2e` stay green.

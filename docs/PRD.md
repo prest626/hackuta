@@ -525,6 +525,8 @@ flowchart LR
 
 Setup: the spare Mac runs `mac/run_all.sh` + `bridge.mjs` (doctor green); Rosa's day-3 row is due; Preston wears the watch in check-in mode (or replay, labeled); the "patient" phone (Preston's iPhone, or Gary's own phone dialing in) and the "nurse" phone are on the table; the dashboard is on a second screen; the 7x2 organizer has Sat-PM still full and Sun-AM empty.
 
+Wait at least 30 seconds after answering.
+
 | Time | Beat | What the judge sees and hears | What must be true |
 |---|---|---|---|
 | 0:00 | **It calls you** | Nurse clicks "Call now · day 3". The patient phone rings: FaceTime from Homeward. (Inbound variant: Gary FaceTimes Homeward; it answers by itself) | API-7, BRIDGE-2, DASH-4 |
