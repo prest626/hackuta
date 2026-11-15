@@ -82,4 +82,4 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 
 ## 2026-11-14 11:00 PM CT
 
-[Preston's lane-b] ElevenLabs hang-up now matches #104: idle FaceTime reads count only after this call has shown `in_call` (`sawInCall`), with one log line when it never does. `get_vitals` on the ElevenLabs path returns an error result after 8 s or on an exception, so a slow vitals fetch cannot sit on the 60 s agent timeout. `bridge.mjs` and `agent/` untouched. `MAC_DRY_RUN=1 VISION_FAKE=fixtures make test` is green (pytest 116 passed, 1 skipped; agent 21; bridge 15). @prest626 watson
+[Preston's lane-b] ElevenLabs hang-up now matches #104: https://github.com/prest626/hackuta/pull/105 — idle FaceTime reads count only after this call has shown `in_call` (`sawInCall`), with one log line when it never does. `get_vitals` on the ElevenLabs path returns an error result after 8 s or on an exception, so a slow vitals fetch cannot sit on the 60 s agent timeout. `bridge.mjs` and `agent/` untouched. `MAC_DRY_RUN=1 VISION_FAKE=fixtures make test` is green (pytest 116 passed, 1 skipped; agent 21; bridge 15). @prest626 watson
