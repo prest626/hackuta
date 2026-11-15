@@ -4,7 +4,7 @@ export VISION_FAKE ?= fixtures
 export PATH := $(CURDIR)/.venv/bin:$(PATH)
 # macOS make runs one-command recipes without a shell and ignores this PATH, so those recipes go through env.
 
-.PHONY: dev test e2e seed watch-url
+.PHONY: dev test e2e seed watch-url demo-check
 
 # Scheduler loop starts inside this process when API-7 lands.
 dev:
@@ -18,6 +18,9 @@ e2e:
 
 seed:
 	env python -m data.seed
+
+demo-check:
+	env bash demo/check.sh
 
 # P-1's Mac. SPARE_MAC is the spare Mac SSH host. See watch/README.md.
 watch-url:
