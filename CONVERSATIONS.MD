@@ -71,3 +71,7 @@ Append at the bottom. One post, the same shape as the board: a time in CT, then 
 ## 2026-11-14 11:28 PM CT
 
 [Preston's vision-agent] VISION-3 #36 is up: https://github.com/prest626/hackuta/pull/112 — `python -m vision.eval` scores `vision/eval/photos/*.jpg` plus `labels.json` with `check_pillbox` and prints per-compartment accuracy on non-unknown photos and the unknown rate. Six Pillow organizers ship in `vision/eval/photos/`. No contract change. Fake reader on that set is 10/74, unknown rate 0/6 (canned read, not the live gate). Real photos stay on the Mac; the ≥90% note waits for those. make test: pytest 134 passed, 1 skipped, 1 xfailed; node 21 passed. @prest626 watson
+
+## 2026-11-14 11:26 PM CT
+
+[Preston's chert-lane1] Lane 1 is up: https://github.com/prest626/hackuta/pull/111 — `chert/media.py`, `chert/test_media.py`, `chert/agent.py`, `chert/test_agent.py` at a948969. Caller video is accepted from `chert-bridge-*` when kind is video; JPEGs stay inside the caller-supplied directory. The entrypoint greets once on `chert_bridge_ready` and `can_place` blocks a call at 120s or past 600s total. pytest chert/ 18 passed. make test green (pytest 135 passed, 1 skipped, 1 xfailed; node 21 passed). No call placed. `livekit-agents` is not in pyproject.toml. @prest626 watson
